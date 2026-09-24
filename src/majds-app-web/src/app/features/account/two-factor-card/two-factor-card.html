@@ -1,0 +1,53 @@
+<mat-card appearance="outlined" class="two-factor">
+  <mat-card-header>
+    <mat-card-title>{{ 'Two-factor authentication' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (recoveryCodes().length > 0) {
+      <div class="two-factor__codes">
+        <p><strong>{{ 'Save these recovery codes now.' | translate }}</strong></p>
+        <p>{{ 'Each code works once if you lose your phone. They will not be shown again.' | translate }}</p>
+        <ul>
+          @for (c of recoveryCodes(); track c) {
+            <li><code>{{ c }}</code></li>
+          }
+        </ul>
+        <button mat-stroked-button (click)="recoveryCodes.set([])">{{ 'I saved them' | translate }}</button>
+      </div>
+    } @else if (settingUp()) {
+      <ol class="two-factor__steps">
+        <li>{{ 'Install an authenticator app (Microsoft Authenticator, Google Authenticator, Authy).' | translate }}</li>
+        <li>{{ 'Scan this QR code, or type the key below into the app.' | translate }}</li>
+      </ol>
+      @if (qrDataUrl(); as qr) {
+        <img class="two-factor__qr" [src]="qr" alt="" />
+      }
+      <p class="two-factor__key"><code>{{ displayKey() }}</code></p>
+      <ol start="3" class="two-factor__steps">
+        <li>{{ 'Enter the 6-digit code the app shows.' | translate }}</li>
+      </ol>
+      <form (submit)="$event.preventDefault(); confirm()" class="two-factor__form">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Verification code' | translate }}</mat-label>
+          <input matInput [formControl]="code" inputmode="numeric" autocomplete="one-time-code" />
+        </mat-form-field>
+        <div class="two-factor__actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="busy()">{{ 'Verify and turn on' | translate }}</button>
+          <button mat-button type="button" (click)="cancelSetup()">{{ 'Cancel' | translate }}</button>
+        </div>
+      </form>
+    } @else if (state(); as s) {
+      @if (s.isTwoFactorEnabled) {
+        <p>{{ 'Two-factor authentication is on.' | translate }}</p>
+        <p class="two-factor__muted">{{ 'Recovery codes left' | translate }}: {{ s.recoveryCodesLeft }}</p>
+        <div class="two-factor__actions">
+          <button mat-stroked-button [disabled]="busy()" (click)="newRecoveryCodes()">{{ 'New recovery codes' | translate }}</button>
+          <button mat-stroked-button color="warn" [disabled]="busy()" (click)="disable()">{{ 'Turn off' | translate }}</button>
+        </div>
+      } @else {
+        <p>{{ 'Add a second step to sign-in using an authenticator app.' | translate }}</p>
+        <button mat-flat-button color="primary" [disabled]="busy()" (click)="startSetup()">{{ 'Set up authenticator' | translate }}</button>
+      }
+    }
+  </mat-card-content>
+</mat-card>

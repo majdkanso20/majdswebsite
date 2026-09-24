@@ -1,0 +1,43 @@
+# MajdsApp.Modules.Files
+
+**Files (F-Files)** — SRS FR-FILE-001..006
+
+Upload, list, download and delete files. Metadata lives in the database; bytes are stored on disk under `App_Data/files` in the API's content root, outside anything served as static content.
+
+## API
+
+All responses use the `ResponseDto<T>` envelope unless noted.
+
+- `GET /api/files/download`
+- `GET /api/files/list`
+- `POST /api/files/delete`
+- `POST /api/files/upload`
+
+## Permissions
+
+`Files.View`, `Files.Upload`, `Files.Delete`. A user can always download or delete a file they own; other users need the permission.
+
+Declared here: `Files.Delete`, `Files.Upload`, `Files.View`.
+
+## Settings defined
+
+- `Files.MaxUploadMb` — Maximum upload size (MB)
+
+## Data
+
+Tables: `Files`. Migrations live in `MajdsApp.Core`.
+
+## Notes
+
+- Uploads are limited by the `Files.MaxUploadMb` setting (default 10) and a blocked-extension list (executables and scripts). Content is not sniffed and the client's content type is trusted.
+- The whole module is behind the `Files` feature flag.
+- Storage is a concrete disk class today; there is no `IFileStorage` abstraction or cloud provider yet, and deletion is permanent.
+
+## Configuration keys
+
+- Setting `Files.MaxUploadMb` (default `10`)
+- Feature flag `Files`
+
+## Tests
+
+Not yet covered by automated tests (see the traceability document).

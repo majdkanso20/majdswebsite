@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    This project is deliberately NOT referenced by MajdsApp.Api.csproj and NOT listed in Program.cs's
+    module array — it is discovered and loaded at runtime from the plugins/ folder (P5), proving the
+    host never needs to be rebuilt to add this feature.
+
+    Private="false" on both references below is load-bearing, not a style choice: it stops MSBuild
+    from copying MajdsApp.SharedKernel.dll/MajdsApp.Core.dll (and everything they pull in — MediatR,
+    FluentValidation, EF Core) into this project's own output folder. If those dlls were copied here,
+    PluginLoadContext would load a SECOND copy of them into the plugin's isolated AssemblyLoadContext,
+    and e.g. this plugin's IFeatureModule would become a different CLR type than the host's
+    IFeatureModule — every reflection-based discovery (MediatR, Scrutor, the permission registry, EF
+    entity configs) would then silently fail to recognize this plugin. With Private="false", these
+    types are absent from the plugin's own folder, so PluginLoadContext.Load() returns null for them
+    and the CLR falls back to the identical assemblies the host already has loaded.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\MajdsApp.SharedKernel\MajdsApp.SharedKernel.csproj" Private="false" />
+    <ProjectReference Include="..\MajdsApp.Core\MajdsApp.Core.csproj" Private="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

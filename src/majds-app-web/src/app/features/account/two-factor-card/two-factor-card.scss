@@ -1,0 +1,44 @@
+.two-factor {
+  margin-bottom: 16px;
+}
+
+.two-factor__steps {
+  padding-inline-start: 20px;
+}
+
+.two-factor__qr {
+  display: block;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: var(--app-qr-background);
+}
+
+.two-factor__key code,
+.two-factor__codes code {
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+
+.two-factor__codes ul {
+  columns: 2;
+  list-style: none;
+  padding: 0;
+}
+
+.two-factor__form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.two-factor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.two-factor__muted {
+  color: var(--mat-sys-on-surface-variant);
+}

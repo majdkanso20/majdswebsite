@@ -1,0 +1,56 @@
+<div class="dashboard">
+  <mat-card class="dashboard__card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>System health</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (health() === undefined) {
+        <app-loading-state message="Checking…" />
+      } @else if (health() === null) {
+        <p>Unreachable</p>
+      } @else {
+        <p><strong>{{ health()!.status }}</strong></p>
+        @for (check of health()!.checks; track check.name) {
+          <p>{{ check.name }}: {{ check.status }}</p>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="dashboard__card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>API connectivity</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (ping() === undefined && !loadFailed()) {
+        <app-loading-state message="Calling the API…" />
+      } @else if (loadFailed()) {
+        <app-empty-state icon="cloud_off" message="Could not reach the API. Is it running?" />
+      } @else {
+        <p>{{ ping() }}</p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="dashboard__card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Recent diagnostics pings</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (pings() === undefined && !loadFailed()) {
+        <app-loading-state message="Loading pings…" />
+      } @else if ((pings()?.items?.length ?? 0) === 0) {
+        <app-empty-state icon="inbox" message="No pings recorded yet." />
+      } @else {
+        <mat-nav-list>
+          @for (item of pings()!.items; track item.id) {
+            <mat-list-item>
+              <span matListItemTitle>{{ item.message }}</span>
+              <span matListItemLine>{{ item.createdAt | date: 'medium' }}</span>
+            </mat-list-item>
+          }
+        </mat-nav-list>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

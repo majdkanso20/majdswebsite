@@ -1,0 +1,44 @@
+// Design tokens (U1, FR-UI-002/003): the M3 theme definition every component consumes via
+// `var(--mat-sys-*)` and the app-level tokens below. Changing only this file (or selecting a skin from
+// theme/skins/) re-skins the whole app — no component .ts changes required (AC-UI-1/3).
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // App-level tokens layered on top of Material's system tokens, for anything the shell/shared
+  // components need that Material doesn't already expose. Skins override these — never hard-code
+  // these values in component SCSS.
+  --app-shell-header-height: 64px;
+  --app-shell-sidenav-width: 264px;
+  --app-shell-mobile-breakpoint: 768px;
+
+  // Spacing scale (mobile-first: components use these instead of raw pixel values).
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-6: 24px;
+  --app-space-8: 32px;
+
+  // Shape, touch target and motion.
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-tap-target: 44px; // FR-MOB-004 minimum
+  --app-motion-fast: 150ms;
+  --app-motion-normal: 250ms;
+
+  // QR codes must stay dark-on-light in every scheme or scanners cannot read them.
+  --app-qr-background: #fff;
+}

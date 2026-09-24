@@ -1,0 +1,6 @@
+<div class="active-filter">
+  <span>{{ 'Filtered by' | translate }} <strong>{{ value() }}</strong></span>
+  <button mat-icon-button type="button" (click)="clear()" [attr.aria-label]="'Clear filter' | translate">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>

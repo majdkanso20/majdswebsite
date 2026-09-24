@@ -1,0 +1,19 @@
+.plugins-list__card {
+  margin-bottom: 12px;
+  max-width: 640px;
+}
+
+.plugins-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.plugins-list__meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}

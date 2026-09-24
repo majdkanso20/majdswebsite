@@ -1,0 +1,34 @@
+<mat-card appearance="outlined" class="prefs">
+  <mat-card-header>
+    <mat-card-title>{{ 'Notification preferences' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="prefs__grid" role="table">
+      <div class="prefs__row prefs__row--head" role="row">
+        <span role="columnheader">{{ 'Type' | translate }}</span>
+        <span role="columnheader">{{ 'In-app' | translate }}</span>
+        <span role="columnheader">{{ 'Email' | translate }}</span>
+      </div>
+      @for (row of rows(); track row.type) {
+        <div class="prefs__row" role="row">
+          <span role="cell">{{ row.type | translate }}</span>
+          <mat-checkbox
+            role="cell"
+            [checked]="row.inApp"
+            (change)="toggle(row.type, 'inApp', $event.checked)"
+            [attr.aria-label]="row.type + ' in-app'"
+          />
+          <mat-checkbox
+            role="cell"
+            [checked]="row.email"
+            (change)="toggle(row.type, 'email', $event.checked)"
+            [attr.aria-label]="row.type + ' email'"
+          />
+        </div>
+      }
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="save()">{{ 'Save' | translate }}</button>
+  </mat-card-actions>
+</mat-card>

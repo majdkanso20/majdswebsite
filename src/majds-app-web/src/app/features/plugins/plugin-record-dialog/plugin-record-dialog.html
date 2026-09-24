@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'Edit' : 'New') | translate }} {{ data.title | translate }}</h2>
+<form [formGroup]="form" (submit)="$event.preventDefault(); submit()">
+  <mat-dialog-content class="plugin-record-dialog__content">
+    @for (field of data.fields; track field.key) {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ field.label | translate }}</mat-label>
+        @switch (field.type) {
+          @case ('textarea') {
+            <textarea matInput [formControlName]="field.key" rows="3"></textarea>
+          }
+          @case ('select') {
+            <mat-select [formControlName]="field.key">
+              @for (option of field.options; track option) {
+                <mat-option [value]="option">{{ option | translate }}</mat-option>
+              }
+            </mat-select>
+          }
+          @case ('date') {
+            <input matInput type="date" [formControlName]="field.key" />
+          }
+          @default {
+            <input matInput [formControlName]="field.key" />
+          }
+        }
+      </mat-form-field>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+    <button mat-flat-button color="primary" type="submit">{{ 'Save' | translate }}</button>
+  </mat-dialog-actions>
+</form>

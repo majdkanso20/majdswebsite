@@ -1,0 +1,37 @@
+<div class="login-page">
+  <mat-card class="login-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>{{ 'Create your account' | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (done()) {
+        <p>{{ 'Check your email for a confirmation link, then sign in.' | translate }}</p>
+        <a mat-flat-button color="primary" routerLink="/login">{{ 'Back to sign in' | translate }}</a>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Full name' | translate }}</mat-label>
+            <input matInput formControlName="fullName" autocomplete="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Email' | translate }}</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="username" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Password' | translate }}</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="new-password" />
+          </mat-form-field>
+
+          @if (error()) {
+            <p class="login-form__error">{{ error()! | translate }}</p>
+          }
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting()" class="login-form__submit">
+            {{ 'Create account' | translate }}
+          </button>
+          <a mat-button routerLink="/login">{{ 'Back to sign in' | translate }}</a>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

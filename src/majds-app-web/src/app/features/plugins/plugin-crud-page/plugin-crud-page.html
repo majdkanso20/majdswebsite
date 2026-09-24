@@ -1,0 +1,37 @@
+@if (loadFailed()) {
+  <app-error-state message="This page could not be loaded." (retry)="init()" />
+}
+@if (schema(); as schema) {
+  <div class="plugin-crud-page">
+    <div class="plugin-crud-page__toolbar">
+      <h1>{{ schema.title | translate }}</h1>
+      <button mat-flat-button color="primary" *hasPermission="schema.createPermission" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon>
+        {{ 'New' | translate }}
+      </button>
+    </div>
+
+    <app-data-grid
+      [columns]="columns()"
+      [rows]="rows()"
+      [totalCount]="totalCount()"
+      [loading]="loading()"
+      emptyMessage="No records found."
+      (page)="onPage($event)"
+      (sortChange)="onSort($event)"
+    >
+      <ng-template #cellTemplate let-row let-column="column">
+        {{ defaultValue(row, column.key) }}
+      </ng-template>
+
+      <ng-template #actionsTemplate let-row>
+        <button mat-icon-button *hasPermission="schema.editPermission" (click)="openEditDialog(row)" aria-label="Edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button *hasPermission="schema.deletePermission" (click)="deleteRow(row)" aria-label="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </ng-template>
+    </app-data-grid>
+  </div>
+}

@@ -1,0 +1,55 @@
+<div class="roles-list">
+  <div class="roles-list__toolbar">
+    <h1>{{ 'Roles' | translate }}</h1>
+    <button mat-flat-button color="primary" *hasPermission="'Roles.Create'" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      {{ 'New role' | translate }}
+    </button>
+  </div>
+
+  @if (filter()) {
+    <app-active-filter [value]="filter()" />
+  }
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    emptyMessage="No roles found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #cellTemplate let-row let-column="column">
+      @switch (column.key) {
+        @case ('flags') {
+          <mat-chip-set>
+            @if (row.isStatic) {
+              <mat-chip>{{ 'Built-in' | translate }}</mat-chip>
+            }
+            @if (row.isDefault) {
+              <mat-chip>{{ 'Default' | translate }}</mat-chip>
+            }
+          </mat-chip-set>
+        }
+        @default {
+          {{ defaultValueFallback(row, column) }}
+        }
+      }
+    </ng-template>
+
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Roles.Edit'" (click)="openPermissionsDialog(row)" aria-label="Permissions">
+        <mat-icon>key</mat-icon>
+      </button>
+      <button mat-icon-button *hasPermission="'Roles.Edit'" (click)="openEditDialog(row)" aria-label="Edit">
+        <mat-icon>edit</mat-icon>
+      </button>
+      @if (!row.isStatic) {
+        <button mat-icon-button *hasPermission="'Roles.Delete'" (click)="deleteRole(row)" aria-label="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </ng-template>
+  </app-data-grid>
+</div>

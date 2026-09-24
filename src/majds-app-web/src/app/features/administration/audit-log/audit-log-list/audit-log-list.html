@@ -1,0 +1,63 @@
+<div class="audit-log-list">
+  <div class="audit-log-list__toolbar">
+    <h1>{{ 'Audit Log' | translate }}</h1>
+    <button mat-stroked-button (click)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      {{ 'Export CSV' | translate }}
+    </button>
+  </div>
+
+  <div class="audit-log-list__filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'Outcome' | translate }}</mat-label>
+      <mat-select [(ngModel)]="outcome" (selectionChange)="applyFilters()">
+        <mat-option value="">{{ 'All' | translate }}</mat-option>
+        @for (o of outcomes; track o) {
+          <mat-option [value]="o">{{ o | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'From' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="from" (change)="applyFilters()" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'To' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="to" (change)="applyFilters()" />
+    </mat-form-field>
+
+    @if (hasFilters) {
+      <button mat-button (click)="clearFilters()">{{ 'Clear filters' | translate }}</button>
+    }
+  </div>
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    emptyMessage="No audit log entries found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #cellTemplate let-row let-column="column">
+      @if (column.key === 'outcome') {
+        <mat-chip-set>
+          <mat-chip [highlighted]="!row.succeeded">{{ row.outcome | translate }}</mat-chip>
+        </mat-chip-set>
+      } @else if (column.value) {
+        {{ column.value(row) }}
+      } @else {
+        {{ row[column.key] }}
+      }
+    </ng-template>
+
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button (click)="openDetails(row)" aria-label="Details">
+        <mat-icon>info</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+</div>

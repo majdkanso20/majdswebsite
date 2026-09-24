@@ -1,0 +1,30 @@
+<div class="jobs">
+  <h1>{{ 'Background Jobs' | translate }}</h1>
+
+  <app-data-grid
+    [columns]="jobColumns"
+    [rows]="jobs()"
+    [totalCount]="jobs().length"
+    [pageSize]="50"
+    [pageSizeOptions]="[50]"
+    emptyMessage="No jobs registered."
+  >
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Jobs.Run'" (click)="runNow(row)" aria-label="Run now">
+        <mat-icon>play_arrow</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+
+  <h2>{{ 'Recent runs' | translate }}</h2>
+  <app-data-grid
+    [columns]="runColumns"
+    [rows]="runs()"
+    [totalCount]="runsTotal()"
+    [loading]="loading()"
+    [pageSize]="10"
+    emptyMessage="No runs recorded yet."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  />
+</div>

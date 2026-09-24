@@ -1,0 +1,16 @@
+// "Sunset" skin: warm orange/red palette with sharper corners. See _ocean.scss for how skins work.
+@use '@angular/material' as mat;
+
+html[data-skin='sunset'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$orange-palette,
+        tertiary: mat.$red-palette,
+      ),
+    )
+  );
+
+  --app-radius-sm: 4px;
+  --app-radius-md: 6px;
+}

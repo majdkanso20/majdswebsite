@@ -1,0 +1,18 @@
+.settings-group {
+  margin-bottom: 16px;
+}
+
+.settings-row {
+  margin-bottom: 12px;
+
+  mat-form-field {
+    width: 100%;
+    max-width: 400px;
+  }
+}
+
+.settings-row__description {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.8rem;
+}

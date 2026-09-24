@@ -1,0 +1,18 @@
+.features__card {
+  margin-bottom: 12px;
+  max-width: 640px;
+}
+
+.features__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.features__description {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}

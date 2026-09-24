@@ -1,0 +1,39 @@
+.account {
+  max-width: 560px;
+}
+
+.account__card {
+  margin-bottom: 16px;
+}
+
+.account__picture {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.account__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+
+  &--empty {
+    font-size: 72px;
+    line-height: 72px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.account__form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  align-items: flex-start;
+
+  mat-form-field {
+    width: 100%;
+  }
+}

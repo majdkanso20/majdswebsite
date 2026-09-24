@@ -1,0 +1,13 @@
+// "Violet" skin: purple palette. See _ocean.scss for how skins work.
+@use '@angular/material' as mat;
+
+html[data-skin='violet'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$rose-palette,
+      ),
+    )
+  );
+}

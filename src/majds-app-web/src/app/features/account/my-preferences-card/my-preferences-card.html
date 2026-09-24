@@ -1,0 +1,28 @@
+<mat-card appearance="outlined" class="my-prefs">
+  <mat-card-header>
+    <mat-card-title>{{ 'My preferences' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="my-prefs__form">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Language' | translate }}</mat-label>
+      <mat-select [ngModel]="language()" (ngModelChange)="language.set($event)">
+        @for (lang of languages; track lang.code) {
+          <mat-option [value]="lang.code">{{ lang.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Time zone' | translate }}</mat-label>
+      <mat-select [ngModel]="timezone()" (ngModelChange)="timezone.set($event)">
+        @for (zone of timezones; track zone) {
+          <mat-option [value]="zone">{{ zone }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="save()">{{ 'Save' | translate }}</button>
+    <button mat-button [disabled]="saving()" (click)="reset()">{{ 'Use application defaults' | translate }}</button>
+  </mat-card-actions>
+</mat-card>

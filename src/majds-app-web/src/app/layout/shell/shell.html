@@ -1,0 +1,143 @@
+<button type="button" class="skip-link" (click)="focusContent(content)">{{ 'Skip to content' | translate }}</button>
+<mat-sidenav-container class="shell">
+  <mat-sidenav
+    #sidenav
+    class="shell-sidenav"
+    [mode]="sidenavMode()"
+    [opened]="!isMobile()"
+    [fixedInViewport]="isMobile()"
+    role="navigation"
+    [attr.aria-label]="'Main navigation' | translate"
+  >
+    <mat-nav-list>
+      @for (item of menuItems(); track item.label) {
+        @if (item.children) {
+          <div mat-subheader class="shell-nav-group">{{ item.label | translate }}</div>
+          @for (child of item.children; track child.route) {
+            <a
+              mat-list-item
+              class="shell-nav-child"
+              [routerLink]="child.route"
+              routerLinkActive="active-link"
+              (click)="isMobile() && sidenav.close()"
+            >
+              <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
+              <span matListItemTitle>{{ child.label | translate }}</span>
+            </a>
+          }
+        } @else {
+          <a
+            mat-list-item
+            [routerLink]="item.route"
+            routerLinkActive="active-link"
+            (click)="isMobile() && sidenav.close()"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label | translate }}</span>
+          </a>
+        }
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="shell-header">
+      @if (isMobile()) {
+        <button mat-icon-button aria-label="Toggle navigation" (click)="sidenav.toggle()">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+
+      <span class="shell-header__title">{{ applicationName() }}</span>
+      <span class="shell-header__spacer"></span>
+      <app-global-search />
+
+      <button mat-icon-button [matMenuTriggerFor]="themeMenu" aria-label="Change theme">
+        <mat-icon>
+          @switch (themeMode()) {
+            @case ('light') {
+              light_mode
+            }
+            @case ('dark') {
+              dark_mode
+            }
+            @default {
+              brightness_auto
+            }
+          }
+        </mat-icon>
+      </button>
+      <mat-menu #themeMenu="matMenu">
+        <button mat-menu-item (click)="setTheme('light')">
+          <mat-icon>light_mode</mat-icon><span>{{ 'Light' | translate }}</span>
+        </button>
+        <button mat-menu-item (click)="setTheme('dark')">
+          <mat-icon>dark_mode</mat-icon><span>{{ 'Dark' | translate }}</span>
+        </button>
+        <button mat-menu-item (click)="setTheme('system')">
+          <mat-icon>brightness_auto</mat-icon><span>{{ 'System' | translate }}</span>
+        </button>
+        <mat-divider />
+        <div class="shell-header__user-email">{{ 'Skin' | translate }}</div>
+        @for (s of skins; track s.id) {
+          <button mat-menu-item (click)="setSkin(s.id)" [attr.aria-pressed]="skin() === s.id">
+            <mat-icon>{{ skin() === s.id ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon><span>{{ s.label }}</span>
+          </button>
+        }
+      </mat-menu>
+
+      @if (features.isEnabled('Notifications')) {
+        <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" aria-label="Notifications">
+          <mat-icon [matBadge]="notifications.unreadCount()" [matBadgeHidden]="notifications.unreadCount() === 0" matBadgeSize="small">notifications</mat-icon>
+        </button>
+        <mat-menu #notificationsMenu="matMenu">
+          @for (n of notifications.recent(); track n.id) {
+            <div class="shell-notification" [class.shell-notification--unread]="!n.isRead">
+              <strong>{{ n.title }}</strong>
+              <span>{{ n.message }}</span>
+            </div>
+          } @empty {
+            <div class="shell-header__user-email">{{ 'No notifications' | translate }}</div>
+          }
+          @if (notifications.unreadCount() > 0) {
+            <button mat-menu-item (click)="notifications.markAllReadAsync()">{{ 'Mark all as read' | translate }}</button>
+          }
+        </mat-menu>
+      }
+
+      <button mat-icon-button [matMenuTriggerFor]="languageMenu" aria-label="Language">
+        <mat-icon>translate</mat-icon>
+      </button>
+      <mat-menu #languageMenu="matMenu">
+        @for (lang of languages; track lang.code) {
+          <button mat-menu-item (click)="setLanguage(lang.code)">
+            <span>{{ lang.label }}</span>
+          </button>
+        }
+      </mat-menu>
+
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+        @if (account.pictureUrl(); as url) {
+          <img class="shell-header__avatar" [src]="url" alt="" />
+        } @else {
+          <mat-icon>account_circle</mat-icon>
+        }
+      </button>
+      <mat-menu #userMenu="matMenu">
+        @if (currentUser(); as user) {
+          <div class="shell-header__user-email">{{ user.email }}</div>
+        }
+        <a mat-menu-item routerLink="/account">
+          <mat-icon>manage_accounts</mat-icon><span>{{ 'My account' | translate }}</span>
+        </a>
+        <button mat-menu-item (click)="signOut()">
+          <mat-icon>logout</mat-icon><span>{{ 'Sign out' | translate }}</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main #content id="main-content" class="shell-content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

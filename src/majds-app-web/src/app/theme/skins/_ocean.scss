@@ -1,0 +1,17 @@
+// "Ocean" skin: cool cyan/azure palette, softer corners. A skin is only a token file (FR-UI-006):
+// selecting it sets <html data-skin="ocean">, no component code changes.
+@use '@angular/material' as mat;
+
+html[data-skin='ocean'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$azure-palette,
+      ),
+    )
+  );
+
+  --app-radius-sm: 6px;
+  --app-radius-md: 10px;
+}

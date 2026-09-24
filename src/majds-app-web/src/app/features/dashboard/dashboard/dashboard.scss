@@ -1,0 +1,19 @@
+:host {
+  display: block;
+  container: dashboard / inline-size;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--app-space-4);
+
+  // Two columns once the dashboard itself (not the viewport) is wide enough (FR-MOB-001).
+  @container dashboard (min-inline-size: 42rem) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dashboard__card {
+  min-width: 0;
+}

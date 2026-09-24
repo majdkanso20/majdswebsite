@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>{{ 'Audit entry' | translate }}</h2>
+<mat-dialog-content class="audit-detail">
+  @if (entry(); as e) {
+    <dl class="audit-detail__meta">
+      <dt>{{ 'Action' | translate }}</dt><dd>{{ e.action }}</dd>
+      <dt>{{ 'When' | translate }}</dt><dd>{{ when(e) }}</dd>
+      <dt>{{ 'User' | translate }}</dt><dd>{{ e.userName ?? '—' }}</dd>
+      <dt>{{ 'Outcome' | translate }}</dt><dd>{{ e.outcome | translate }} ({{ e.durationMs }} ms)</dd>
+      <dt>{{ 'Request' | translate }}</dt><dd>{{ e.httpMethod }} {{ e.url }}</dd>
+      <dt>{{ 'IP address' | translate }}</dt><dd>{{ e.clientIp ?? '—' }}</dd>
+      <dt>{{ 'Browser' | translate }}</dt><dd>{{ e.clientBrowser ?? '—' }}</dd>
+      @if (e.error) {
+        <dt>{{ 'Error' | translate }}</dt><dd>{{ e.error }}</dd>
+      }
+    </dl>
+
+    @if (e.parameters) {
+      <h3>{{ 'Parameters' | translate }}</h3>
+      <pre class="audit-detail__code">{{ e.parameters }}</pre>
+    }
+
+    <h3>{{ 'Changes' | translate }}</h3>
+    @for (change of e.changes; track $index) {
+      <p class="audit-detail__change"><strong>{{ change.changeType }}</strong> {{ change.entityType }} <code>{{ change.entityId }}</code></p>
+      <table class="audit-detail__table">
+        <thead>
+          <tr><th>{{ 'Property' | translate }}</th><th>{{ 'Before' | translate }}</th><th>{{ 'After' | translate }}</th></tr>
+        </thead>
+        <tbody>
+          @for (p of change.properties; track p.property) {
+            <tr><td>{{ p.property }}</td><td>{{ p.original ?? '—' }}</td><td>{{ p.new ?? '—' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    } @empty {
+      <p>{{ 'No data changes were recorded.' | translate }}</p>
+    }
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>{{ 'Close' | translate }}</button>
+</mat-dialog-actions>

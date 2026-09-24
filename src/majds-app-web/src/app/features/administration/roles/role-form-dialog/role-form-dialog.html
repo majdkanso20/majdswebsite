@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'Edit role' : 'New role') | translate }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content class="role-form">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Name' | translate }}</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Display name' | translate }}</mat-label>
+      <input matInput formControlName="displayName" />
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isDefault">{{ 'Auto-assign to new users (default role)' | translate }}</mat-checkbox>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+    <button mat-flat-button color="primary" type="submit">{{ (isEdit ? 'Save' : 'Create') | translate }}</button>
+  </mat-dialog-actions>
+</form>

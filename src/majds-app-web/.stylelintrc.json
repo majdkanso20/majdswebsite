@@ -1,0 +1,55 @@
+{
+  "extends": [
+    "stylelint-config-standard-scss"
+  ],
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "message": "Use a design token (var(--mat-sys-*) or an --app-* token) instead of a hard-coded color (FR-UI-002/008)."
+      }
+    ],
+    "function-disallowed-list": [
+      "rgb",
+      "rgba",
+      "hsl",
+      "hsla"
+    ],
+    "declaration-property-value-disallowed-list": {
+      "/^(color|background|background-color|border|border-color|outline-color|fill|stroke)$/": [
+        "/^(white|black|red|green|blue|gray|grey)$/i"
+      ]
+    },
+    "selector-class-pattern": null,
+    "scss/dollar-variable-pattern": null,
+    "custom-property-pattern": null,
+    "no-descending-specificity": null,
+    "scss/at-extend-no-missing-placeholder": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "alpha-value-notation": null,
+    "color-function-notation": null,
+    "value-keyword-case": null,
+    "shorthand-property-no-redundant-values": null,
+    "media-feature-range-notation": null,
+    "scss/no-global-function-names": null,
+    "selector-pseudo-element-no-unknown": [
+      true,
+      {
+        "ignorePseudoElements": [
+          "ng-deep"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/app/theme/**/*.scss"
+      ],
+      "rules": {
+        "color-no-hex": null,
+        "function-disallowed-list": null
+      }
+    }
+  ]
+}

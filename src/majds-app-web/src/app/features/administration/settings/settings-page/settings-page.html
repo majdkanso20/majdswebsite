@@ -1,0 +1,68 @@
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    @for (group of groups(); track group) {
+      <mat-card class="settings-group">
+        <mat-card-header>
+          <mat-card-title>{{ group | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @for (setting of settingsForGroup(group); track setting.name) {
+            <div class="settings-row">
+              @switch (setting.dataType) {
+                @case (SettingDataType.Boolean) {
+                  <mat-slide-toggle
+                    [checked]="form.controls[setting.name].value"
+                    (change)="setToggle(setting.name, $event.checked)"
+                  >{{ setting.displayName | translate }}</mat-slide-toggle>
+                }
+                @case (SettingDataType.Integer) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ setting.displayName | translate }}</mat-label>
+                    <input matInput type="number" [formControlName]="setting.name" />
+                  </mat-form-field>
+                }
+                @default {
+                  @if (setting.isSensitive) {
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ setting.displayName | translate }}</mat-label>
+                      <input
+                        matInput
+                        type="password"
+                        autocomplete="new-password"
+                        [formControlName]="setting.name"
+                        [placeholder]="(setting.hasValue && !toClear().has(setting.name) ? 'A value is set. Type to replace it.' : 'Not set') | translate"
+                      />
+                    </mat-form-field>
+                    @if (setting.hasValue) {
+                      <button mat-button type="button" (click)="toggleClear(setting.name)">
+                        {{ (toClear().has(setting.name) ? 'Keep stored value' : 'Remove stored value') | translate }}
+                      </button>
+                    }
+                  } @else {
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ setting.displayName | translate }}</mat-label>
+                    <input matInput [formControlName]="setting.name" />
+                  </mat-form-field>
+                  }
+                }
+              }
+              @if (setting.description) {
+                <p class="settings-row__description">{{ setting.description | translate }}</p>
+              }
+            </div>
+          }
+          @if (group === 'Email') {
+            <button mat-stroked-button type="button" [disabled]="testing()" (click)="testEmail()">
+              {{ 'Send test email' | translate }}
+            </button>
+            <p class="settings-row__description">{{ 'Save first, then send. The email goes to your own address.' | translate }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <button mat-flat-button color="primary" type="submit" [disabled]="saving()">{{ 'Save' | translate }}</button>
+  </form>
+}

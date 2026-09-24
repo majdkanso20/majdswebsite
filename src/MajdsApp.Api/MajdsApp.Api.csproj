@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Same secrets store as the Razor site so the Google/Microsoft credentials are configured once. -->
+    <UserSecretsId>aspnet-MajdsApp-a590488f-4048-43f1-9104-872021524944</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.12" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MajdsApp.SharedKernel\MajdsApp.SharedKernel.csproj" />
+    <ProjectReference Include="..\MajdsApp.Core\MajdsApp.Core.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Diagnostics\MajdsApp.Modules.Diagnostics.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Authorization\MajdsApp.Modules.Authorization.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Roles\MajdsApp.Modules.Roles.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Users\MajdsApp.Modules.Users.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Settings\MajdsApp.Modules.Settings.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Audit\MajdsApp.Modules.Audit.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Notifications\MajdsApp.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Files\MajdsApp.Modules.Files.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Account\MajdsApp.Modules.Account.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Health\MajdsApp.Modules.Health.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Jobs\MajdsApp.Modules.Jobs.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Features\MajdsApp.Modules.Features.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Search\MajdsApp.Modules.Search.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.ExternalLogin\MajdsApp.Modules.ExternalLogin.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Plugins\MajdsApp.Modules.Plugins.csproj" />
+  </ItemGroup>
+
+</Project>

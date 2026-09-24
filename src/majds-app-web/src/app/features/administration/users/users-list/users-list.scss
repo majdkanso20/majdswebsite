@@ -1,0 +1,12 @@
+.users-list__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.users-list__chip--inactive {
+  --mat-chip-label-text-color: var(--mat-sys-error);
+}

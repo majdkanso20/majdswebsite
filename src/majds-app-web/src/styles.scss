@@ -1,0 +1,87 @@
+// Global styles: import the design tokens and skins (theme/), then app-wide resets only.
+// Component-specific styles belong in each component's own .scss — never here.
+@use './app/theme/tokens';
+@use './app/theme/skins';
+
+body {
+  // ThemeService (U3/FR-SHELL-004) toggles these classes on <body> to switch scheme explicitly;
+  // 'light dark' (the default) defers to the OS/browser preference (AC-MOB-2).
+  &.theme-light {
+    color-scheme: light;
+  }
+
+  &.theme-dark {
+    color-scheme: dark;
+  }
+
+  &.theme-system {
+    color-scheme: light dark;
+  }
+
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+
+  // Respect prefers-reduced-motion globally (AC-MOB-3).
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+// Fluid headings (FR-MOB-003): scale smoothly between a phone and a desktop instead of jumping at breakpoints.
+h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2rem);
+  margin-block: 0 var(--app-space-3);
+}
+
+// Touch targets (FR-MOB-004): every icon button and primary control is at least 44x44px.
+button[mat-icon-button],
+a[mat-icon-button] {
+  min-inline-size: var(--app-tap-target);
+  min-block-size: var(--app-tap-target);
+}
+
+button[mat-button],
+button[mat-flat-button],
+button[mat-stroked-button],
+a[mat-button],
+a[mat-flat-button],
+a[mat-stroked-button] {
+  min-block-size: var(--app-tap-target);
+}
+
+// Keyboard focus is always visible (FR-SHELL-007, NFR-A11Y-1).
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+// Skip link (FR-SHELL-007): first focusable element, visible only when it receives keyboard focus.
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--app-space-2);
+  inset-block-start: calc(-1 * var(--app-tap-target) - var(--app-space-4));
+  z-index: 1000;
+  padding: var(--app-space-3) var(--app-space-4);
+  border-radius: var(--app-radius-sm);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  transition: inset-block-start var(--app-motion-fast);
+
+  &:focus {
+    inset-block-start: var(--app-space-2);
+  }
+}

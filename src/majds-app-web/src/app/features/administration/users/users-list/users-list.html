@@ -1,0 +1,82 @@
+<div class="users-list">
+  <div class="users-list__toolbar">
+    <h1>{{ 'Users' | translate }}</h1>
+    <button mat-stroked-button (click)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      {{ 'Export CSV' | translate }}
+    </button>
+    <button mat-flat-button color="primary" *hasPermission="'Users.Create'" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      {{ 'New user' | translate }}
+    </button>
+  </div>
+
+  @if (filter()) {
+    <app-active-filter [value]="filter()" />
+  }
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    emptyMessage="No users found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #cellTemplate let-row let-column="column">
+      @switch (column.key) {
+        @case ('roles') {
+          @for (role of row.roles; track role) {
+            <mat-chip-set>
+              <mat-chip>{{ role }}</mat-chip>
+            </mat-chip-set>
+          }
+        }
+        @case ('status') {
+          <mat-chip-set>
+            <mat-chip [class.users-list__chip--inactive]="!row.isActive">
+              {{ (row.isActive ? 'Active' : 'Inactive') | translate }}
+            </mat-chip>
+            @if (row.twoFactorEnabled) {
+        <button mat-icon-button *hasPermission="'Users.Edit'" (click)="resetTwoFactor(row)" aria-label="Reset two-factor">
+          <mat-icon>phonelink_lock</mat-icon>
+        </button>
+      }
+      @if (row.lockedOut) {
+              <mat-chip class="users-list__chip--inactive">{{ 'Locked' | translate }}</mat-chip>
+            }
+          </mat-chip-set>
+        }
+        @default {
+          {{ defaultValueFallback(row, column) }}
+        }
+      }
+    </ng-template>
+
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Users.Edit'" (click)="openEditDialog(row)" aria-label="Edit">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        *hasPermission="'Users.Edit'"
+        (click)="toggleActivation(row)"
+        [attr.aria-label]="row.isActive ? 'Deactivate' : 'Activate'"
+      >
+        <mat-icon>{{ row.isActive ? 'block' : 'check_circle' }}</mat-icon>
+      </button>
+      <button mat-icon-button *hasPermission="'Users.Edit'" (click)="resetPassword(row)" aria-label="Reset password">
+        <mat-icon>lock_reset</mat-icon>
+      </button>
+      @if (row.lockedOut) {
+        <button mat-icon-button *hasPermission="'Users.Edit'" (click)="unlock(row)" aria-label="Unlock">
+          <mat-icon>lock_open</mat-icon>
+        </button>
+      }
+      <button mat-icon-button *hasPermission="'Users.Delete'" (click)="deleteUser(row)" aria-label="Delete">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+</div>

@@ -1,0 +1,8 @@
+<div class="error-state" role="alert">
+  <mat-icon class="error-state__icon">error_outline</mat-icon>
+  <p class="error-state__message">{{ message() | translate }}</p>
+  <ng-content />
+  @if (retryable()) {
+    <button mat-stroked-button type="button" (click)="retry.emit()">{{ 'Try again' | translate }}</button>
+  }
+</div>

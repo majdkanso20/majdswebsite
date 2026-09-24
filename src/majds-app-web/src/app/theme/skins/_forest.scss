@@ -1,0 +1,13 @@
+// "Forest" skin: green palette. See _ocean.scss for how skins work.
+@use '@angular/material' as mat;
+
+html[data-skin='forest'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$spring-green-palette,
+      ),
+    )
+  );
+}

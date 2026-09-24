@@ -1,0 +1,6 @@
+// One file per named skin (FR-UI-006). Add a skin by creating theme/skins/_<name>.scss, forwarding it
+// here, and listing it in `SKINS` in theme.service.ts. The default skin is the palette in _tokens.scss.
+@forward './skins/ocean';
+@forward './skins/forest';
+@forward './skins/sunset';
+@forward './skins/violet';

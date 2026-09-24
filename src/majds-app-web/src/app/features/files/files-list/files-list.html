@@ -1,0 +1,35 @@
+<div class="files-list">
+  <div class="files-list__toolbar">
+    <h1>{{ 'Files' | translate }}</h1>
+    <ng-container *hasPermission="'Files.Upload'">
+      <input #picker type="file" hidden (change)="onFileSelected($event)" />
+      <button mat-flat-button color="primary" [disabled]="uploading()" (click)="picker.click()">
+        <mat-icon>upload</mat-icon>
+        {{ 'Upload file' | translate }}
+      </button>
+    </ng-container>
+  </div>
+
+  @if (filter()) {
+    <app-active-filter [value]="filter()" />
+  }
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    emptyMessage="No files found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button (click)="download(row)" aria-label="Download">
+        <mat-icon>download</mat-icon>
+      </button>
+      <button mat-icon-button (click)="remove(row)" aria-label="Delete">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+</div>

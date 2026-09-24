@@ -1,0 +1,83 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace MajdsApp.Modules.Notifications;
+
+[Flags]
+public enum NotificationChannel { None = 0, InApp = 1, Email = 2, All = InApp | Email }
+
+/// <summary>An in-app notification addressed to one user (F-Notifications data model).</summary>
+public class Notification
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Type { get; set; } = "General";
+    public string Title { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public bool IsRead { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>A user's channel choices per notification type; no row means every channel is on (FR-NOTIF-006).</summary>
+public class NotificationSubscription
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public NotificationChannel Channels { get; set; } = NotificationChannel.All;
+}
+
+public enum DeliveryStatus { Pending = 0, Sent = 1, Failed = 2 }
+
+/// <summary>Per-recipient, per-channel delivery for channels that go through the background queue
+/// (email), with attempt tracking for retry/backoff (FR-NOTIF-004/007).</summary>
+public class NotificationDelivery
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public NotificationChannel Channel { get; set; }
+    public string Type { get; set; } = "General";
+    public string Title { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DeliveryStatus Status { get; set; }
+    public int Attempts { get; set; }
+    public string? LastError { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime NextAttemptAt { get; set; }
+    public DateTime? SentAt { get; set; }
+}
+
+public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
+{
+    public void Configure(EntityTypeBuilder<Notification> builder)
+    {
+        builder.ToTable("Notifications");
+        builder.Property(n => n.Type).HasMaxLength(50).HasDefaultValue("General");
+        builder.Property(n => n.Title).HasMaxLength(200);
+        builder.Property(n => n.Message).HasMaxLength(2000);
+        builder.HasIndex(n => new { n.UserId, n.IsRead });
+    }
+}
+
+public class NotificationSubscriptionConfiguration : IEntityTypeConfiguration<NotificationSubscription>
+{
+    public void Configure(EntityTypeBuilder<NotificationSubscription> builder)
+    {
+        builder.ToTable("NotificationSubscriptions");
+        builder.Property(s => s.Type).HasMaxLength(50);
+        builder.HasIndex(s => new { s.UserId, s.Type }).IsUnique();
+    }
+}
+
+public class NotificationDeliveryConfiguration : IEntityTypeConfiguration<NotificationDelivery>
+{
+    public void Configure(EntityTypeBuilder<NotificationDelivery> builder)
+    {
+        builder.ToTable("NotificationDeliveries");
+        builder.Property(d => d.Type).HasMaxLength(50);
+        builder.Property(d => d.Title).HasMaxLength(200);
+        builder.Property(d => d.Message).HasMaxLength(2000);
+        builder.Property(d => d.LastError).HasMaxLength(1000);
+        builder.HasIndex(d => new { d.Status, d.NextAttemptAt });
+    }
+}

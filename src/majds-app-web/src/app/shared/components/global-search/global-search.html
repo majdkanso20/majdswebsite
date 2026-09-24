@@ -1,0 +1,28 @@
+<div class="global-search">
+  <mat-icon class="global-search__icon">search</mat-icon>
+  <input
+    class="global-search__input"
+    type="search"
+    [formControl]="control"
+    [matAutocomplete]="auto"
+    [placeholder]="'Search…' | translate"
+    [attr.aria-label]="'Search' | translate"
+  />
+  <mat-autocomplete #auto="matAutocomplete" [displayWith]="display" (optionSelected)="open($event)">
+    @for (group of groups(); track group.category) {
+      <mat-optgroup [label]="group.category | translate">
+        @for (item of group.items; track item.route) {
+          <mat-option [value]="item">
+            <span>{{ item.title }}</span>
+            @if (item.subtitle) {
+              <small class="global-search__subtitle"> — {{ item.subtitle }}</small>
+            }
+          </mat-option>
+        }
+      </mat-optgroup>
+    }
+    @if (searched() && groups().length === 0) {
+      <mat-option disabled>{{ 'No results' | translate }}</mat-option>
+    }
+  </mat-autocomplete>
+</div>

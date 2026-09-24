@@ -1,0 +1,34 @@
+<h2 mat-dialog-title>{{ 'Permissions' | translate }} — {{ data.role.displayName ?? data.role.name }}</h2>
+
+<mat-dialog-content class="permissions-dialog">
+  @if (loading()) {
+    <div class="permissions-dialog__loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    @for (group of groups(); track group.name) {
+      <div class="permissions-dialog__group">
+        <mat-checkbox
+          [checked]="isGroupFullyGranted(group)"
+          [indeterminate]="isGroupPartiallyGranted(group)"
+          (change)="toggleGroup(group, $event.checked)"
+        >
+          <strong>{{ group.name }}</strong>
+        </mat-checkbox>
+
+        <div class="permissions-dialog__items">
+          @for (permission of group.permissions; track permission) {
+            <mat-checkbox [checked]="isGranted(permission)" (change)="toggle(permission, $event.checked)">
+              {{ permission }}
+            </mat-checkbox>
+          }
+        </div>
+      </div>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+  <button mat-flat-button color="primary" [disabled]="loading()" (click)="save()">{{ 'Save' | translate }}</button>
+</mat-dialog-actions>

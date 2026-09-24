@@ -1,0 +1,21 @@
+.permissions-dialog {
+  min-width: min(360px, 80vw);
+}
+
+.permissions-dialog__loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.permissions-dialog__group {
+  margin-bottom: 16px;
+}
+
+.permissions-dialog__items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-inline-start: 32px;
+  margin-top: 4px;
+}

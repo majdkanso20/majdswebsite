@@ -1,0 +1,22 @@
+<div class="features">
+  <h1>{{ 'Features' | translate }}</h1>
+
+  @for (feature of features(); track feature.name) {
+    <mat-card appearance="outlined" class="features__card">
+      <mat-card-content class="features__row">
+        <div>
+          <strong>{{ feature.displayName | translate }}</strong>
+          @if (feature.description) {
+            <p class="features__description">{{ feature.description | translate }}</p>
+          }
+        </div>
+        <mat-slide-toggle
+          [checked]="feature.isEnabled"
+          [disabled]="!canEdit"
+          (change)="toggle(feature, $event.checked)"
+          [attr.aria-label]="feature.displayName"
+        />
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

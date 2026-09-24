@@ -1,0 +1,44 @@
+.audit-detail__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0 0 12px;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.audit-detail__code {
+  margin: 0 0 12px;
+  padding: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.audit-detail__change {
+  margin: 12px 0 4px;
+}
+
+.audit-detail__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    text-align: start;
+    padding: 4px 8px;
+    border-block-end: 1px solid var(--mat-sys-outline-variant);
+    overflow-wrap: anywhere;
+  }
+}

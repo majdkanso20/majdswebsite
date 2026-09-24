@@ -1,0 +1,11 @@
+{
+  "id": "MajdsApp.Plugins.Tasks",
+  "name": "Tasks",
+  "version": "1.0.0",
+  "author": "Demo",
+  "assembly": "MajdsApp.Plugins.Tasks.dll",
+  "moduleType": "MajdsApp.Plugins.Tasks.TasksModule",
+  "menu": [
+    { "label": "Tasks", "icon": "checklist", "route": "tasks", "permission": "Tasks.View", "order": 45 }
+  ]
+}

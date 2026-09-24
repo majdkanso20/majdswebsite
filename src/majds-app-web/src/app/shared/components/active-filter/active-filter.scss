@@ -1,0 +1,11 @@
+.active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-1);
+  margin-block-end: var(--app-space-2);
+  padding-inline: var(--app-space-3) var(--app-space-1);
+  border-radius: var(--app-radius-md);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font-size: 0.9rem;
+}

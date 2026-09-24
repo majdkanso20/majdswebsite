@@ -1,0 +1,27 @@
+<div class="plugins-list">
+  <h1>{{ 'Plugins' | translate }}</h1>
+
+  @for (plugin of plugins(); track plugin.id) {
+    <mat-card appearance="outlined" class="plugins-list__card">
+      <mat-card-content class="plugins-list__row">
+        <div>
+          <strong>{{ plugin.name }}</strong>
+          <span class="plugins-list__meta">v{{ plugin.version }} — {{ plugin.author }}</span>
+          @if (plugin.lastError) {
+            <mat-chip-set>
+              <mat-chip color="warn" highlighted>{{ 'Load error' | translate }}: {{ plugin.lastError }}</mat-chip>
+            </mat-chip-set>
+          }
+        </div>
+        <mat-slide-toggle
+          [checked]="plugin.isEnabled"
+          [disabled]="!canManage"
+          (change)="toggle(plugin, $event.checked)"
+          [attr.aria-label]="plugin.name"
+        />
+      </mat-card-content>
+    </mat-card>
+  } @empty {
+    <p>{{ 'No plugins installed.' | translate }}</p>
+  }
+</div>

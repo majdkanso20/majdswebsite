@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'Edit user' : 'New user') | translate }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content class="user-form">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Email' | translate }}</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
+
+    @if (!isEdit) {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Password' | translate }}</mat-label>
+        <input matInput type="password" formControlName="password" />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <mat-error>{{ 'At least 6 characters.' | translate }}</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Full name' | translate }}</mat-label>
+      <input matInput formControlName="fullName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Phone number' | translate }}</mat-label>
+      <input matInput formControlName="phoneNumber" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Roles' | translate }}</mat-label>
+      <mat-select formControlName="roles" multiple>
+        @for (role of data.roleOptions; track role) {
+          <mat-option [value]="role">{{ role }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+    <button mat-flat-button color="primary" type="submit">{{ (isEdit ? 'Save' : 'Create') | translate }}</button>
+  </mat-dialog-actions>
+</form>
