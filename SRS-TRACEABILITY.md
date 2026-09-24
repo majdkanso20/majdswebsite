@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 78 |
-| PARTIAL | 92 |
-| MISSING | 31 |
+| DONE | 82 |
+| PARTIAL | 90 |
+| MISSING | 29 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Errors | 5 | 3 | 2 | 0 |
 | F-Data | 6 | 1 | 5 | 0 |
 | F-Export | 5 | 0 | 1 | 4 |
-| F-Dashboard | 4 | 0 | 2 | 2 |
+| F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 0 | 4 | 1 |
 | F-Health | 4 | 1 | 2 | 1 |
 | F-ApiDocs | 4 | 1 | 2 | 1 |
@@ -119,7 +119,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 ## F-Export / F-Dashboard / F-Background-Jobs
 - Export: PARTIAL 001 (CSV only). MISSING 002 PDF, 003 import, 004 background export, 005 templates.
-- Dashboard: PARTIAL 001 (one fixed page, no widget registry), 003 (health/ping cards, no KPI/chart/feed). MISSING 002, 004.
+- Dashboard: DONE 001-004. Widgets implement `IDashboardWidget` and register from any module; the dashboard lists those the caller may see and each tile loads its own data (deferred until in view). Baseline widgets: users KPI, unread-notifications KPI, failed-actions KPI, 7-day activity chart, recent-activity feed. Layout (order, hidden) is a per-user setting, `Dashboard.Layout`. Tests: `DashboardTests`, `DashboardHandlerTests`, `dashboard.spec.ts`.
 - Jobs: PARTIAL 001 (interval jobs only), 002 (run history persisted, no retry/backoff), 003 (view + run-now, no retry/delete), 005 (audit and notification cleanup, no temp-file job). MISSING 004 job parameters/user context.
 
 ## F-Health / F-ApiDocs / F-Caching
@@ -154,6 +154,6 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 Still open, roughly by value:
 1. P5 remainder: install/uninstall through the API, signature checks, per-plugin settings and schema, upgrade and rollback.
 2. Browser end-to-end tests, a CI pipeline, and tests for two-factor, Google sign-in, files, jobs and SignalR delivery.
-3. F-Export (Excel, PDF, import), F-Dashboard widgets, generic repository adoption (P3), Polly and Mapster (P4).
+3. F-Export (Excel, PDF, import), generic repository adoption (P3), Polly and Mapster (P4).
 4. SMS and push notification channels, localized templates, backend localization, Redis cache and SignalR backplane, OpenTelemetry metrics.
 5. Working SMTP credentials (currently rejected), so email can be demonstrated end to end.

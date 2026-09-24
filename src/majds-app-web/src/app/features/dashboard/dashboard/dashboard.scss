@@ -8,12 +8,69 @@
   grid-template-columns: 1fr;
   gap: var(--app-space-4);
 
-  // Two columns once the dashboard itself (not the viewport) is wide enough (FR-MOB-001).
-  @container dashboard (min-inline-size: 42rem) {
-    grid-template-columns: repeat(2, 1fr);
+  // As many columns as fit (FR-MOB-001), measured on the dashboard itself, not the viewport.
+  @container dashboard (min-inline-size: 36rem) {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   }
 }
 
-.dashboard__card {
+.dashboard__cell {
   min-width: 0;
+}
+
+.dashboard__cell--wide {
+  @container dashboard (min-inline-size: 36rem) {
+    grid-column: span 2;
+  }
+}
+
+// Holds the space of a tile that has not scrolled into view yet, so viewport-deferred tiles can be detected.
+.dashboard__placeholder {
+  min-height: 10rem;
+}
+
+.dashboard__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--app-space-4);
+}
+
+.dashboard__customize {
+  margin-block-end: var(--app-space-4);
+  padding: var(--app-space-4);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--app-radius-md);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.dashboard__hint {
+  margin: 0 0 var(--app-space-2);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dashboard__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-2);
+  min-height: var(--app-tap-target);
+}
+
+.dashboard__move {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--app-space-2);
+  margin-block-start: var(--app-space-3);
 }

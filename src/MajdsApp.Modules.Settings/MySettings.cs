@@ -24,7 +24,7 @@ public class GetMySettingsQueryHandler(ISettingsProvider settings, ICurrentUser 
         var app = await settings.GetAllAsync(ct);
 
         return SettingDefinitionRegistry.GetAll()
-            .Where(d => d.AllowUserOverride)
+            .Where(d => d.AllowUserOverride && !d.IsInternal)
             .OrderBy(d => d.Group).ThenBy(d => d.DisplayName)
             .Select(d => new SettingDto(d.Name, d.Group, d.DisplayName, d.DataType,
                 mine.GetValueOrDefault(d.Name, d.DefaultValue), app.GetValueOrDefault(d.Name, d.DefaultValue), d.Description))

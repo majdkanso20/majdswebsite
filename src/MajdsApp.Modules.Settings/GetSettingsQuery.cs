@@ -17,6 +17,7 @@ public class GetSettingsQueryHandler(ISettingsProvider settingsProvider) : IRequ
         var effective = await settingsProvider.GetAllAsync(ct);
 
         return SettingDefinitionRegistry.GetAll()
+            .Where(d => !d.IsInternal)
             .OrderBy(d => d.Group).ThenBy(d => d.DisplayName)
             .Select(d =>
             {

@@ -13,6 +13,7 @@
     <Project Path="src/MajdsApp.Modules.Jobs/MajdsApp.Modules.Jobs.csproj" />
     <Project Path="src/MajdsApp.Modules.Notifications/MajdsApp.Modules.Notifications.csproj" />
     <Project Path="src/MajdsApp.Modules.Plugins/MajdsApp.Modules.Plugins.csproj" />
+    <Project Path="src/MajdsApp.Modules.Dashboard/MajdsApp.Modules.Dashboard.csproj" />
     <Project Path="src/MajdsApp.Modules.Roles/MajdsApp.Modules.Roles.csproj" />
     <Project Path="src/MajdsApp.Modules.Search/MajdsApp.Modules.Search.csproj" />
     <Project Path="src/MajdsApp.Modules.Settings/MajdsApp.Modules.Settings.csproj" />

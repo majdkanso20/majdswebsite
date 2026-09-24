@@ -12,6 +12,7 @@ public class NotificationsModule : IFeatureModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IUserNotificationPublisher, NotificationPublisher>();
+        services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, UnreadNotificationsWidget>();
         services.AddSignalR();
         services.AddHostedService<NotificationDeliveryWorker>();
     }

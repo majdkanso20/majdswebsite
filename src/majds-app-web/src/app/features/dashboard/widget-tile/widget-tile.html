@@ -1,0 +1,45 @@
+<mat-card class="tile" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title class="tile__title">{{ widget().title | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (loading()) {
+      <app-loading-state />
+    } @else if (failed()) {
+      <app-empty-state icon="cloud_off" message="This widget could not be loaded." />
+    } @else if (kpi(); as kpi) {
+      <p class="tile__value">{{ kpi.value }}</p>
+      @if (kpi.caption) {
+        <p class="tile__caption">{{ kpi.caption | translate }}</p>
+      }
+    } @else if (chart(); as chart) {
+      <div class="tile__chart" role="img" [attr.aria-label]="chartSummary()">
+        @for (point of chart.points; track point.label) {
+          <div class="tile__bar-column">
+            <span class="tile__bar-value">{{ point.value }}</span>
+            <span class="tile__bar" [style.height.%]="(point.value / chartMax()) * 100"></span>
+            <span class="tile__bar-label">{{ point.label }}</span>
+          </div>
+        }
+      </div>
+    } @else if (feed(); as feed) {
+      @if (feed.items.length === 0) {
+        <app-empty-state icon="inbox" message="Nothing to show yet." />
+      } @else {
+        <ul class="tile__feed">
+          @for (item of feed.items; track $index) {
+            <li class="tile__feed-item">
+              <span class="tile__feed-title">{{ item.title }}</span>
+              <span class="tile__feed-meta">
+                {{ item.subtitle }}
+                @if (item.at) {
+                  · {{ item.at | date: 'short' }}
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </mat-card-content>
+</mat-card>

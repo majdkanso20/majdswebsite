@@ -1,56 +1,54 @@
-<div class="dashboard">
-  <mat-card class="dashboard__card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>System health</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (health() === undefined) {
-        <app-loading-state message="Checking…" />
-      } @else if (health() === null) {
-        <p>Unreachable</p>
-      } @else {
-        <p><strong>{{ health()!.status }}</strong></p>
-        @for (check of health()!.checks; track check.name) {
-          <p>{{ check.name }}: {{ check.status }}</p>
+@if (widgets() === undefined) {
+  <app-loading-state message="Loading the dashboard…" />
+} @else if (loadFailed()) {
+  <app-empty-state icon="cloud_off" message="Could not reach the API. Is it running?" />
+} @else {
+  <div class="dashboard__toolbar">
+    <button mat-stroked-button type="button" (click)="customizing() ? closeCustomize() : openCustomize()" [disabled]="widgets()!.length === 0">
+      <mat-icon>tune</mat-icon>
+      {{ 'Customize' | translate }}
+    </button>
+  </div>
+
+  @if (customizing()) {
+    <section class="dashboard__customize" [attr.aria-label]="'Customize the dashboard' | translate">
+      <p class="dashboard__hint">{{ 'Choose which widgets to show and in what order.' | translate }}</p>
+      <ul class="dashboard__list">
+        @for (widget of draft(); track widget.key; let i = $index; let first = $first; let last = $last) {
+          <li class="dashboard__row">
+            <mat-slide-toggle [checked]="widget.visible" (change)="toggle(i)">{{ widget.title | translate }}</mat-slide-toggle>
+            <span class="dashboard__move">
+              <button mat-icon-button type="button" [disabled]="first" [attr.aria-label]="'Move up' | translate" (click)="move(i, -1)">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button mat-icon-button type="button" [disabled]="last" [attr.aria-label]="'Move down' | translate" (click)="move(i, 1)">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+            </span>
+          </li>
         }
-      }
-    </mat-card-content>
-  </mat-card>
+      </ul>
+      <div class="dashboard__actions">
+        <button mat-button type="button" [disabled]="saving()" (click)="reset()">{{ 'Reset to default' | translate }}</button>
+        <button mat-button type="button" [disabled]="saving()" (click)="closeCustomize()">{{ 'Cancel' | translate }}</button>
+        <button mat-flat-button type="button" [disabled]="saving()" (click)="save()">{{ 'Save' | translate }}</button>
+      </div>
+    </section>
+  }
 
-  <mat-card class="dashboard__card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>API connectivity</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (ping() === undefined && !loadFailed()) {
-        <app-loading-state message="Calling the API…" />
-      } @else if (loadFailed()) {
-        <app-empty-state icon="cloud_off" message="Could not reach the API. Is it running?" />
-      } @else {
-        <p>{{ ping() }}</p>
-      }
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="dashboard__card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>Recent diagnostics pings</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (pings() === undefined && !loadFailed()) {
-        <app-loading-state message="Loading pings…" />
-      } @else if ((pings()?.items?.length ?? 0) === 0) {
-        <app-empty-state icon="inbox" message="No pings recorded yet." />
-      } @else {
-        <mat-nav-list>
-          @for (item of pings()!.items; track item.id) {
-            <mat-list-item>
-              <span matListItemTitle>{{ item.message }}</span>
-              <span matListItemLine>{{ item.createdAt | date: 'medium' }}</span>
-            </mat-list-item>
+  @if (visible().length === 0) {
+    <app-empty-state icon="dashboard_customize" message="No widgets to show. Use Customize to add some." />
+  } @else {
+    <div class="dashboard">
+      @for (widget of visible(); track widget.key) {
+        <div class="dashboard__cell" [class.dashboard__cell--wide]="widget.columns > 1">
+          @defer (on viewport; prefetch on idle) {
+            <app-widget-tile [widget]="widget" />
+          } @placeholder {
+            <div class="dashboard__placeholder"></div>
           }
-        </mat-nav-list>
+        </div>
       }
-    </mat-card-content>
-  </mat-card>
-</div>
+    </div>
+  }
+}

@@ -36,6 +36,7 @@
     <ProjectReference Include="..\MajdsApp.Modules.Search\MajdsApp.Modules.Search.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.ExternalLogin\MajdsApp.Modules.ExternalLogin.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Plugins\MajdsApp.Modules.Plugins.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Dashboard\MajdsApp.Modules.Dashboard.csproj" />
   </ItemGroup>
 
 </Project>

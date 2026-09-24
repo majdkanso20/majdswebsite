@@ -20,7 +20,8 @@ public sealed class SettingDefinition(
     bool isVisibleToClient = false,
     string? description = null,
     bool allowUserOverride = false,
-    bool isSensitive = false)
+    bool isSensitive = false,
+    bool isInternal = false)
 {
     public string Name { get; } = name;
     public string Group { get; } = group;
@@ -36,4 +37,8 @@ public sealed class SettingDefinition(
     /// <summary>Credentials and similar (FR-SET-006): stored encrypted, never returned by any API, and
     /// changed write-only. Server code still reads the plain value through <c>ISettingsProvider</c>.</summary>
     public bool IsSensitive { get; } = isSensitive;
+
+    /// <summary>Stored like any setting but written by a feature's own screen (for example the dashboard layout),
+    /// so it is not listed on the settings pages.</summary>
+    public bool IsInternal { get; } = isInternal;
 }
