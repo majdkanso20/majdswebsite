@@ -32,3 +32,6 @@ plugins/**/backend/
 src/majds-app-web/dist/
 src/majds-app-web/.angular/
 node_modules/
+
+## Empty helper repository GitHub Desktop created inside this folder
+majdswebsite/
