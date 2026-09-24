@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 82 |
-| PARTIAL | 90 |
-| MISSING | 29 |
+| DONE | 84 |
+| PARTIAL | 89 |
+| MISSING | 28 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -31,7 +31,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Localization | 6 | 1 | 4 | 1 |
 | F-Errors | 5 | 3 | 2 | 0 |
 | F-Data | 6 | 1 | 5 | 0 |
-| F-Export | 5 | 0 | 1 | 4 |
+| F-Export | 5 | 2 | 0 | 3 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 0 | 4 | 1 |
 | F-Health | 4 | 1 | 2 | 1 |
@@ -118,7 +118,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - DONE: 002. PARTIAL: 001 column filters ad hoc, 003 DB-side paging but not tied to the repository and unknown sort keys are ignored, 004 cap is a constant (100), 005 grid has no filter UI, 006 permission checks live in consumers.
 
 ## F-Export / F-Dashboard / F-Background-Jobs
-- Export: PARTIAL 001 (CSV only). MISSING 002 PDF, 003 import, 004 background export, 005 templates.
+- Export: DONE 001 (CSV, Excel and PDF from one renderer, `TabularExport`, so all formats hold the same rows; users and audit exports take the list's filters and share its filter code), 002 (server-generated PDF, landscape A4, paginated, capped at 2,000 rows and says so). Formats: `?format=csv|xlsx|pdf`; unknown values are a 400. MISSING 003 import, 004 background export with notification, 005 import templates.
 - Dashboard: DONE 001-004. Widgets implement `IDashboardWidget` and register from any module; the dashboard lists those the caller may see and each tile loads its own data (deferred until in view). Baseline widgets: users KPI, unread-notifications KPI, failed-actions KPI, 7-day activity chart, recent-activity feed. Layout (order, hidden) is a per-user setting, `Dashboard.Layout`. Tests: `DashboardTests`, `DashboardHandlerTests`, `dashboard.spec.ts`.
 - Jobs: PARTIAL 001 (interval jobs only), 002 (run history persisted, no retry/backoff), 003 (view + run-now, no retry/delete), 005 (audit and notification cleanup, no temp-file job). MISSING 004 job parameters/user context.
 
@@ -154,6 +154,6 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 Still open, roughly by value:
 1. P5 remainder: install/uninstall through the API, signature checks, per-plugin settings and schema, upgrade and rollback.
 2. Browser end-to-end tests, a CI pipeline, and tests for two-factor, Google sign-in, files, jobs and SignalR delivery.
-3. F-Export (Excel, PDF, import), generic repository adoption (P3), Polly and Mapster (P4).
+3. F-Export (import, templates, background export), generic repository adoption (P3), Polly and Mapster (P4).
 4. SMS and push notification channels, localized templates, backend localization, Redis cache and SignalR backplane, OpenTelemetry metrics.
 5. Working SMTP credentials (currently rejected), so email can be demonstrated end to end.

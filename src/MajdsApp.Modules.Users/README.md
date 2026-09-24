@@ -2,13 +2,13 @@
 
 **Users (F-Users)** — SRS FR-USER-001..008
 
-Administrative management of user accounts: list and search, create, edit (name, phone, roles), activate or deactivate, soft-delete, reset password (emails a link), unlock, reset two-factor, and export to CSV.
+Administrative management of user accounts: list and search, create, edit (name, phone, roles), activate or deactivate, soft-delete, reset password (emails a link), unlock, reset two-factor, and export to CSV, Excel or PDF.
 
 ## API
 
 All responses use the `ResponseDto<T>` envelope unless noted.
 
-- `GET /api/users/export`
+- `GET /api/users/export` — `format` (`csv` default, `xlsx`, `pdf`) plus the list's `filter`, `isActive` and `role`. Returns the file, not the envelope.
 - `GET /api/users/get`
 - `GET /api/users/list`
 - `POST /api/users/create`

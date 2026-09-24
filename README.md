@@ -95,4 +95,4 @@ The integration tests host the real application against a throwaway SQLite datab
 
 ## Known limits
 
-The honest list, kept current in [SRS-TRACEABILITY.md](SRS-TRACEABILITY.md): plugin upload/install and signing, per-plugin schema isolation, SMS and push notification channels, Redis backplane, export to Excel/PDF and import, dashboard widgets, and browser end-to-end tests.
+The honest list, kept current in [SRS-TRACEABILITY.md](SRS-TRACEABILITY.md): plugin upload/install and signing, per-plugin schema isolation, SMS and push notification channels, Redis backplane, import from Excel/CSV, background exports, and browser end-to-end tests.

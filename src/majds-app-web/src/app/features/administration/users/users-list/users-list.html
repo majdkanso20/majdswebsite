@@ -1,10 +1,7 @@
 <div class="users-list">
   <div class="users-list__toolbar">
     <h1>{{ 'Users' | translate }}</h1>
-    <button mat-stroked-button (click)="exportCsv()">
-      <mat-icon>download</mat-icon>
-      {{ 'Export CSV' | translate }}
-    </button>
+    <app-export-menu (chosen)="export($event)" />
     <button mat-flat-button color="primary" *hasPermission="'Users.Create'" (click)="openCreateDialog()">
       <mat-icon>add</mat-icon>
       {{ 'New user' | translate }}

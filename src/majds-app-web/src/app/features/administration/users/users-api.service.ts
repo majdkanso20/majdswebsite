@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PagedResponse, ResponseDto } from '../../../core/models/response-dto';
-import { saveBlob } from '../../../core/utils/download';
+import { ExportFormat, exportFileName, saveBlob } from '../../../core/utils/download';
 import { CreateUserRequest, UpdateUserRequest, UserDto } from './user.models';
 
 export interface ListUsersParams {
@@ -58,10 +58,15 @@ export class UsersApiService {
     return this.http.post<ResponseDto<null>>(`${this.baseUrl}/reset-two-factor`, { userId }).pipe(map(() => undefined));
   }
 
-  exportCsv(filter?: string): Observable<void> {
+  /** Downloads the users the list currently shows (same filters) as CSV, Excel or PDF. */
+  export(format: ExportFormat, filters: { filter?: string; isActive?: boolean; role?: string } = {}): Observable<void> {
+    const params: Record<string, string | boolean> = { format };
+    if (filters.filter) params['filter'] = filters.filter;
+    if (filters.isActive !== undefined) params['isActive'] = filters.isActive;
+    if (filters.role) params['role'] = filters.role;
     return this.http
-      .get(`${this.baseUrl}/export`, { params: filter ? { filter } : {}, responseType: 'blob' })
-      .pipe(map((blob) => saveBlob(blob, 'users.csv')));
+      .get(`${this.baseUrl}/export`, { params, responseType: 'blob' })
+      .pipe(map((blob) => saveBlob(blob, exportFileName('users', format))));
   }
 
   unlock(userId: string): Observable<void> {

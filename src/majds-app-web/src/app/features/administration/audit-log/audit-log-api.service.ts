@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PagedResponse, ResponseDto } from '../../../core/models/response-dto';
-import { saveBlob } from '../../../core/utils/download';
+import { ExportFormat, exportFileName, saveBlob } from '../../../core/utils/download';
 import { AuditLogEntryDetailDto, AuditLogEntryDto, AuditLogFilterParams } from './audit-log.models';
 
 export interface ListAuditLogParams extends AuditLogFilterParams {
@@ -18,10 +18,11 @@ export class AuditLogApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/audit`;
 
-  exportCsv(filters: AuditLogFilterParams): Observable<void> {
+  /** Downloads the entries matching the current filters as CSV, Excel or PDF. */
+  export(format: ExportFormat, filters: AuditLogFilterParams): Observable<void> {
     return this.http
-      .get(`${this.baseUrl}/export`, { params: this.filterQuery(filters), responseType: 'blob' })
-      .pipe(map((blob) => saveBlob(blob, 'audit-log.csv')));
+      .get(`${this.baseUrl}/export`, { params: { ...this.filterQuery(filters), format }, responseType: 'blob' })
+      .pipe(map((blob) => saveBlob(blob, exportFileName('audit-log', format))));
   }
 
   list(params: ListAuditLogParams): Observable<PagedResponse<AuditLogEntryDto>> {

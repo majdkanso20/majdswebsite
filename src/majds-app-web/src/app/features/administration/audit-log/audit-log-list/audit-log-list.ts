@@ -1,3 +1,5 @@
+import { ExportFormat } from '../../../../core/utils/download';
+import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +20,7 @@ import { AuditLogDetailDialog } from '../audit-log-detail-dialog/audit-log-detai
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-audit-log-list',
   imports: [
-    TranslatePipe, FormsModule, DataGrid, MatButtonModule, MatChipsModule, MatFormFieldModule,
+    TranslatePipe, FormsModule, DataGrid, ExportMenu, MatButtonModule, MatChipsModule, MatFormFieldModule,
     MatIconModule, MatInputModule, MatSelectModule
   ],
   styleUrl: './audit-log-list.scss',
@@ -71,8 +73,8 @@ export class AuditLogList {
     return !!(this.outcome || this.from || this.to);
   }
 
-  exportCsv(): void {
-    this.auditLogApi.exportCsv(this.filterParams()).subscribe();
+  export(format: ExportFormat): void {
+    this.auditLogApi.export(format, this.filterParams()).subscribe();
   }
 
   openDetails(entry: AuditLogEntryDto): void {

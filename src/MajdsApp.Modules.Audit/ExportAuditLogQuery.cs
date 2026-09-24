@@ -6,18 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MajdsApp.Modules.Audit;
 
-/// <summary>CSV of the audit log (newest first, capped at <see cref="CsvWriter.MaxRows"/>), honoring the same filters as the list.</summary>
+/// <summary>The audit log as CSV, Excel or PDF (newest first, capped at <see cref="CsvWriter.MaxRows"/>), honoring the same filters as the list.</summary>
 [RequiresPermission(Permissions.Audit.View)]
-public record ExportAuditLogQuery(AuditLogFilter Filter) : IRequest<byte[]>;
+public record ExportAuditLogQuery(AuditLogFilter Filter, string? Format) : IRequest<ExportFile>;
 
-public class ExportAuditLogQueryHandler(ApplicationDbContext db) : IRequestHandler<ExportAuditLogQuery, byte[]>
+public class ExportAuditLogQueryHandler(ApplicationDbContext db) : IRequestHandler<ExportAuditLogQuery, ExportFile>
 {
-    public async Task<byte[]> Handle(ExportAuditLogQuery request, CancellationToken ct)
+    public async Task<ExportFile> Handle(ExportAuditLogQuery request, CancellationToken ct)
     {
+        var format = ExportFormats.Parse(request.Format);
         var query = AuditLogFilters.Apply(db.Set<AuditLogEntry>().AsNoTracking(), request.Filter);
         var rows = await query.OrderByDescending(a => a.CreatedAt).Take(CsvWriter.MaxRows).ToListAsync(ct);
 
-        return CsvWriter.Write(rows,
+        return TabularExport.Render(format, "Audit log", "audit-log", rows,
             ("When (UTC)", (AuditLogEntry a) => a.CreatedAt),
             ("Action", a => a.Action),
             ("User", a => a.UserName),

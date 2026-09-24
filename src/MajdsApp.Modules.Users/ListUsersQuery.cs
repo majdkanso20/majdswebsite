@@ -17,22 +17,7 @@ public class ListUsersQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
 {
     public async Task<PagedResponse<UserDto>> Handle(ListUsersQuery request, CancellationToken ct)
     {
-        var query = db.Users.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(request.Request.Filter))
-        {
-            var pattern = LikePattern.Contains(request.Request.Filter);
-            query = query.Where(u => EF.Functions.Like(u.Email!, pattern, LikePattern.Escape) || EF.Functions.Like(u.FullName!, pattern, LikePattern.Escape));
-        }
-
-        if (request.IsActive.HasValue)
-            query = query.Where(u => u.IsActive == request.IsActive.Value);
-
-        if (!string.IsNullOrWhiteSpace(request.Role))
-        {
-            var roleId = await db.Roles.Where(r => r.Name == request.Role).Select(r => r.Id).FirstOrDefaultAsync(ct);
-            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
-        }
+        var query = await UserQueryFilters.ApplyAsync(db, db.Users.AsNoTracking(), request.Request.Filter, request.IsActive, request.Role, ct);
 
         var sortableColumns = new Dictionary<string, System.Linq.Expressions.Expression<Func<ApplicationUser, object>>>
         {
@@ -72,5 +57,31 @@ public class ListUsersQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
             Page = page.Page,
             PageSize = page.PageSize
         };
+    }
+}
+
+/// <summary>The one place the users list and the users export narrow the data, so an export always contains
+/// exactly the rows the list shows for the same filters (AC-EXP-1).</summary>
+public static class UserQueryFilters
+{
+    public static async Task<IQueryable<ApplicationUser>> ApplyAsync(
+        ApplicationDbContext db, IQueryable<ApplicationUser> query, string? text, bool? isActive, string? role, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var pattern = LikePattern.Contains(text);
+            query = query.Where(u => EF.Functions.Like(u.Email!, pattern, LikePattern.Escape) || EF.Functions.Like(u.FullName!, pattern, LikePattern.Escape));
+        }
+
+        if (isActive.HasValue)
+            query = query.Where(u => u.IsActive == isActive.Value);
+
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            var roleId = await db.Roles.Where(r => r.Name == role).Select(r => r.Id).FirstOrDefaultAsync(ct);
+            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
+        }
+
+        return query;
     }
 }

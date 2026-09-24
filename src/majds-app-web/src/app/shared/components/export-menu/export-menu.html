@@ -1,0 +1,12 @@
+<button mat-stroked-button type="button" [matMenuTriggerFor]="menu">
+  <mat-icon>download</mat-icon>
+  {{ 'Export' | translate }}
+</button>
+<mat-menu #menu="matMenu">
+  @for (item of formats; track item.format) {
+    <button mat-menu-item type="button" (click)="chosen.emit(item.format)">
+      <mat-icon>{{ item.icon }}</mat-icon>
+      <span>{{ item.label }}</span>
+    </button>
+  }
+</mat-menu>

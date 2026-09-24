@@ -9,11 +9,15 @@ namespace MajdsApp.Modules.Users;
 [Authorize]
 public class UsersController(IMediator mediator) : ApiControllerBase
 {
-    /// <summary>CSV file (not the envelope), like F-Files' download.</summary>
+    /// <summary>A file (csv, xlsx or pdf; not the envelope), like F-Files' download. Takes the list's filters.</summary>
     [HttpGet("export")]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(MajdsApp.SharedKernel.Security.RateLimitPolicies.Expensive)]
-    public async Task<IActionResult> Export([FromQuery] string? filter) =>
-        File(await mediator.Send(new ExportUsersQuery(filter)), "text/csv", "users.csv");
+    public async Task<IActionResult> Export(
+        [FromQuery] string? filter, [FromQuery] bool? isActive, [FromQuery] string? role, [FromQuery] string? format)
+    {
+        var file = await mediator.Send(new ExportUsersQuery(filter, isActive, role, format));
+        return File(file.Content, file.ContentType, file.FileName);
+    }
 
     [HttpPost("reset-two-factor")]
     public async Task<ResponseDto<object?>> ResetTwoFactor([FromBody] ResetTwoFactorCommand command)

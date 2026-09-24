@@ -1,10 +1,7 @@
 <div class="audit-log-list">
   <div class="audit-log-list__toolbar">
     <h1>{{ 'Audit Log' | translate }}</h1>
-    <button mat-stroked-button (click)="exportCsv()">
-      <mat-icon>download</mat-icon>
-      {{ 'Export CSV' | translate }}
-    </button>
+    <app-export-menu (chosen)="export($event)" />
   </div>
 
   <div class="audit-log-list__filters">

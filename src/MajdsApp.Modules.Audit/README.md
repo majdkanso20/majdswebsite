@@ -8,7 +8,7 @@ The append-only record of who did what. Auditable commands are recorded with use
 
 All responses use the `ResponseDto<T>` envelope unless noted.
 
-- `GET /api/audit/export`
+- `GET /api/audit/export` — `format` (`csv` default, `xlsx`, `pdf`) plus the list's filters. Returns the file, not the envelope.
 - `GET /api/audit/get`
 - `GET /api/audit/list`
 
@@ -32,7 +32,7 @@ Tables: `AuditEntityChanges`, `AuditLogEntries`, `AuditPropertyChanges`. Migrati
 
 ## Notes
 
-- The list accepts `page`, `pageSize`, `sort`, `filter` (text), `from`, `to` (UTC dates, end inclusive) and `outcome` (`Success`, `Failure`, or one of `Forbidden`, `Invalid`, `NotFound`, `Conflict`, `Unauthorized`, `Error`). The CSV export takes the same filters.
+- The list accepts `page`, `pageSize`, `sort`, `filter` (text), `from`, `to` (UTC dates, end inclusive) and `outcome` (`Success`, `Failure`, or one of `Forbidden`, `Invalid`, `NotFound`, `Conflict`, `Unauthorized`, `Error`). The export takes the same filters, in any format.
 - There is intentionally no endpoint that modifies or deletes entries, and the save interceptor refuses to update or delete audit rows. The only removal is the daily retention job.
 - Credential-like fields (password, hash, token, stamp, secret...) and encrypted setting values are stored as `[redacted]`. Notification, job-run and audit tables are not change-tracked, by design.
 - Bulk `ExecuteUpdate`/`ExecuteDelete` statements bypass change tracking and so produce no entity changes. Client IP is the direct connection address (proxy headers are not interpreted).

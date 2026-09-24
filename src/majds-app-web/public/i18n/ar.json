@@ -259,5 +259,6 @@
   "You are all caught up": "لا يوجد جديد",
   "Waiting for you": "بانتظارك",
   "Refused or failed in the last 24 hours": "مرفوضة أو فاشلة في آخر 24 ساعة",
-  "Could not reach the API. Is it running?": "تعذر الوصول إلى الخادم. هل هو قيد التشغيل؟"
+  "Could not reach the API. Is it running?": "تعذر الوصول إلى الخادم. هل هو قيد التشغيل؟",
+  "Export": "تصدير"
 }

@@ -58,3 +58,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 |---|---|
 | `RateLimiting:*` | See the root README. Policies are `auth`, `expensive` and the global limit. |
 | `MediatR:LicenseKey` | MediatR license key. |
+
+## Export
+
+`Export/` renders one dataset to CSV, Excel (ClosedXML) or PDF (QuestPDF) from a single description of rows and columns (`TabularExport.Render`), so the formats can never disagree. Text is written literally in Excel and guarded in CSV, so user-supplied values cannot run as formulas. PDFs are capped at 2,000 rows and say so on the page. QuestPDF is used under its Community license (free below 1M USD annual revenue; larger organizations need a paid license). The bundled font covers Latin text; Arabic content in a PDF needs a font with Arabic glyphs.

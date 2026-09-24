@@ -1,3 +1,5 @@
+import { ExportFormat } from '../../../../core/utils/download';
+import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
@@ -18,7 +20,7 @@ import { UserFormDialog, UserFormDialogData, UserFormResult } from '../user-form
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-users-list',
-  imports: [ActiveFilter, TranslatePipe, DataGrid, HasPermissionDirective, MatButtonModule, MatIconModule, MatChipsModule],
+  imports: [ActiveFilter, ExportMenu, TranslatePipe, DataGrid, HasPermissionDirective, MatButtonModule, MatIconModule, MatChipsModule],
   styleUrl: './users-list.scss',
   templateUrl: './users-list.html'
 })
@@ -115,8 +117,8 @@ export class UsersList {
     });
   }
 
-  exportCsv(): void {
-    this.usersApi.exportCsv().subscribe({ error: (err) => this.showError(err) });
+  export(format: ExportFormat): void {
+    this.usersApi.export(format, { filter: this.filter() || undefined }).subscribe({ error: (err) => this.showError(err) });
   }
 
   resetTwoFactor(user: UserDto): void {

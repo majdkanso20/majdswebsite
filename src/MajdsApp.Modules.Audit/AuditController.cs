@@ -19,10 +19,13 @@ public class AuditController(IMediator mediator) : ApiControllerBase
     public async Task<ResponseDto<AuditLogEntryDetailDto>> Get([FromQuery] int id) =>
         Ok(await mediator.Send(new GetAuditLogEntryQuery(id)));
 
-    /// <summary>CSV file (not the envelope), like F-Files' download.</summary>
+    /// <summary>A file (csv, xlsx or pdf; not the envelope), like F-Files' download. Takes the list's filters.</summary>
     [HttpGet("export")]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(MajdsApp.SharedKernel.Security.RateLimitPolicies.Expensive)]
     public async Task<IActionResult> Export(
-        [FromQuery] string? filter, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? outcome) =>
-        File(await mediator.Send(new ExportAuditLogQuery(new AuditLogFilter(filter, from, to, outcome))), "text/csv", "audit-log.csv");
+        [FromQuery] string? filter, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] string? outcome, [FromQuery] string? format)
+    {
+        var file = await mediator.Send(new ExportAuditLogQuery(new AuditLogFilter(filter, from, to, outcome), format));
+        return File(file.Content, file.ContentType, file.FileName);
+    }
 }
