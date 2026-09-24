@@ -1,0 +1,75 @@
+name: CI
+
+# Runs the backend and frontend checks on every push to main and on every pull request, so a change
+# that breaks a test, the linters or the production build is caught before it is merged.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (build + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore MajdsApp.slnx
+
+      - name: Build (warnings are visible, errors fail the job)
+        run: dotnet build MajdsApp.slnx --no-restore
+
+      - name: Test (both backend test projects)
+        run: >
+          dotnet test MajdsApp.slnx --no-build
+          --logger "trx"
+          --results-directory test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: test-results/*.trx
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend (lint + tests + production build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: src/majds-app-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/majds-app-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint (ESLint + Stylelint)
+        run: npm run lint:all
+
+      - name: Unit tests
+        run: npx ng test --watch=false
+
+      - name: Production build (service worker, budgets)
+        run: npm run build

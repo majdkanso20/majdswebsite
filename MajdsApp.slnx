@@ -20,6 +20,7 @@
     <Project Path="src/MajdsApp.Plugins.Tasks/MajdsApp.Plugins.Tasks.csproj" />
     <Project Path="src/MajdsApp.SharedKernel/MajdsApp.SharedKernel.csproj" />
     <Project Path="src/MajdsApp.Tests/MajdsApp.Tests.csproj" />
+    <Project Path="src/MajdsApp.Tests.Plugins/MajdsApp.Tests.Plugins.csproj" />
     <Project Path="src/MajdsApp/MajdsApp.csproj" />
   </Folder>
 </Solution>

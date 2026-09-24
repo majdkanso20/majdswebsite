@@ -1,8 +1,9 @@
 # MajdsApp.Tests
 
-Backend automated tests (xunit + FluentAssertions). 121 tests, about five seconds.
+Backend automated tests (xunit + FluentAssertions): 114 tests here plus 7 runtime-plugin tests in `MajdsApp.Tests.Plugins`, about ten seconds together.
 
 ```bash
+dotnet test MajdsApp.slnx                                   # everything, as CI runs it
 dotnet test src/MajdsApp.Tests
 dotnet test src/MajdsApp.Tests --filter "FullyQualifiedName~AuditTests"      # one class
 ```
@@ -28,7 +29,8 @@ Tests sign in over HTTP like a real client (`factory.SignInAsync("a@b.co", "Admi
 | `AuditTests` | metadata, property changes, redaction, refusals, failures, filters, append-only |
 | `NotificationTests` | delivery, privacy, per-type opt-out, permission to send |
 | `AccountTests` | forgot/reset password, registration, change password, own-record rule |
-| `PluginTests`, `NoPluginsTests` | runtime plugin discovery, permissions, menu, CRUD, enable/disable |
+| `NoPluginsTests` | a host with no plugins starts and lists none |
+| `MajdsApp.Tests.Plugins` (separate project) | runtime plugin discovery, permissions, menu, CRUD, enable/disable |
 
 ## Writing a new integration test
 
@@ -49,10 +51,13 @@ public class WidgetTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
 Per the platform's Definition of Done, every feature needs a happy path, a permission-denied case and a validation-failure case.
 
+## Why the plugin tests are a separate project
+
+EF Core builds and caches its model once per process from the assemblies loaded at that moment. A plugin's entity is only in the model if the plugin was loaded before the first `DbContext` use, so plugin tests running beside tests that build the model without the plugin failed intermittently (found by running the suite repeatedly). A separate test project is a separate process, which makes the result deterministic, as in a real deployment. It shares the harness by linking `Support/*.cs`.
+
 ## Notes
 
 - Tests use SQLite (the provider the app uses today), not Testcontainers/SQL Server.
-- The sample plugin project is built by a `ReferenceOutputAssembly="false"` project reference so it is never loaded into the test process unless a test copies it into a plugins folder.
 - Not covered yet: browser end-to-end tests, two-factor and Google sign-in, file upload/download, background jobs, CSV contents, SignalR delivery.
 
 Frontend tests live in `src/majds-app-web` (`npm test`).

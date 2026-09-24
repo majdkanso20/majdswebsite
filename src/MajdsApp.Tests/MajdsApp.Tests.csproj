@@ -18,8 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MajdsApp.Api\MajdsApp.Api.csproj" />
-    <!-- Built (not referenced): the plugin tests copy its output into a temporary plugins folder and load it at runtime. -->
-    <ProjectReference Include="..\MajdsApp.Plugins.Tasks\MajdsApp.Plugins.Tasks.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,7 @@
 # Majd's Platform
 
+[![CI](https://github.com/majdkanso20/majdswebsite/actions/workflows/ci.yml/badge.svg)](https://github.com/majdkanso20/majdswebsite/actions/workflows/ci.yml)
+
 A reusable foundation for business web applications: a **.NET 10 Web API** built from self-registering feature modules, and an **Angular 22 / Angular Material** frontend that is skinnable and mobile-first. It provides sign-in, users, roles and permissions, settings, an audit trail, notifications, files, background jobs, search and runtime-loadable plugins, so a new application only has to add its own business features.
 
 It implements the requirements in the *Application Template SRS* (v2.1). What is done, partial and missing, requirement by requirement, is tracked in [SRS-TRACEABILITY.md](SRS-TRACEABILITY.md).
@@ -39,7 +41,8 @@ dotnet ef database update --project src/MajdsApp.Core --startup-project src/Majd
 | `src/MajdsApp.Plugins.Tasks` | A sample **runtime plugin** with its own permissions, menu entry and CRUD API. Not referenced by the host. |
 | `plugins/` | The folder the host scans at startup for plugin packages. |
 | `src/majds-app-web` | The Angular frontend. |
-| `src/MajdsApp.Tests` | Backend unit and integration tests. |
+| `src/MajdsApp.Tests`, `src/MajdsApp.Tests.Plugins` | Backend unit and integration tests, and the runtime-plugin tests. |
+| `.github/workflows` | Continuous integration. |
 | `src/MajdsApp` | The original Razor Pages identity site (2FA, Google and Microsoft sign-in). Independent of everything above. |
 
 Every project has its own README describing its endpoints, permissions, settings and configuration.
@@ -73,12 +76,14 @@ Runtime behavior that administrators change without a redeploy (application name
 ## Testing
 
 ```bash
-dotnet test src/MajdsApp.Tests        # backend: unit + in-process integration tests
+dotnet test MajdsApp.slnx             # backend: unit + in-process integration tests, plus the plugin tests
 cd src/majds-app-web && npm test      # frontend: vitest
 npm run lint:all                      # ESLint (TypeScript and templates) + Stylelint
 ```
 
 The integration tests host the real application against a throwaway SQLite database built from the project's migrations, so they exercise the same pipeline production uses.
+
+**Continuous integration:** `.github/workflows/ci.yml` runs the backend build and both backend test projects, and the frontend lint, unit tests and production build, on every push to `main` and every pull request. Run the same checks locally before pushing.
 
 ## Security notes
 
@@ -90,4 +95,4 @@ The integration tests host the real application against a throwaway SQLite datab
 
 ## Known limits
 
-The honest list, kept current in [SRS-TRACEABILITY.md](SRS-TRACEABILITY.md): plugin upload/install and signing, per-plugin schema isolation, SMS and push notification channels, Redis backplane, export to Excel/PDF and import, dashboard widgets, browser end-to-end tests and CI.
+The honest list, kept current in [SRS-TRACEABILITY.md](SRS-TRACEABILITY.md): plugin upload/install and signing, per-plugin schema isolation, SMS and push notification channels, Redis backplane, export to Excel/PDF and import, dashboard widgets, and browser end-to-end tests.
