@@ -16,14 +16,15 @@ public static class NotificationTypes
 /// The module routes each notification to the channels the recipient enabled for its <c>type</c>.</summary>
 public interface IUserNotificationPublisher
 {
-    Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default);
+    /// <param name="link">An in-app route the notification opens when clicked (for example <c>/exports</c>), or null.</param>
+    Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null);
     Task PublishToAllAsync(string title, string message, string type = NotificationTypes.General, CancellationToken ct = default);
     Task PublishToRoleAsync(string roleName, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default);
 }
 
 public class NullNotificationPublisher : IUserNotificationPublisher
 {
-    public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default) => Task.CompletedTask;
+    public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) => Task.CompletedTask;
     public Task PublishToAllAsync(string title, string message, string type = NotificationTypes.General, CancellationToken ct = default) => Task.CompletedTask;
     public Task PublishToRoleAsync(string roleName, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default) => Task.CompletedTask;
 }

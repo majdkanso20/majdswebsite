@@ -10,5 +10,7 @@ public class UsersModule : IFeatureModule
     {
         // SuperAdminGuard self-registers via IScopedService; handlers/validators/controller by convention.
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, TotalUsersWidget>();
+        services.AddScoped<UsersExportSource>();
+        services.AddScoped<MajdsApp.SharedKernel.Export.IExportSource>(sp => sp.GetRequiredService<UsersExportSource>());
     }
 }

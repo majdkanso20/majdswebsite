@@ -29,14 +29,14 @@ describe('MenuService', () => {
   it('shows only the entries the user is permitted to see (FR-SHELL-002)', async () => {
     await signInWith(['Users.View']);
 
-    expect(labels()).toEqual(['Dashboard', 'Files', 'Users']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports', 'Users']);
   });
 
   it('hides a whole group when none of its entries are visible', async () => {
     await signInWith([]);
 
     expect(menu.visibleItems().some((item) => item.children)).toBe(false);
-    expect(labels()).toEqual(['Dashboard', 'Files']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports']);
   });
 
   it('hides an entry whose feature flag is off', async () => {
@@ -61,7 +61,7 @@ describe('MenuService', () => {
 
     menu.replaceSource('plugins', []);
     expect(labels()).not.toContain('Tasks');
-    expect(labels()).toEqual(['Dashboard', 'Files']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports']);
   });
 
   it('applies the same permission filter to contributed entries as to built-in ones', async () => {

@@ -1,7 +1,7 @@
 <div class="users-list">
   <div class="users-list__toolbar">
     <h1>{{ 'Users' | translate }}</h1>
-    <app-export-menu (chosen)="export($event)" />
+    <app-export-menu (chosen)="export($event)" (background)="exportInBackground($event)" />
     <button mat-stroked-button *hasPermission="'Users.Create'" (click)="openImportDialog()">
       <mat-icon>upload</mat-icon>
       {{ 'Import' | translate }}

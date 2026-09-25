@@ -9,4 +9,16 @@
       <span>{{ item.label }}</span>
     </button>
   }
+  @if (backgroundEnabled()) {
+    <mat-divider />
+    <button mat-menu-item type="button" disabled>{{ 'In the background (large exports)' | translate }}</button>
+    <button mat-menu-item type="button" (click)="background.emit('csv')">
+      <mat-icon>schedule</mat-icon>
+      <span>CSV</span>
+    </button>
+    <button mat-menu-item type="button" (click)="background.emit('xlsx')">
+      <mat-icon>schedule</mat-icon>
+      <span>Excel</span>
+    </button>
+  }
 </mat-menu>

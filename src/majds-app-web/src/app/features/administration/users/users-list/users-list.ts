@@ -4,7 +4,8 @@ import { ExportMenu } from '../../../../shared/components/export-menu/export-men
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ExportsService, activeFilters } from '../../../../core/services/exports.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -30,6 +31,8 @@ export class UsersList {
   private readonly rolesApi = inject(RolesApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly exportsApi = inject(ExportsService);
+  private readonly router = inject(Router);
 
   readonly columns: GridColumn<UserDto>[] = [
     { key: 'email', header: 'Email', sortable: true },
@@ -133,6 +136,19 @@ export class UsersList {
       .subscribe((imported) => {
         if (imported) this.load();
       });
+  }
+
+  /** Queues the users export (with the list's filter) as a background job and points the user to the Exports page. */
+  exportInBackground(format: 'csv' | 'xlsx'): void {
+    this.exportsApi.start('users', format, activeFilters({ filter: this.filter() })).subscribe({
+      next: () => {
+        this.snackBar
+          .open('Export started. You will be notified when it is ready.', 'View', { duration: 6000 })
+          .onAction()
+          .subscribe(() => void this.router.navigate(['/exports']));
+      },
+      error: (err) => this.showError(err)
+    });
   }
 
   export(format: ExportFormat): void {

@@ -12,8 +12,8 @@ namespace MajdsApp.Modules.Notifications;
 /// </summary>
 public class NotificationPublisher(ApplicationDbContext db, IHubContext<NotificationHub> hub) : IUserNotificationPublisher
 {
-    public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default) =>
-        DispatchAsync([userId], title, message, type, ct);
+    public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) =>
+        DispatchAsync([userId], title, message, type, ct, link);
 
     public async Task PublishToAllAsync(string title, string message, string type = NotificationTypes.General, CancellationToken ct = default)
     {
@@ -31,7 +31,7 @@ public class NotificationPublisher(ApplicationDbContext db, IHubContext<Notifica
         await DispatchAsync(ids, title, message, type, ct);
     }
 
-    private async Task DispatchAsync(IReadOnlyList<string> userIds, string title, string message, string type, CancellationToken ct)
+    private async Task DispatchAsync(IReadOnlyList<string> userIds, string title, string message, string type, CancellationToken ct, string? link = null)
     {
         if (userIds.Count == 0) return;
 
@@ -47,7 +47,7 @@ public class NotificationPublisher(ApplicationDbContext db, IHubContext<Notifica
             var channels = choices.TryGetValue(userId, out var c) ? c : NotificationChannel.All;
 
             if (channels.HasFlag(NotificationChannel.InApp))
-                inApp.Add(new Notification { UserId = userId, Type = type, Title = title, Message = message, CreatedAt = now });
+                inApp.Add(new Notification { UserId = userId, Type = type, Title = title, Message = message, Link = link, CreatedAt = now });
 
             if (channels.HasFlag(NotificationChannel.Email))
                 db.Set<NotificationDelivery>().Add(new NotificationDelivery
@@ -62,6 +62,6 @@ public class NotificationPublisher(ApplicationDbContext db, IHubContext<Notifica
 
         foreach (var n in inApp)
             await hub.Clients.User(n.UserId).SendAsync("notification",
-                new NotificationDto(n.Id, n.Type, n.Title, n.Message, false, n.CreatedAt), ct);
+                new NotificationDto(n.Id, n.Type, n.Title, n.Message, false, n.CreatedAt, n.Link), ct);
     }
 }

@@ -14,6 +14,9 @@ public class AuditModule : IFeatureModule
         services.AddScoped<AuditLogWriter>();
         services.AddScoped<IAuditLogWriter>(sp => sp.GetRequiredService<AuditLogWriter>());
 
+        services.AddScoped<AuditExportSource>();
+        services.AddScoped<MajdsApp.SharedKernel.Export.IExportSource>(sp => sp.GetRequiredService<AuditExportSource>());
+
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, FailedActionsWidget>();
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, ActivityChartWidget>();
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, RecentActivityWidget>();

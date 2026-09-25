@@ -17,6 +17,7 @@ export class MenuService {
   private readonly items = signal<MenuItem[]>([
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Files', icon: 'folder', route: '/files', feature: 'Files' },
+    { label: 'My exports', icon: 'cloud_download', route: '/exports', feature: 'Files' },
     {
       label: 'Administration',
       icon: 'admin_panel_settings',

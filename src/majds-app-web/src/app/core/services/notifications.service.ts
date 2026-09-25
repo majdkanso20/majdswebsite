@@ -14,6 +14,8 @@ export interface NotificationDto {
   message: string;
   isRead: boolean;
   createdAt: string;
+  /** An in-app route the notification opens when clicked, or null. */
+  link?: string | null;
 }
 
 export interface NotificationSubscription {

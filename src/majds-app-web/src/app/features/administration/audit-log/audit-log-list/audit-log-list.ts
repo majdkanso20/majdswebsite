@@ -6,6 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { ExportsService, activeFilters } from '../../../../core/services/exports.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -29,6 +32,9 @@ import { AuditLogDetailDialog } from '../audit-log-detail-dialog/audit-log-detai
 export class AuditLogList {
   private readonly auditLogApi = inject(AuditLogApiService);
   private readonly dialog = inject(MatDialog);
+  private readonly exportsApi = inject(ExportsService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   readonly columns: GridColumn<AuditLogEntryDto>[] = [
     { key: 'createdAt', header: 'When', sortable: true, value: (a) => new Date(a.createdAt + 'Z').toLocaleString() },
@@ -71,6 +77,18 @@ export class AuditLogList {
 
   get hasFilters(): boolean {
     return !!(this.outcome || this.from || this.to);
+  }
+
+  /** Queues the audit export (with the current filters) as a background job and points the user to the Exports page. */
+  exportInBackground(format: 'csv' | 'xlsx'): void {
+    this.exportsApi.start('audit', format, activeFilters(this.filterParams())).subscribe({
+      next: () => {
+        this.snackBar
+          .open('Export started. You will be notified when it is ready.', 'View', { duration: 6000 })
+          .onAction()
+          .subscribe(() => void this.router.navigate(['/exports']));
+      }
+    });
   }
 
   export(format: ExportFormat): void {

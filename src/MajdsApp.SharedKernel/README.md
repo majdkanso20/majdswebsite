@@ -66,3 +66,5 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Import
 
 `Import/` reads an uploaded CSV or Excel file (`TabularReader`: quoted fields, BOM, `,` or `;`, header matching that ignores case and order, at most 5,000 rows), runs a per-row action and collects what failed (`ImportRunner`, result `{ total, succeeded, failed, errors: [{ row, reason }] }`), and builds blank templates (`ImportTemplate`). The per-row action should send the same command as the normal create endpoint, so an import obeys exactly the same validation and audit rules; a validation or conflict error fails only that row, while a permission refusal fails the whole import.
+
+`Export/IExportSource.cs` lets a module register a dataset (key, title, view permission, a build method that takes the list's filters). The same source serves the immediate download and background exports (`MajdsApp.Modules.Exports`), so a new resource gets both by registering one class.

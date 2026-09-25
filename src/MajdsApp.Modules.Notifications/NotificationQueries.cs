@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MajdsApp.Modules.Notifications;
 
-public record NotificationDto(int Id, string Type, string Title, string Message, bool IsRead, DateTime CreatedAt);
+public record NotificationDto(int Id, string Type, string Title, string Message, bool IsRead, DateTime CreatedAt, string? Link = null);
 
 // Notifications are always the caller's own, so these carry no [RequiresPermission]; scoping by
 // ICurrentUser is the access control.
@@ -25,7 +25,7 @@ public class ListMyNotificationsQueryHandler(ApplicationDbContext db, ICurrentUs
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip((request.Request.Page - 1) * request.Request.PageSize).Take(request.Request.PageSize)
-            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Message, n.IsRead, n.CreatedAt)).ToListAsync(ct);
+            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Message, n.IsRead, n.CreatedAt, n.Link)).ToListAsync(ct);
 
         return new PagedResponse<NotificationDto>
             { Items = items, TotalCount = total, Page = request.Request.Page, PageSize = request.Request.PageSize };

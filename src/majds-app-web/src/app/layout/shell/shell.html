@@ -92,10 +92,17 @@
         </button>
         <mat-menu #notificationsMenu="matMenu">
           @for (n of notifications.recent(); track n.id) {
-            <div class="shell-notification" [class.shell-notification--unread]="!n.isRead">
-              <strong>{{ n.title }}</strong>
-              <span>{{ n.message }}</span>
-            </div>
+            @if (n.link) {
+              <button mat-menu-item type="button" class="shell-notification shell-notification--link" [class.shell-notification--unread]="!n.isRead" (click)="openNotification(n.link)">
+                <strong>{{ n.title }}</strong>
+                <span>{{ n.message }}</span>
+              </button>
+            } @else {
+              <div class="shell-notification" [class.shell-notification--unread]="!n.isRead">
+                <strong>{{ n.title }}</strong>
+                <span>{{ n.message }}</span>
+              </div>
+            }
           } @empty {
             <div class="shell-header__user-email">{{ 'No notifications' | translate }}</div>
           }

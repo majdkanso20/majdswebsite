@@ -57,6 +57,12 @@ export class Shell {
   private readonly permissionService = inject(PermissionService);
   private readonly appSettingsService = inject(AppSettingsService);
   private readonly router = inject(Router);
+
+  /** Opens the page a notification points to (for example a finished export). */
+  openNotification(link: string): void {
+    void this.router.navigateByUrl(link);
+  }
+
   private readonly localization = inject(LocalizationService);
   private readonly userSettings = inject(UserSettingsService);
 

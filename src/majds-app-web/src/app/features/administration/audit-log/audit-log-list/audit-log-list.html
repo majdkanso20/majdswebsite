@@ -1,7 +1,7 @@
 <div class="audit-log-list">
   <div class="audit-log-list__toolbar">
     <h1>{{ 'Audit Log' | translate }}</h1>
-    <app-export-menu (chosen)="export($event)" />
+    <app-export-menu (chosen)="export($event)" (background)="exportInBackground($event)" />
   </div>
 
   <div class="audit-log-list__filters">

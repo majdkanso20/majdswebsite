@@ -1,6 +1,6 @@
 # MajdsApp.Tests
 
-Backend automated tests (xunit + FluentAssertions): 162 tests here plus 7 runtime-plugin tests in `MajdsApp.Tests.Plugins`, about ten seconds together.
+Backend automated tests (xunit + FluentAssertions): 171 tests here plus 7 runtime-plugin tests in `MajdsApp.Tests.Plugins`, about ten seconds together.
 
 ```bash
 dotnet test MajdsApp.slnx                                   # everything, as CI runs it
@@ -27,6 +27,7 @@ Tests sign in over HTTP like a real client (`factory.SignInAsync("a@b.co", "Admi
 | `DashboardTests`, `DashboardHandlerTests` | permission-filtered widgets, data shapes, per-user layout, refused widgets never run |
 | `ExportTests`, `ExportWriterTests` | CSV, Excel and PDF, filters, formula safety, permissions |
 | `ImportTests`, `ImportReaderTests` | CSV and Excel parsing, per-row errors, templates, permissions |
+| `BackgroundExportTests` | queued exports end to end (worker, Files, notification link), failure, limits, ownership, cleanup |
 | `AdministrationTests` | permissions, users, roles, paging, last-administrator protection, cache refresh |
 | `SettingsTests` | user > application > default, encrypted write-only secrets |
 | `AuditTests` | metadata, property changes, redaction, refusals, failures, filters, append-only |

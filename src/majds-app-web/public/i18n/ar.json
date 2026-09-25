@@ -271,5 +271,17 @@
   "rows": "صفوف",
   "Row": "الصف",
   "Reason": "السبب",
-  "Download the template, fill it in, then choose the file. Valid rows are imported; invalid rows are listed with the reason.": "نزّل القالب واملأه ثم اختر الملف. تُستورد الصفوف الصحيحة وتُعرض الصفوف غير الصحيحة مع السبب."
+  "Download the template, fill it in, then choose the file. Valid rows are imported; invalid rows are listed with the reason.": "نزّل القالب واملأه ثم اختر الملف. تُستورد الصفوف الصحيحة وتُعرض الصفوف غير الصحيحة مع السبب.",
+  "My exports": "تصديراتي",
+  "Refresh": "تحديث",
+  "Download": "تنزيل",
+  "Pending": "قيد الانتظار",
+  "Running": "قيد التنفيذ",
+  "Completed": "اكتمل",
+  "Failed": "فشل",
+  "In the background (large exports)": "في الخلفية (التصدير الكبير)",
+  "Export started. You will be notified when it is ready.": "بدأ التصدير. سيصلك إشعار عندما يصبح جاهزًا.",
+  "View": "عرض",
+  "Large exports run in the background. You are notified when one is ready, and finished files are kept for a few days.": "تعمل التصديرات الكبيرة في الخلفية. سيصلك إشعار عند جاهزيتها، وتُحفظ الملفات المكتملة لبضعة أيام.",
+  "No background exports yet. Use Export, then choose a background option, on a list.": "لا توجد تصديرات في الخلفية بعد. استخدم «تصدير» ثم اختر خيار الخلفية في إحدى القوائم."
 }

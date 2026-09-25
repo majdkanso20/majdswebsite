@@ -1,0 +1,45 @@
+<div class="exports">
+  <div class="exports__toolbar">
+    <h1>{{ 'My exports' | translate }}</h1>
+    <button mat-stroked-button type="button" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'Refresh' | translate }}
+    </button>
+  </div>
+
+  <p class="exports__hint">
+    {{ 'Large exports run in the background. You are notified when one is ready, and finished files are kept for a few days.' | translate }}
+  </p>
+
+  @if (jobs() === undefined) {
+    <app-loading-state />
+  } @else if (jobs()!.length === 0) {
+    <app-empty-state icon="cloud_download" message="No background exports yet. Use Export, then choose a background option, on a list." />
+  } @else {
+    <ul class="exports__list">
+      @for (job of jobs(); track job.id) {
+        <li class="exports__item" [class.exports__item--failed]="job.status === 'Failed'">
+          <mat-icon class="exports__icon">{{ icon(job) }}</mat-icon>
+          <div class="exports__details">
+            <strong>{{ job.title | translate }} ({{ job.format.toUpperCase() }})</strong>
+            <span class="exports__meta">
+              {{ job.status | translate }} · {{ job.createdAt + 'Z' | date: 'short' }}
+              @if (job.size) {
+                · {{ (job.size / 1024).toFixed(0) }} KB
+              }
+            </span>
+            @if (job.error) {
+              <span class="exports__error">{{ job.error }}</span>
+            }
+          </div>
+          @if (job.status === 'Completed') {
+            <button mat-flat-button type="button" [disabled]="downloading() === job.id" (click)="download(job)">
+              <mat-icon>download</mat-icon>
+              {{ 'Download' | translate }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

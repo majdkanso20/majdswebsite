@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MajdsApp.SharedKernel\MajdsApp.SharedKernel.csproj" />
+    <ProjectReference Include="..\MajdsApp.Core\MajdsApp.Core.csproj" />
+    <!-- Finished exports are delivered as files (FR-EXP-004), so this module writes into F-Files' storage. -->
+    <ProjectReference Include="..\MajdsApp.Modules.Files\MajdsApp.Modules.Files.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

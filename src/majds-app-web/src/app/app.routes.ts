@@ -73,6 +73,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/files/files-list/files-list').then((m) => m.FilesList)
       },
       {
+        path: 'exports',
+        canActivate: [featureGuard('Files')],
+        loadComponent: () => import('./features/exports/exports-page/exports-page').then((m) => m.ExportsPage)
+      },
+      {
         path: 'administration/audit-log',
         canActivate: [permissionGuard('Audit.View')],
         loadComponent: () =>

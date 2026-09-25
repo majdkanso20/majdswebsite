@@ -53,6 +53,15 @@
   font-size: 0.85rem;
 }
 
+.shell-notification--link {
+  height: auto;
+  min-height: 0;
+  align-items: flex-start;
+  flex-direction: column;
+  text-align: start;
+  white-space: normal;
+}
+
 .shell-notification {
   display: flex;
   flex-direction: column;

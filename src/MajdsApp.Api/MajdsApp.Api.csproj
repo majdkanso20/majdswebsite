@@ -37,6 +37,7 @@
     <ProjectReference Include="..\MajdsApp.Modules.ExternalLogin\MajdsApp.Modules.ExternalLogin.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Plugins\MajdsApp.Modules.Plugins.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Dashboard\MajdsApp.Modules.Dashboard.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Exports\MajdsApp.Modules.Exports.csproj" />
   </ItemGroup>
 
 </Project>

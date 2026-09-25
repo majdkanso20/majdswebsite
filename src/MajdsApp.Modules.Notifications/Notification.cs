@@ -14,6 +14,10 @@ public class Notification
     public string Type { get; set; } = "General";
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>An in-app route the notification opens when clicked (for example /exports); null for a plain message.</summary>
+    public string? Link { get; set; }
+
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -55,6 +59,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         builder.Property(n => n.Type).HasMaxLength(50).HasDefaultValue("General");
         builder.Property(n => n.Title).HasMaxLength(200);
         builder.Property(n => n.Message).HasMaxLength(2000);
+        builder.Property(n => n.Link).HasMaxLength(300);
         builder.HasIndex(n => new { n.UserId, n.IsRead });
     }
 }

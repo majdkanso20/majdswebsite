@@ -34,6 +34,7 @@ Tables: `NotificationDeliveries`, `NotificationSubscriptions`, `Notifications`. 
 
 - Real-time: hub at `/hubs/notifications`. Browsers cannot set headers on a WebSocket, so the token is accepted from the `access_token` query string on `/hubs` paths only.
 - Types are `General`, `Security`, `Account`, `Administration` (see `NotificationTypes`); channels are in-app and email. With no saved preference every channel is on.
+- A notification may carry an in-app `link` (for example `/exports`); the bell opens it when clicked. Publishers pass it through the optional `link` argument of `IUserNotificationPublisher.PublishAsync`. Email copies carry the text only.
 - Email goes through a queue with retry and exponential backoff (three attempts, then marked failed). `POST /api/notifications/test-channel` sends one email to the caller immediately and returns the real error.
 - Not implemented: SMS and push channels, a shared channel interface, localized templates, a Redis backplane.
 - The module is behind the `Notifications` feature flag.

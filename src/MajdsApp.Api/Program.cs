@@ -30,7 +30,8 @@ var moduleAssemblies = new[]
     typeof(MajdsApp.Modules.Search.SearchModule).Assembly,
     typeof(MajdsApp.Modules.ExternalLogin.ExternalLoginModule).Assembly,
     typeof(MajdsApp.Modules.Plugins.PluginsModule).Assembly,
-    typeof(MajdsApp.Modules.Dashboard.DashboardModule).Assembly
+    typeof(MajdsApp.Modules.Dashboard.DashboardModule).Assembly,
+    typeof(MajdsApp.Modules.Exports.ExportsModule).Assembly
 };
 
 // P5: runtime-deployable plugins. Each subfolder of the plugins directory with a plugin.json +
