@@ -11,7 +11,11 @@ plugins/
 ```
 
 - **Load:** at API startup. A folder that fails to load (missing manifest, missing or wrong assembly) is recorded with its error, shown under *Administration > Plugins*, and skipped; it never stops the host or other plugins.
-- **Change:** copy a new build over the old one and restart the API. Enable and disable are live from the admin screen.
+- **Change:** use *Administration > Plugins > Install plugin* to upload a `.zip` package (it contains `plugin.json` and `backend/`). It is verified and applied the next time the API starts; the previous version is kept so it can be rolled back. Copying a build over the folder and restarting still works. Enable and disable are live from the admin screen.
+- **Installer folders:** `.pending/` (staged, waiting for the next start), `.previous/` (the version before the last change) and `.staging/` (scratch). Folders starting with a dot are never treated as plugins.
+- **Uninstall:** stops the plugin at once and deletes its folder at the next start. Its data is kept.
+- **Compatibility:** an optional `minHostVersion` / `maxHostVersion` in `plugin.json` is checked against the platform version.
+- **Trust:** set `Plugins:Trust:RequireAllowList` to `true` and list approved packages (id and SHA-256) under `Plugins:Trust:Allowed` so only those can be installed.
 - **Trust:** plugin code runs in the API process with full trust. Only put reviewed code here.
 
 `MajdsApp.Plugins.Tasks/` is the included sample. See `src/MajdsApp.Plugins.Tasks/README.md` for how to build and package one.

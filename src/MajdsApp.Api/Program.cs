@@ -46,6 +46,10 @@ var loadedPlugins = PluginManager.LoadAll(pluginsDirectory);
 var pluginAssemblies = loadedPlugins.Where(p => p.Succeeded).Select(p => p.Assembly!).ToArray();
 builder.Services.AddSingleton(loadedPlugins);
 
+// Where plugins live and who may install one (P5 FR-PLUG-036). With Plugins:Trust:RequireAllowList on, only packages
+// listed under Plugins:Trust:Allowed (id + SHA-256 of the package file) can be installed through the admin screen.
+builder.Services.AddSingleton(PluginHostOptions.FromConfiguration(builder.Configuration, pluginsDirectory));
+
 var allModuleAssemblies = moduleAssemblies.Concat(pluginAssemblies).ToArray();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")

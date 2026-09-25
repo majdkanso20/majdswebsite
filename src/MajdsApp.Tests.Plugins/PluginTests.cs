@@ -9,29 +9,11 @@ public record TaskRow(Guid Id, string Title, string? Description, string Status)
 
 /// <summary>P5 end to end: a real plugin assembly, built separately and never referenced by the host, is dropped
 /// into the plugins folder and loaded at runtime into its own load context.</summary>
-public class PluginTests : IClassFixture<PluginTests.PluginFactory>
+[Collection(PluginHostCollection.Name)]
+public class PluginTests
 {
-    public class PluginFactory : ApiFactory
-    {
-        public PluginFactory() : base(null, CopyTasksPlugin) { }
-
-        private static void CopyTasksPlugin(string pluginsFolder)
-        {
-            var baseDir = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
-            var configuration = baseDir.Parent!.Name; // Debug / Release
-            var built = Path.GetFullPath(Path.Combine(baseDir.FullName, "..", "..", "..", "..",
-                "MajdsApp.Plugins.Tasks", "bin", configuration, baseDir.Name));
-
-            var target = Path.Combine(pluginsFolder, "MajdsApp.Plugins.Tasks");
-            Directory.CreateDirectory(Path.Combine(target, "backend"));
-            File.Copy(Path.Combine(built, "plugin.json"), Path.Combine(target, "plugin.json"));
-            foreach (var file in Directory.GetFiles(built, "MajdsApp.Plugins.Tasks.*"))
-                File.Copy(file, Path.Combine(target, "backend", Path.GetFileName(file)));
-        }
-    }
-
-    private readonly PluginFactory _factory;
-    public PluginTests(PluginFactory factory) => _factory = factory;
+    private readonly PluginHostFactory _factory;
+    public PluginTests(PluginHostFactory factory) => _factory = factory;
 
     private Task<ApiClient> AdminAsync() => _factory.SignInAsync("admin@example.com", "Admin");
 

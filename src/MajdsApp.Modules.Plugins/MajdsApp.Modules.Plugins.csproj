@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MajdsApp.SharedKernel\MajdsApp.SharedKernel.csproj" />
     <ProjectReference Include="..\MajdsApp.Core\MajdsApp.Core.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Authorization\MajdsApp.Modules.Authorization.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

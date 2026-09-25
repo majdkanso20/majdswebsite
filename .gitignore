@@ -35,3 +35,9 @@ node_modules/
 
 ## Empty helper repository GitHub Desktop created inside this folder
 majdswebsite/
+
+## Plugin installer working folders and markers (created at runtime by install/upgrade/uninstall)
+plugins/.pending/
+plugins/.previous/
+plugins/.staging/
+plugins/*/.uninstall

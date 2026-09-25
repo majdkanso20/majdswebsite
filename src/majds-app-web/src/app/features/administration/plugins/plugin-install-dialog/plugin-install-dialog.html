@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>{{ 'Install a plugin' | translate }}</h2>
+
+<mat-dialog-content class="plugin-install">
+  <p class="plugin-install__hint">
+    {{ 'Choose a plugin package (.zip). It is checked before anything changes, and it takes effect the next time the API starts. Install only plugins from a publisher you trust.' | translate }}
+  </p>
+
+  <label class="plugin-install__file">
+    <span>{{ 'Package (.zip)' | translate }}</span>
+    <input type="file" accept=".zip" (change)="onFileChosen($event)" />
+  </label>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>{{ 'Publisher checksum (SHA-256, optional)' | translate }}</mat-label>
+    <input matInput [(ngModel)]="checksum" autocomplete="off" spellcheck="false" />
+  </mat-form-field>
+
+  @if (uploading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (error(); as message) {
+    <p class="plugin-install__error" role="alert">{{ message }}</p>
+  }
+
+  @if (result(); as staged) {
+    <div class="plugin-install__result" role="status">
+      <strong>{{ staged.action | translate }}: {{ staged.name }} {{ staged.version }}</strong>
+      @if (staged.previousVersion) {
+        <span>{{ 'Replaces version' | translate }} {{ staged.previousVersion }}.</span>
+      }
+      <span>{{ 'It will take effect the next time the API starts.' | translate }}</span>
+      <span class="plugin-install__sha">SHA-256: {{ staged.sha256 }}</span>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="close()">{{ 'Close' | translate }}</button>
+  <button mat-flat-button type="button" [disabled]="!file() || uploading() || result() !== null" (click)="install()">{{ 'Install' | translate }}</button>
+</mat-dialog-actions>

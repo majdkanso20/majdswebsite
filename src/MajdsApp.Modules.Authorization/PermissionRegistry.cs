@@ -22,27 +22,37 @@ public static class PermissionRegistry
                 && (name.StartsWith("MajdsApp.Modules.", StringComparison.Ordinal) || name.StartsWith("MajdsApp.Plugins.", StringComparison.Ordinal)));
 
         var groups = new List<PermissionGroup>();
-
         foreach (var assembly in moduleAssemblies)
-        {
-            foreach (var outerType in assembly.GetTypes().Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true, IsNested: false }))
-            {
-                foreach (var groupType in outerType.GetNestedTypes(BindingFlags.Public).Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true }))
-                {
-                    var permissionNames = groupType
-                        .GetFields(BindingFlags.Public | BindingFlags.Static)
-                        .Where(f => f.IsLiteral && f.FieldType == typeof(string))
-                        .Select(f => (string)f.GetRawConstantValue()!)
-                        .ToList();
+            groups.AddRange(GetGroups(assembly));
 
-                    if (permissionNames.Count > 0)
-                        groups.Add(new PermissionGroup(groupType.Name, permissionNames));
-                }
+        return groups;
+    }
+
+    /// <summary>The permission groups one assembly declares. Used to find what an uninstalled plugin must give back (P5 FR-PLUG-028).</summary>
+    public static IReadOnlyList<PermissionGroup> GetGroups(Assembly assembly)
+    {
+        var groups = new List<PermissionGroup>();
+
+        foreach (var outerType in assembly.GetTypes().Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true, IsNested: false }))
+        {
+            foreach (var groupType in outerType.GetNestedTypes(BindingFlags.Public).Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true }))
+            {
+                var permissionNames = groupType
+                    .GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(f => f.IsLiteral && f.FieldType == typeof(string))
+                    .Select(f => (string)f.GetRawConstantValue()!)
+                    .ToList();
+
+                if (permissionNames.Count > 0)
+                    groups.Add(new PermissionGroup(groupType.Name, permissionNames));
             }
         }
 
         return groups;
     }
+
+    public static IReadOnlyList<string> GetPermissionNames(Assembly assembly) =>
+        GetGroups(assembly).SelectMany(g => g.Permissions).Distinct().ToList();
 
     public static IReadOnlyList<string> GetAllPermissionNames() =>
         GetAllGroups().SelectMany(g => g.Permissions).Distinct().ToList();

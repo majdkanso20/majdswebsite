@@ -8,18 +8,32 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MajdsApp.Modules.Plugins;
 
-public record PluginDto(string Id, string Name, string Version, string Author, bool IsEnabled, string? LastError, DateTime DiscoveredAt);
+public record PluginDto(
+    string Id, string Name, string Version, string Author, bool IsEnabled, string? LastError, DateTime DiscoveredAt,
+    IReadOnlyList<string> Permissions, IReadOnlyList<string> MenuEntries, bool CanRollback, bool PendingUninstall,
+    string? MinHostVersion, string? MaxHostVersion);
 
 [RequiresPermission(Permissions.Plugins.View)]
 public record ListPluginsQuery : IRequest<IReadOnlyList<PluginDto>>;
 
-public class ListPluginsQueryHandler(ApplicationDbContext db) : IRequestHandler<ListPluginsQuery, IReadOnlyList<PluginDto>>
+public class ListPluginsQueryHandler(ApplicationDbContext db, IReadOnlyList<LoadedPlugin> loaded, PluginHostOptions options)
+    : IRequestHandler<ListPluginsQuery, IReadOnlyList<PluginDto>>
 {
-    public async Task<IReadOnlyList<PluginDto>> Handle(ListPluginsQuery request, CancellationToken ct) =>
-        await db.Set<InstalledPlugin>()
-            .OrderBy(p => p.Name)
-            .Select(p => new PluginDto(p.Id, p.Name, p.Version, p.Author, p.IsEnabled, p.LastError, p.DiscoveredAt))
-            .ToListAsync(ct);
+    public async Task<IReadOnlyList<PluginDto>> Handle(ListPluginsQuery request, CancellationToken ct)
+    {
+        var rows = await db.Set<InstalledPlugin>().AsNoTracking().OrderBy(p => p.Name).ToListAsync(ct);
+        var pendingUninstall = PluginInstaller.ListPending(options.Directory).Where(c => c.Action == "Uninstall").Select(c => c.Id).ToHashSet();
+
+        return rows.Select(p =>
+        {
+            var plugin = loaded.FirstOrDefault(l => l.Manifest.Id == p.Id);
+            var permissions = plugin?.Assembly is { } assembly ? MajdsApp.Modules.Authorization.PermissionRegistry.GetPermissionNames(assembly) : [];
+            return new PluginDto(p.Id, p.Name, p.Version, p.Author, p.IsEnabled, p.LastError, p.DiscoveredAt,
+                permissions, plugin?.Manifest.Menu.Select(m => m.Label).ToList() ?? [],
+                PluginInstaller.HasPreviousVersion(options.Directory, p.Id), pendingUninstall.Contains(p.Id),
+                plugin?.Manifest.MinHostVersion, plugin?.Manifest.MaxHostVersion);
+        }).ToList();
+    }
 }
 
 [RequiresPermission(Permissions.Plugins.Manage)]

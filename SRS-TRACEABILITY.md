@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 86 |
-| PARTIAL | 90 |
-| MISSING | 25 |
+| DONE | 91 |
+| PARTIAL | 91 |
+| MISSING | 19 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | P2 Modules | 8 | 3 | 4 | 1 |
 | P3 Repository/UoW | 7 | 2 | 5 | 0 |
 | P4 Cross-cutting | 7 | 2 | 2 | 3 |
-| P5 Plugins | 42 | 6 | 22 | 14 |
+| P5 Plugins | 42 | 11 | 23 | 8 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 4 | 5 | 0 |
 | U3 App shell | 8 | 5 | 3 | 0 |
@@ -59,9 +59,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: 004 decorators (Scrutor `Decorate`), 006 Polly, 007 Mapster/AutoMapper (DTOs hand-mapped).
 
 ## P5 — Plugins (42)
-- DONE (6): 007 module + controllers registered, 008 per-plugin failure isolation with persisted `LastError`, 021 menu ingested only for enabled plugins, 025 permissions appear in role editor, 026 grantable to roles and users, 027 enforced by the same authorization pipeline.
-- PARTIAL (22): 001, 002 (manifest is a small subset), 003, 004, 005 (startup scan only), 006 (collectible context, never unloaded), 011 (prefixed table; migration lives in the host), 012, 015 (schema-driven renderer instead of Native Federation), 017, 020, 022, 024, 029, 030, 033 (API blocked at once; assembly stays loaded), 035, 037, 038, 039, 040, 041.
-- MISSING (14): 009 host-version check, 010 dependency resolution, 013 per-plugin settings, 014 frontend bundles, 016 static asset serving, 018 CSS isolation, 019 shared-dependency check, 023 plugin localization, 028 uninstall cleanup, 031 lifecycle hooks, 032 transactional install/upgrade, 034 uninstall, 036 signature/checksum and allow-list, 042 permissions view with role-editor deep link.
+- DONE (11): 007 module + controllers registered, 008 per-plugin failure isolation with persisted `LastError`, 009 host-version check (`minHostVersion`/`maxHostVersion` in the manifest, checked when a package is uploaded and again at load; an incompatible plugin is refused with the reason), 021 menu ingested only for enabled plugins, 025 permissions appear in role editor, 026 grantable to roles and users, 027 enforced by the same authorization pipeline, 028 uninstall cleanup (the plugin's permissions are removed from every role and user that held them and permission caches are refreshed; tested), 038 upgrade and rollback (a newer package upgrades, the previous version is kept and can be restored; compatibility is checked), 039 every install, upgrade, rollback, uninstall, enable and disable is an audited command gated by `Plugins.Manage`, 042 the plugin list shows declared permissions with a link to the roles screen (it does not pre-select the plugin's permissions).
+- PARTIAL (23): 001, 002 (manifest is a small subset), 003, 004, 005 (startup scan, and staged installs are applied at start), 006 (collectible context, never unloaded), 011 (prefixed table; migration lives in the host), 012, 015 (schema-driven renderer instead of Native Federation), 017, 020, 022, 024, 029, 030, 032 (a package is fully verified, staged and applied at start with an undo if it cannot be applied, so the host is never left half-installed; plugin database migrations are not part of this), 033 (API blocked at once; assembly stays loaded), 034 (uninstall stops the plugin at once, removes its menu, permissions and registry entry, and deletes its files at the next start; removing its data on explicit confirmation is not offered, data is always kept), 035, 036 (SHA-256 checksum the publisher can supply, the package's checksum is reported, and an allow-list of id + checksum in `Plugins:Trust`; there is no digital signature), 037, 040 (install/upload, enable, disable, uninstall, upgrade and rollback are in the UI; per-plugin settings are not), 041 (load errors and the declared platform range are shown; no fuller compatibility report).
+- MISSING (8): 010 dependency resolution, 013 per-plugin settings, 014 frontend bundles, 016 static asset serving, 018 CSS isolation, 019 shared-dependency check, 023 plugin localization, 031 lifecycle hooks.
 - Not verified live: FR-PLUG-022 route guard on the dynamic route (permission guard is attached in code); FR-PLUG-037 with a throwing plugin.
 
 ## U1 — Skinnable UI (updated 2026-09-24)
@@ -152,7 +152,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 Done (2026-09-24): notifications with SignalR and preferences; user-scope and encrypted settings; security hardening (deny-by-default, rate limiting, headers, HSTS); audit trail; frontend rules, skins, PWA build and container queries; automated tests; READMEs.
 
 Still open, roughly by value:
-1. P5 remainder: install/uninstall through the API, signature checks, per-plugin settings and schema, upgrade and rollback.
+1. P5 remainder: digital signatures, per-plugin settings and database schema, lifecycle hooks, dependency resolution, applying changes without a restart.
 2. Browser end-to-end tests, a CI pipeline, and tests for two-factor, Google sign-in, files, jobs and SignalR delivery.
 3. F-Export (background imports), generic repository adoption (P3), Polly and Mapster (P4).
 4. SMS and push notification channels, localized templates, backend localization, Redis cache and SignalR backplane, OpenTelemetry metrics.

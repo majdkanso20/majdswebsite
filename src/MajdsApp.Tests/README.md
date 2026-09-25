@@ -1,6 +1,6 @@
 # MajdsApp.Tests
 
-Backend automated tests (xunit + FluentAssertions): 171 tests here plus 7 runtime-plugin tests in `MajdsApp.Tests.Plugins`, about ten seconds together.
+Backend automated tests (xunit + FluentAssertions): 171 tests here plus 34 runtime-plugin tests in `MajdsApp.Tests.Plugins`, under a minute together.
 
 ```bash
 dotnet test MajdsApp.slnx                                   # everything, as CI runs it
@@ -34,7 +34,7 @@ Tests sign in over HTTP like a real client (`factory.SignInAsync("a@b.co", "Admi
 | `NotificationTests` | delivery, privacy, per-type opt-out, permission to send |
 | `AccountTests` | forgot/reset password, registration, change password, own-record rule |
 | `NoPluginsTests` | a host with no plugins starts and lists none |
-| `MajdsApp.Tests.Plugins` (separate project) | runtime plugin discovery, permissions, menu, CRUD, enable/disable |
+| `MajdsApp.Tests.Plugins` (separate project) | runtime plugin discovery, permissions, menu, CRUD, enable/disable; package install, upgrade, rollback, uninstall, trust policy, permission cleanup |
 
 ## Writing a new integration test
 

@@ -15,6 +15,8 @@ public class PluginManifestJson
     public string Author { get; set; } = "";
     public string Assembly { get; set; } = "";
     public string ModuleType { get; set; } = "";
+    public string? MinHostVersion { get; set; }
+    public string? MaxHostVersion { get; set; }
     public List<PluginMenuEntryJson> Menu { get; set; } = [];
 }
 
@@ -56,7 +58,12 @@ public static class PluginManager
         if (!Directory.Exists(pluginsDirectory))
             return results;
 
-        foreach (var pluginDir in Directory.GetDirectories(pluginsDirectory))
+        // Staged installs, upgrades, rollbacks and uninstalls take effect now, before anything is loaded (see PluginInstaller).
+        foreach (var message in PluginInstaller.ApplyPendingChanges(pluginsDirectory))
+            logger?.LogInformation("Plugin change: {Message}", message);
+
+        // Folders starting with a dot are the installer's own (.pending, .previous, .staging), never plugins.
+        foreach (var pluginDir in Directory.GetDirectories(pluginsDirectory).Where(d => !Path.GetFileName(d).StartsWith('.')))
         {
             var fallbackId = Path.GetFileName(pluginDir);
             try
@@ -75,6 +82,34 @@ public static class PluginManager
         return results;
     }
 
+    internal static PluginManifest ToManifest(PluginManifestJson raw) =>
+        new(raw.Id, raw.Name, raw.Version, raw.Author, raw.ModuleType,
+            raw.Menu.Select(m => new PluginMenuEntry(m.Label, m.Icon, m.Route, m.Permission, m.Order)).ToList(),
+            string.IsNullOrWhiteSpace(raw.MinHostVersion) ? null : raw.MinHostVersion,
+            string.IsNullOrWhiteSpace(raw.MaxHostVersion) ? null : raw.MaxHostVersion);
+
+    /// <summary>Null when the plugin supports this platform version; otherwise the reason it does not (P5 FR-PLUG-009).</summary>
+    public static string? HostCompatibilityProblem(PluginManifest manifest)
+    {
+        var host = PluginHost.Version;
+
+        if (manifest.MinHostVersion is not null)
+        {
+            if (!Version.TryParse(manifest.MinHostVersion, out var min))
+                return $"minHostVersion '{manifest.MinHostVersion}' is not a valid version.";
+            if (host < min) return $"This plugin needs platform version {min} or newer; this is {host}.";
+        }
+
+        if (manifest.MaxHostVersion is not null)
+        {
+            if (!Version.TryParse(manifest.MaxHostVersion, out var max))
+                return $"maxHostVersion '{manifest.MaxHostVersion}' is not a valid version.";
+            if (host > max) return $"This plugin supports platform versions up to {max}; this is {host}.";
+        }
+
+        return null;
+    }
+
     private static LoadedPlugin LoadOne(string pluginDir)
     {
         var manifestPath = Path.Combine(pluginDir, "plugin.json");
@@ -87,8 +122,11 @@ public static class PluginManager
         if (string.IsNullOrWhiteSpace(raw.Id) || string.IsNullOrWhiteSpace(raw.ModuleType) || string.IsNullOrWhiteSpace(raw.Assembly))
             throw new InvalidOperationException("plugin.json must declare id, assembly, and moduleType.");
 
-        var manifest = new PluginManifest(raw.Id, raw.Name, raw.Version, raw.Author, raw.ModuleType,
-            raw.Menu.Select(m => new PluginMenuEntry(m.Label, m.Icon, m.Route, m.Permission, m.Order)).ToList());
+        var manifest = ToManifest(raw);
+
+        // A plugin built for another platform version is rejected with a diagnostic rather than loaded (P5 FR-PLUG-009).
+        if (HostCompatibilityProblem(manifest) is { } incompatible)
+            throw new InvalidOperationException(incompatible);
 
         var assemblyPath = Path.Combine(pluginDir, "backend", raw.Assembly);
         if (!File.Exists(assemblyPath))

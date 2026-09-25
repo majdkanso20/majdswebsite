@@ -118,6 +118,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         if (!disposing) return;
 
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        try { Directory.Delete(_root, recursive: true); } catch (IOException) { /* a still-locked temp file is harmless */ }
+        // A loaded plugin assembly stays locked until the process ends (Windows); a leftover temp folder is harmless.
+        try { Directory.Delete(_root, recursive: true); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 }
