@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 91 |
-| PARTIAL | 91 |
-| MISSING | 19 |
+| DONE | 96 |
+| PARTIAL | 87 |
+| MISSING | 18 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -33,7 +33,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Data | 6 | 1 | 5 | 0 |
 | F-Export | 5 | 4 | 1 | 0 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
-| F-Background-Jobs | 5 | 0 | 4 | 1 |
+| F-Background-Jobs | 5 | 5 | 0 | 0 |
 | F-Health | 4 | 1 | 2 | 1 |
 | F-ApiDocs | 4 | 1 | 2 | 1 |
 | F-Caching | 3 | 0 | 2 | 1 |
@@ -120,7 +120,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 ## F-Export / F-Dashboard / F-Background-Jobs
 - Export: DONE 001 (CSV, Excel and PDF from one renderer, `TabularExport`, so all formats hold the same rows; users and audit exports take the list's filters and share its filter code), 002 (server-generated PDF, landscape A4, paginated, capped at 2,000 rows and says so). Formats: `?format=csv|xlsx|pdf`; unknown values are a 400. DONE 003 (import from CSV or Excel: per-row validation through the same `CreateUserCommand` as the create endpoint, valid rows imported, invalid rows reported with row number and reason, whole-file problems such as a missing column rejected up front; users import is wired end to end with a reusable dialog), 005 (downloadable CSV and Excel templates, headers only, plus an Instructions sheet). PARTIAL 004: exports run as background jobs (`ExportJob` queue, hosted worker, atomic claim, restart recovery, retention cleanup), the file is delivered through F-Files and the user gets a notification that links to My exports (AC-EXP-3); imports still run during the request (5,000-row limit), so the requirement is not fully met. Only users have an import so far; other resources reuse `TabularReader`, `ImportRunner` and `ImportTemplate`.
 - Dashboard: DONE 001-004. Widgets implement `IDashboardWidget` and register from any module; the dashboard lists those the caller may see and each tile loads its own data (deferred until in view). Baseline widgets: users KPI, unread-notifications KPI, failed-actions KPI, 7-day activity chart, recent-activity feed. Layout (order, hidden) is a per-user setting, `Dashboard.Layout`. Tests: `DashboardTests`, `DashboardHandlerTests`, `dashboard.spec.ts`.
-- Jobs: PARTIAL 001 (interval jobs only), 002 (run history persisted, no retry/backoff), 003 (view + run-now, no retry/delete), 005 (audit and notification cleanup, no temp-file job). MISSING 004 job parameters/user context.
+- Jobs: DONE 001 (recurring jobs by interval or cron expression, plus persisted fire-and-forget and delayed jobs through `IBackgroundJobQueue`), 002 (queued jobs are stored in `BackgroundJobs` and survive a restart; a failure is retried with 10 s, 20 s, 40 s ... up to an hour, then left failed and the administrators are told; a failed recurring run is retried after 1, 2 and 4 minutes; a job left running by a restart is run again, and one that keeps crashing the process still ends up failed; tested), 003 (queue view with status filter, retry and delete, gated by `Jobs.View` / `Jobs.Manage`; recurring jobs show their last result, failure streak and next run, and can be run now), 004 (the queuing user's id and name and a parameter map are stored with the job and handed to it), 005 (audit retention, notification cleanup, export cleanup, orphaned uploaded files and abandoned plugin staging folders). Not done: no built-in feature uses the queue yet (exports and email delivery keep their own persisted queues), and a single node is assumed for the recurring scheduler.
 
 ## F-Health / F-ApiDocs / F-Caching
 - Health: DONE 004. PARTIAL 001 (DB and file storage only), 003 (correlation id, no trace propagation). MISSING 002 metrics.
@@ -141,7 +141,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - **Covered end to end:** deny-by-default and hardening headers, login and deactivated accounts, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, audit trail (changes, redaction, refusals, failures, filters, append-only), notifications and per-type opt-out, forgot/reset password and registration, and a real runtime plugin load (the sample Tasks plugin is built separately, dropped into a temporary plugins folder, and exercised through its API, permissions, menu and enable/disable).
 - **Frontend: 37 automated tests** (vitest via `ng test`): menu filtering and live plugin replacement, theme and skin persistence, the auth and error interceptors, the login page, the data grid (template overrides, card-layout labels, empty state) and the error state. Run with `npm test` in `src/majds-app-web`.
 - **Bugs the tests found and that are now fixed:** (1) removing the Administrator role from the last administrator by editing the user was allowed (FR-USER-007); (2) a user's cached permissions were not refreshed after their roles changed, so a newly granted permission did not apply until the cache expired (FR-AUTHZ-006, AC-AUTHZ-2).
-- **Not covered:** browser end-to-end tests (Playwright), the two-factor and Google sign-in flows, file upload and download, background jobs, CSV export contents, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a CI pipeline that runs them.
+- **Not covered:** browser end-to-end tests (Playwright), the two-factor and Google sign-in flows, file upload and download, CSV export contents, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a CI pipeline that runs them.
 - **Documentation:** every project now has a README (24 in total: root, platform projects, all 15 modules, the sample plugin, the plugins folder, the tests, the frontend and the Razor site). Each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys. A CI pipeline now exists (see above).
 
 ## Outside the SRS but blocking

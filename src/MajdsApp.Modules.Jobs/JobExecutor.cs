@@ -1,6 +1,7 @@
 using MajdsApp.SharedKernel.Notifications;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Jobs;
 using MajdsApp.SharedKernel.Modules;
@@ -42,7 +43,16 @@ public class JobExecutor(ApplicationDbContext db, IUserNotificationPublisher not
         await db.SaveChangesAsync(CancellationToken.None);
 
         if (!run.Success)
-            await notifications.PublishToRoleAsync("Admin", "Background job failed", $"{job.Name}: {run.Error}", NotificationTypes.Administration, CancellationToken.None);
+        {
+            // A scheduled job that fails is retried before anyone is bothered; the administrators are told once the retries are used up,
+            // or straight away when someone ran it by hand and is waiting for the result.
+            var previous = await db.Set<JobRun>().AsNoTracking().Where(r => r.JobName == job.Name && r.Id != run.Id)
+                .OrderByDescending(r => r.StartedAt).Take(JobSchedule.MaxRetries + 1).ToListAsync(CancellationToken.None);
+            var failuresInARow = JobSchedule.ConsecutiveFailures(previous) + 1;
+
+            if (trigger == "Manual" || failuresInARow > JobSchedule.MaxRetries)
+                await notifications.PublishToRoleAsync("Admin", "Background job failed", $"{job.Name}: {run.Error}", NotificationTypes.Administration, CancellationToken.None);
+        }
 
         return true;
     }

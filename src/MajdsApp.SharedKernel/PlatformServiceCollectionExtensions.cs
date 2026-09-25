@@ -37,6 +37,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddScoped<IAuditLogWriter, NullAuditLogWriter>();
         services.TryAddScoped<IAuditChangeBuffer, AuditChangeBuffer>();
         services.TryAddScoped<IUserNotificationPublisher, NullNotificationPublisher>();
+        services.TryAddScoped<MajdsApp.SharedKernel.Jobs.IBackgroundJobQueue, MajdsApp.SharedKernel.Jobs.NullBackgroundJobQueue>();
         services.TryAddScoped<IFeatureChecker, DefaultFeatureChecker>();
         services.TryAddSingleton<IPluginStateCache, AllowAllPluginStateCache>();
         services.AddMemoryCache();

@@ -41,3 +41,5 @@ Tables: `Files`. Migrations live in `MajdsApp.Core`.
 ## Tests
 
 Not yet covered by automated tests (see the traceability document).
+
+- *Orphaned file cleanup* (a recurring job, daily) deletes stored files that no file record points to, once they are a day old, so an upload interrupted between writing the bytes and saving the record does not leave a file behind.

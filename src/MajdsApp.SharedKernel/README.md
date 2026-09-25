@@ -72,3 +72,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Plugin installer
 
 `Plugins/PluginInstaller.cs` verifies an uploaded package and stages it, applies staged installs, upgrades, rollbacks and uninstalls at startup (before any plugin loads), and keeps the previous version for rollback. See `MajdsApp.Modules.Plugins/README.md` for the rules and the trust policy (`PluginHostOptions`).
+
+## Jobs
+
+`Jobs/IRecurringJob.cs` (interval or cron) and `Jobs/IBackgroundJob.cs` (a one-off job plus `IBackgroundJobQueue` to queue it). The scheduler, the persisted queue and the retry rules live in `MajdsApp.Modules.Jobs`.

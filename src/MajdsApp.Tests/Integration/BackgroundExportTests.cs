@@ -31,6 +31,22 @@ public class BackgroundExportTests(ApiFactory factory) : IClassFixture<ApiFactor
         throw new TimeoutException($"Export {jobId} did not reach {string.Join("/", finished)} in time.");
     }
 
+    /// <summary>The notification is published just after the job's status changes, so wait for it rather than assume it is already there.</summary>
+    private static async Task<List<NotificationWithLink>> WaitForNotificationAsync(ApiClient client, Func<NotificationWithLink, bool> match)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        List<NotificationWithLink> items;
+        do
+        {
+            items = (await client.GetAsync<PagedData<NotificationWithLink>>("/api/notifications/list?page=1&pageSize=50")).Data!.Items;
+            if (items.Any(match)) return items;
+            await Task.Delay(200);
+        }
+        while (DateTime.UtcNow < deadline);
+
+        return items;
+    }
+
     private static Task<ApiResult<ExportJobRow>> StartAsync(ApiClient client, string source, string? format = "xlsx", Dictionary<string, string>? filters = null) =>
         client.PostAsync<ExportJobRow>("/api/exports/start", new { source, format, filters });
 
@@ -72,7 +88,7 @@ public class BackgroundExportTests(ApiFactory factory) : IClassFixture<ApiFactor
         var files = (await admin.GetAsync<PagedData<FileRow>>("/api/files/list?page=1&pageSize=50")).Data!.Items;
         files.Should().Contain(f => f.Id == done.FileId);                                // delivered through F-Files
 
-        var notifications = (await admin.GetAsync<PagedData<NotificationWithLink>>("/api/notifications/list?page=1&pageSize=20")).Data!.Items;
+        var notifications = await WaitForNotificationAsync(admin, n => n.Title == "Your export is ready");
         notifications.Should().Contain(n => n.Title == "Your export is ready" && n.Link == "/exports");
     }
 
@@ -134,7 +150,7 @@ public class BackgroundExportTests(ApiFactory factory) : IClassFixture<ApiFactor
 
         done.Status.Should().Be("Failed");
         done.Error.Should().Contain("no longer available");
-        var notifications = (await admin.GetAsync<PagedData<NotificationWithLink>>("/api/notifications/list?page=1&pageSize=20")).Data!.Items;
+        var notifications = await WaitForNotificationAsync(admin, n => n.Title == "Your export failed");
         notifications.Should().Contain(n => n.Title == "Your export failed");
     }
 

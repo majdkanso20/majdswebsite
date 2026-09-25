@@ -44,7 +44,10 @@ public class ApiFactory : WebApplicationFactory<Program>
             // Generous by default so ordinary tests are never throttled; the rate-limit tests lower these.
             ["RateLimiting:AuthPermitLimit"] = "10000",
             ["RateLimiting:ExpensivePermitLimit"] = "10000",
-            ["RateLimiting:GlobalPermitLimit"] = "100000"
+            ["RateLimiting:GlobalPermitLimit"] = "100000",
+            // The recurring-job scheduler would run every job against this host after ten seconds, including the ones that sweep
+            // the API project's real App_Data folder. Tests run jobs themselves, so keep it off.
+            ["Jobs:Scheduler:Enabled"] = "false"
         };
         if (extraSettings is not null)
             foreach (var (key, value) in extraSettings) _settings[key] = value;
@@ -102,7 +105,8 @@ public class ApiFactory : WebApplicationFactory<Program>
 
         var http = CreateClient();
         var response = await http.PostAsJsonAsync("/api/identity/login", new { email, password = Password });
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Sign-in as {email} failed: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
         var token = (await response.Content.ReadFromJsonAsync<LoginResult>())!.AccessToken;
         http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return new ApiClient(http);

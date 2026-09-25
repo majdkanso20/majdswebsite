@@ -1,19 +1,21 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DataGrid } from '../../../../shared/components/data-grid/data-grid';
 import { GridColumn, GridPage, GridSort } from '../../../../shared/components/data-grid/data-grid.model';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { JobDto, JobRunDto, JobsService } from '../jobs.service';
+import { BackgroundJobDto, BackgroundJobStatus, JobDto, JobRunDto, JobsService } from '../jobs.service';
 
 const asLocal = (utc: string | null) => (utc ? new Date(utc + 'Z').toLocaleString() : '—');
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-jobs-page',
-  imports: [DataGrid, HasPermissionDirective, TranslatePipe, MatButtonModule, MatIconModule],
+  imports: [DataGrid, HasPermissionDirective, TranslatePipe, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule],
   styleUrl: './jobs-page.scss',
   templateUrl: './jobs-page.html'
 })
@@ -23,9 +25,9 @@ export class JobsPage {
 
   readonly jobColumns: GridColumn<JobDto>[] = [
     { key: 'name', header: 'Job' },
-    { key: 'intervalMinutes', header: 'Every', value: (j) => JobsPage.formatInterval(j.intervalMinutes) },
+    { key: 'intervalMinutes', header: 'Every', value: (j) => j.cron ?? JobsPage.formatInterval(j.intervalMinutes) },
     { key: 'lastRunAt', header: 'Last run', value: (j) => asLocal(j.lastRunAt) },
-    { key: 'lastSuccess', header: 'Last result', value: (j) => (j.lastSuccess === null ? '—' : j.lastSuccess ? 'OK' : 'Failed') },
+    { key: 'lastSuccess', header: 'Last result', value: (j) => JobsPage.lastResult(j) },
     { key: 'nextRunAt', header: 'Next run', value: (j) => asLocal(j.nextRunAt) }
   ];
 
@@ -36,6 +38,26 @@ export class JobsPage {
     { key: 'durationMs', header: 'Duration', sortable: true, value: (r) => `${r.durationMs} ms` },
     { key: 'success', header: 'Result', value: (r) => (r.success ? 'OK' : `Failed: ${r.error ?? ''}`) }
   ];
+
+  readonly queueColumns: GridColumn<BackgroundJobDto>[] = [
+    { key: 'createdAt', header: 'Queued', sortable: true, value: (j) => asLocal(j.createdAt) },
+    { key: 'type', header: 'Job', sortable: true },
+    { key: 'status', header: 'Status', value: (j) => (j.status === 'Pending' ? `Pending, next try ${asLocal(j.nextAttemptAt)}` : j.status) },
+    { key: 'attempts', header: 'Attempts', sortable: true, value: (j) => `${j.attempts} / ${j.maxAttempts}` },
+    { key: 'userName', header: 'Queued by', value: (j) => j.userName ?? '—' },
+    { key: 'lastError', header: 'Last error', value: (j) => j.lastError ?? '' }
+  ];
+
+  readonly statuses: BackgroundJobStatus[] = ['Pending', 'Running', 'Succeeded', 'Failed'];
+  queueStatus = '';
+
+  readonly queued = signal<BackgroundJobDto[]>([]);
+  readonly queuedTotal = signal(0);
+  readonly queueLoading = signal(true);
+
+  private queuePage = 0;
+  private queuePageSize = 10;
+  private queueSort = 'createdAt:desc';
 
   readonly jobs = signal<JobDto[]>([]);
   readonly runs = signal<JobRunDto[]>([]);
@@ -61,20 +83,78 @@ export class JobsPage {
     this.load();
   }
 
+  onQueuePage(event: GridPage): void {
+    this.queuePage = event.pageIndex;
+    this.queuePageSize = event.pageSize;
+    this.loadQueue();
+  }
+
+  onQueueSort(event: GridSort): void {
+    this.queueSort = event.direction ? `${event.active}:${event.direction}` : '';
+    this.loadQueue();
+  }
+
+  applyQueueFilter(): void {
+    this.queuePage = 0;
+    this.loadQueue();
+  }
+
+  retry(job: BackgroundJobDto): void {
+    this.jobsApi.retry(job.id).subscribe({
+      next: () => {
+        this.snackBar.open(`"${job.type}" was queued again.`, 'Dismiss', { duration: 3000 });
+        this.loadQueue();
+      },
+      error: (err) => this.showError(err)
+    });
+  }
+
+  remove(job: BackgroundJobDto): void {
+    if (!confirm(`Delete this "${job.type}" job?`)) return;
+    this.jobsApi.delete(job.id).subscribe({
+      next: () => {
+        this.snackBar.open('The job was deleted.', 'Dismiss', { duration: 3000 });
+        this.loadQueue();
+      },
+      error: (err) => this.showError(err)
+    });
+  }
+
   runNow(job: JobDto): void {
     this.jobsApi.run(job.name).subscribe({
       next: (ran) => {
         this.snackBar.open(ran ? `"${job.name}" finished.` : `"${job.name}" is already running.`, 'Dismiss', { duration: 3000 });
         this.load();
       },
-      error: (err) => {
-        const message = (err as { error?: { message?: string } })?.error?.message ?? 'Something went wrong.';
-        this.snackBar.open(message, 'Dismiss', { duration: 5000 });
-      }
+      error: (err) => this.showError(err)
     });
   }
 
+  private showError(err: unknown): void {
+    const message = (err as { error?: { message?: string } })?.error?.message ?? 'Something went wrong.';
+    this.snackBar.open(message, 'Dismiss', { duration: 5000 });
+  }
+
+  private loadQueue(): void {
+    this.queueLoading.set(true);
+    this.jobsApi.queue(this.queuePage + 1, this.queuePageSize, this.queueStatus || undefined, this.queueSort || undefined).subscribe({
+      next: (result) => {
+        this.queued.set(result.items);
+        this.queuedTotal.set(result.totalCount);
+        this.queueLoading.set(false);
+      },
+      error: () => this.queueLoading.set(false)
+    });
+  }
+
+  private static lastResult(job: JobDto): string {
+    if (job.lastSuccess === null) return '—';
+    if (job.lastSuccess) return 'OK';
+    return job.consecutiveFailures > 1 ? `Failed (${job.consecutiveFailures} in a row)` : 'Failed';
+  }
+
   private load(): void {
+    this.loadQueue();
     this.loading.set(true);
     this.jobsApi.list().subscribe((jobs) => this.jobs.set(jobs));
     this.jobsApi.runs(this.page + 1, this.pageSize, this.sort || undefined).subscribe({

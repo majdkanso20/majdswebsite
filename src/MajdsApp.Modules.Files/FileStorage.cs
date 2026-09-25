@@ -18,6 +18,12 @@ public class FileStorage(IWebHostEnvironment env) : IScopedService
 
     public Stream Open(string storedName) => File.OpenRead(PathFor(storedName));
 
+    /// <summary>Every stored file with its last write time, for the orphan sweep.</summary>
+    public IEnumerable<(string Name, DateTime LastWriteUtc)> Enumerate() =>
+        Directory.Exists(Root)
+            ? new DirectoryInfo(Root).EnumerateFiles().Select(f => (f.Name, f.LastWriteTimeUtc)).ToList()
+            : [];
+
     public void Delete(string storedName)
     {
         var path = PathFor(storedName);

@@ -36,6 +36,10 @@ A plugin is loaded once, at startup, because its endpoints, handlers and entity 
 
 `Plugins:Trust:RequireAllowList` (default `false`) and `Plugins:Trust:Allowed` (a list of `{ "Id": "...", "Sha256": "..." }`). With the allow-list required, only a package whose id **and** SHA-256 are listed can be installed. Turn it on in production. The response to an install includes the package's SHA-256 so it can be compared with what the publisher published. There is no digital-signature check.
 
+## Recurring jobs
+
+- *Plugin staging cleanup* (daily) removes `.staging` scratch folders left behind for a day. Staged changes in `.pending` are never touched.
+
 ## Data
 
 Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.

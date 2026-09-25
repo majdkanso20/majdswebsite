@@ -16,6 +16,25 @@ public class JobsController(IMediator mediator) : ApiControllerBase
     public async Task<ResponseDto<PagedResponse<JobRunDto>>> Runs([FromQuery] PagedRequest request, [FromQuery] string? jobName) =>
         Ok(await mediator.Send(new ListJobRunsQuery(request, jobName)));
 
+    /// <summary>The queued one-off jobs with their status and attempts (FR-JOB-003).</summary>
+    [HttpGet("queue")]
+    public async Task<ResponseDto<PagedResponse<BackgroundJobDto>>> Queue([FromQuery] PagedRequest request, [FromQuery] string? status) =>
+        Ok(await mediator.Send(new ListBackgroundJobsQuery(request, status)));
+
+    [HttpPost("retry")]
+    public async Task<ResponseDto<object?>> Retry([FromBody] RetryBackgroundJobCommand command)
+    {
+        await mediator.Send(command);
+        return Ok<object?>(null);
+    }
+
+    [HttpPost("delete")]
+    public async Task<ResponseDto<object?>> Delete([FromBody] DeleteBackgroundJobCommand command)
+    {
+        await mediator.Send(command);
+        return Ok<object?>(null);
+    }
+
     [HttpPost("run")]
     public async Task<ResponseDto<bool>> Run([FromBody] RunJobCommand command) => Ok(await mediator.Send(command));
 }

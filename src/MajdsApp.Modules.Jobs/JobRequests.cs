@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MajdsApp.Modules.Jobs;
 
-public record JobDto(string Name, int IntervalMinutes, DateTime? LastRunAt, bool? LastSuccess, DateTime? NextRunAt);
+public record JobDto(string Name, int IntervalMinutes, DateTime? LastRunAt, bool? LastSuccess, DateTime? NextRunAt, string? Cron = null, int ConsecutiveFailures = 0);
 
 public record JobRunDto(int Id, string JobName, DateTime StartedAt, int DurationMs, bool Success, string? Error, string Trigger);
 
@@ -24,11 +24,12 @@ public class ListJobsQueryHandler(ApplicationDbContext db, IEnumerable<IRecurrin
         var result = new List<JobDto>();
         foreach (var job in jobs.OrderBy(j => j.Name))
         {
-            var last = await db.Set<JobRun>().AsNoTracking().Where(r => r.JobName == job.Name)
-                .OrderByDescending(r => r.StartedAt).FirstOrDefaultAsync(ct);
+            var recent = await db.Set<JobRun>().AsNoTracking().Where(r => r.JobName == job.Name)
+                .OrderByDescending(r => r.StartedAt).Take(JobSchedule.MaxRetries + 2).ToListAsync(ct);
+            var last = recent.FirstOrDefault();
 
             result.Add(new JobDto(job.Name, (int)job.Interval.TotalMinutes, last?.StartedAt, last?.Success,
-                last is null ? null : last.StartedAt + job.Interval));
+                JobSchedule.NextRun(job, recent), job.Cron, JobSchedule.ConsecutiveFailures(recent)));
         }
 
         return result;

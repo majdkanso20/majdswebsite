@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace MajdsApp.Modules.Jobs;
 
-/// <summary>Wakes every 30s and runs any job whose interval has elapsed since its last recorded run
-/// (or that has never run). "Last run" comes from the database, so restarts don't reset the schedule.</summary>
+/// <summary>Wakes every 30s and runs any job that is due (see <see cref="JobSchedule"/>): its interval or cron time has come, it has
+/// never run, or its last run failed and a retry is due. "Last run" comes from the database, so restarts don't reset the schedule.</summary>
 public class JobScheduler(IServiceScopeFactory scopes, ILogger<JobScheduler> logger) : BackgroundService
 {
     private static readonly TimeSpan Tick = TimeSpan.FromSeconds(30);
@@ -46,11 +46,12 @@ public class JobScheduler(IServiceScopeFactory scopes, ILogger<JobScheduler> log
 
         foreach (var job in scope.ServiceProvider.GetServices<IRecurringJob>())
         {
-            var lastStart = await db.Set<JobRun>().Where(r => r.JobName == job.Name)
-                .OrderByDescending(r => r.StartedAt).Select(r => (DateTime?)r.StartedAt).FirstOrDefaultAsync(ct);
+            var recent = await db.Set<JobRun>().AsNoTracking().Where(r => r.JobName == job.Name)
+                .OrderByDescending(r => r.StartedAt).Take(JobSchedule.MaxRetries + 2).ToListAsync(ct);
 
-            if (lastStart is null || DateTime.UtcNow - lastStart >= job.Interval)
-                await executor.RunAsync(job, "Schedule", ct);
+            var (due, trigger) = JobSchedule.Evaluate(job, recent, DateTime.UtcNow);
+            if (due)
+                await executor.RunAsync(job, trigger, ct);
         }
     }
 }

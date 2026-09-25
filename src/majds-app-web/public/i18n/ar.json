@@ -301,5 +301,10 @@
   "Platform versions": "إصدارات المنصة",
   "Menu": "القائمة",
   "Declared permissions": "الصلاحيات المُعلنة",
-  "Assign to roles": "تعيين للأدوار"
+  "Assign to roles": "تعيين للأدوار",
+  "Queued jobs": "المهام في الطابور",
+  "No queued jobs.": "لا توجد مهام في الطابور.",
+  "Retry": "إعادة المحاولة",
+  "Delete": "حذف",
+  "Succeeded": "نجحت"
 }

@@ -16,6 +16,40 @@
     </ng-template>
   </app-data-grid>
 
+  <h2>{{ 'Queued jobs' | translate }}</h2>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="jobs__filter">
+    <mat-label>{{ 'Status' | translate }}</mat-label>
+    <mat-select [(value)]="queueStatus" (selectionChange)="applyQueueFilter()">
+      <mat-option value="">{{ 'All' | translate }}</mat-option>
+      @for (status of statuses; track status) {
+        <mat-option [value]="status">{{ status | translate }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <app-data-grid
+    [columns]="queueColumns"
+    [rows]="queued()"
+    [totalCount]="queuedTotal()"
+    [loading]="queueLoading()"
+    [pageSize]="10"
+    emptyMessage="No queued jobs."
+    (page)="onQueuePage($event)"
+    (sortChange)="onQueueSort($event)"
+  >
+    <ng-template #actionsTemplate let-row>
+      @if (row.status === 'Failed') {
+        <button mat-icon-button *hasPermission="'Jobs.Manage'" (click)="retry(row)" aria-label="Retry">
+          <mat-icon>replay</mat-icon>
+        </button>
+      }
+      @if (row.status !== 'Running') {
+        <button mat-icon-button *hasPermission="'Jobs.Manage'" (click)="remove(row)" aria-label="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </ng-template>
+  </app-data-grid>
+
   <h2>{{ 'Recent runs' | translate }}</h2>
   <app-data-grid
     [columns]="runColumns"
