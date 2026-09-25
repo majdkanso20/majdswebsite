@@ -2,12 +2,14 @@
 
 **Users (F-Users)** — SRS FR-USER-001..008
 
-Administrative management of user accounts: list and search, create, edit (name, phone, roles), activate or deactivate, soft-delete, reset password (emails a link), unlock, reset two-factor, and export to CSV, Excel or PDF.
+Administrative management of user accounts: list and search, create, edit (name, phone, roles), activate or deactivate, soft-delete, reset password (emails a link), unlock, reset two-factor, export to CSV, Excel or PDF, and import from CSV or Excel.
 
 ## API
 
 All responses use the `ResponseDto<T>` envelope unless noted.
 
+- `POST /api/users/import` — multipart `file` (.csv or .xlsx, up to 5 MB and 5,000 rows). Creates one user per row through the normal create command and returns `{ total, succeeded, failed, errors: [{ row, reason }] }`. Requires `Users.Create`. Columns: `Email` (required), `Full name`, `Roles` (semicolon-separated), `Password` (blank generates a random one; the user then uses Forgot password). Valid rows are imported, invalid rows are reported with their row number (the header is row 1) and reason; an unknown role or a duplicate email fails only that row.
+- `GET /api/users/import-template` — `format=csv` (default) or `xlsx`; headers only, plus an Instructions sheet in Excel. Requires `Users.View`.
 - `GET /api/users/export` — `format` (`csv` default, `xlsx`, `pdf`) plus the list's `filter`, `isActive` and `role`. Returns the file, not the envelope.
 - `GET /api/users/get`
 - `GET /api/users/list`

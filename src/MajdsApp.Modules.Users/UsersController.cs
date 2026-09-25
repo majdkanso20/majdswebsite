@@ -19,6 +19,29 @@ public class UsersController(IMediator mediator) : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
+    /// <summary>The blank import template (csv or xlsx), as a file.</summary>
+    [HttpGet("import-template")]
+    public async Task<IActionResult> ImportTemplate([FromQuery] string? format)
+    {
+        var file = await mediator.Send(new GetUsersImportTemplateQuery(format));
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>Creates users from an uploaded .csv or .xlsx; returns how many succeeded and each failed row with its reason.</summary>
+    [HttpPost("import")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(MajdsApp.SharedKernel.Security.RateLimitPolicies.Expensive)]
+    public async Task<ResponseDto<MajdsApp.SharedKernel.Import.ImportResult>> Import(Microsoft.AspNetCore.Http.IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            throw new FluentValidation.ValidationException("Choose a file to import.");
+        if (file.Length > MajdsApp.SharedKernel.Import.TabularReader.MaxBytes)
+            throw new FluentValidation.ValidationException("The file is larger than 5 MB.");
+
+        using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer);
+        return Ok(await mediator.Send(new ImportUsersCommand(buffer.ToArray(), file.FileName)));
+    }
+
     [HttpPost("reset-two-factor")]
     public async Task<ResponseDto<object?>> ResetTwoFactor([FromBody] ResetTwoFactorCommand command)
     {

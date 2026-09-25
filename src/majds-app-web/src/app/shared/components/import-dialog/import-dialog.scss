@@ -1,0 +1,51 @@
+.import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-3);
+  min-width: min(520px, 80vw);
+}
+
+.import__hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.import__templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2);
+}
+
+.import__file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-1);
+}
+
+.import__error {
+  margin: 0;
+  color: var(--mat-sys-error);
+}
+
+.import__summary {
+  margin: 0;
+  font: var(--mat-sys-title-small);
+}
+
+.import__errors {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--app-space-1) var(--app-space-2);
+    border-block-end: 1px solid var(--mat-sys-outline-variant);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  th:first-child,
+  td:first-child {
+    width: 4rem;
+  }
+}

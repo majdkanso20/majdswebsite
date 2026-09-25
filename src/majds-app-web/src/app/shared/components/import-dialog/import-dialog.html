@@ -1,0 +1,60 @@
+<h2 mat-dialog-title>{{ data.title | translate }}</h2>
+
+<mat-dialog-content class="import">
+  <p class="import__hint">
+    {{ 'Download the template, fill it in, then choose the file. Valid rows are imported; invalid rows are listed with the reason.' | translate }}
+  </p>
+
+  <div class="import__templates">
+    <button mat-stroked-button type="button" (click)="downloadTemplate('xlsx')">
+      <mat-icon>table_chart</mat-icon>
+      {{ 'Excel template' | translate }}
+    </button>
+    <button mat-stroked-button type="button" (click)="downloadTemplate('csv')">
+      <mat-icon>description</mat-icon>
+      {{ 'CSV template' | translate }}
+    </button>
+  </div>
+
+  <label class="import__file">
+    <span>{{ 'File (.csv or .xlsx)' | translate }}</span>
+    <input type="file" accept=".csv,.xlsx" (change)="onFileChosen($event)" />
+  </label>
+
+  @if (uploading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (error(); as message) {
+    <p class="import__error" role="alert">{{ message }}</p>
+  }
+
+  @if (result(); as summary) {
+    <p class="import__summary" role="status">
+      {{ summary.succeeded }} {{ 'imported' | translate }}, {{ summary.failed }} {{ 'failed' | translate }} ({{ summary.total }} {{ 'rows' | translate }})
+    </p>
+    @if (summary.errors.length > 0) {
+      <table class="import__errors">
+        <thead>
+          <tr>
+            <th>{{ 'Row' | translate }}</th>
+            <th>{{ 'Reason' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of summary.errors; track item.row) {
+            <tr>
+              <td>{{ item.row }}</td>
+              <td>{{ item.reason }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="close()">{{ 'Close' | translate }}</button>
+  <button mat-flat-button type="button" [disabled]="!file() || uploading()" (click)="import()">{{ 'Import' | translate }}</button>
+</mat-dialog-actions>

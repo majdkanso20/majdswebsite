@@ -62,3 +62,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Export
 
 `Export/` renders one dataset to CSV, Excel (ClosedXML) or PDF (QuestPDF) from a single description of rows and columns (`TabularExport.Render`), so the formats can never disagree. Text is written literally in Excel and guarded in CSV, so user-supplied values cannot run as formulas. PDFs are capped at 2,000 rows and say so on the page. QuestPDF is used under its Community license (free below 1M USD annual revenue; larger organizations need a paid license). The bundled font covers Latin text; Arabic content in a PDF needs a font with Arabic glyphs.
+
+## Import
+
+`Import/` reads an uploaded CSV or Excel file (`TabularReader`: quoted fields, BOM, `,` or `;`, header matching that ignores case and order, at most 5,000 rows), runs a per-row action and collects what failed (`ImportRunner`, result `{ total, succeeded, failed, errors: [{ row, reason }] }`), and builds blank templates (`ImportTemplate`). The per-row action should send the same command as the normal create endpoint, so an import obeys exactly the same validation and audit rules; a validation or conflict error fails only that row, while a permission refusal fails the whole import.

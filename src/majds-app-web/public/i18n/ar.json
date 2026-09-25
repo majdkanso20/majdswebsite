@@ -260,5 +260,16 @@
   "Waiting for you": "بانتظارك",
   "Refused or failed in the last 24 hours": "مرفوضة أو فاشلة في آخر 24 ساعة",
   "Could not reach the API. Is it running?": "تعذر الوصول إلى الخادم. هل هو قيد التشغيل؟",
-  "Export": "تصدير"
+  "Export": "تصدير",
+  "Import": "استيراد",
+  "Import users": "استيراد المستخدمين",
+  "Excel template": "قالب Excel",
+  "CSV template": "قالب CSV",
+  "File (.csv or .xlsx)": "الملف (.csv أو .xlsx)",
+  "imported": "تم استيرادها",
+  "failed": "فشلت",
+  "rows": "صفوف",
+  "Row": "الصف",
+  "Reason": "السبب",
+  "Download the template, fill it in, then choose the file. Valid rows are imported; invalid rows are listed with the reason.": "نزّل القالب واملأه ثم اختر الملف. تُستورد الصفوف الصحيحة وتُعرض الصفوف غير الصحيحة مع السبب."
 }

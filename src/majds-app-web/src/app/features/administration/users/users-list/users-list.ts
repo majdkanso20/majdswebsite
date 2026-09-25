@@ -1,4 +1,5 @@
 import { ExportFormat } from '../../../../core/utils/download';
+import { ImportDialog, ImportDialogData } from '../../../../shared/components/import-dialog/import-dialog';
 import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -115,6 +116,23 @@ export class UsersList {
       },
       error: (err) => this.showError(err)
     });
+  }
+
+  openImportDialog(): void {
+    this.dialog
+      .open<ImportDialog, ImportDialogData, boolean>(ImportDialog, {
+        data: {
+          title: 'Import users',
+          upload: (file) => this.usersApi.importUsers(file),
+          template: (format) => this.usersApi.importTemplate(format)
+        },
+        width: 'min(640px, 95vw)',
+        maxWidth: '95vw'
+      })
+      .afterClosed()
+      .subscribe((imported) => {
+        if (imported) this.load();
+      });
   }
 
   export(format: ExportFormat): void {

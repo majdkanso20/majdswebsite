@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PagedResponse, ResponseDto } from '../../../core/models/response-dto';
 import { ExportFormat, exportFileName, saveBlob } from '../../../core/utils/download';
+import { ImportResult } from '../../../shared/components/import-dialog/import-dialog';
 import { CreateUserRequest, UpdateUserRequest, UserDto } from './user.models';
 
 export interface ListUsersParams {
@@ -67,6 +68,19 @@ export class UsersApiService {
     return this.http
       .get(`${this.baseUrl}/export`, { params, responseType: 'blob' })
       .pipe(map((blob) => saveBlob(blob, exportFileName('users', format))));
+  }
+
+  /** Creates users from a .csv or .xlsx file; valid rows are imported, invalid ones come back with a reason. */
+  importUsers(file: File): Observable<ImportResult> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return this.http.post<ResponseDto<ImportResult>>(`${this.baseUrl}/import`, body).pipe(map((r) => r.data!));
+  }
+
+  importTemplate(format: 'csv' | 'xlsx'): Observable<void> {
+    return this.http
+      .get(`${this.baseUrl}/import-template`, { params: { format }, responseType: 'blob' })
+      .pipe(map((blob) => saveBlob(blob, `users-import-template.${format}`)));
   }
 
   unlock(userId: string): Observable<void> {
