@@ -1,14 +1,14 @@
+using MajdsApp.SharedKernel.Caching;
 using MediatR;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace MajdsApp.SharedKernel.Behaviors;
 
 /// <summary>
-/// Caches the result of any request implementing <see cref="ICacheableQuery"/> (FR-XC-002/003).
-/// Backed by <see cref="IMemoryCache"/> for now; F-Caching later swaps this to a distributed
-/// (Redis) backend behind the same contract without touching callers (NFR-SCALE-2).
+/// Caches the result of any request implementing <see cref="ICacheableQuery"/> (FR-XC-002/003) through <see cref="ICacheService"/>, so the same
+/// requests are cached in memory on one node or in a shared distributed cache across nodes, by configuration alone (F-Caching FR-CACHE-002).
+/// A cached response must be serializable to JSON.
 /// </summary>
-public class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : IPipelineBehavior<TRequest, TResponse>
+public class CachingBehavior<TRequest, TResponse>(ICacheService cache) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
@@ -16,11 +16,6 @@ public class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : IPipelin
         if (request is not ICacheableQuery cacheable)
             return await next(ct);
 
-        if (cache.TryGetValue(cacheable.CacheKey, out TResponse? cached) && cached is not null)
-            return cached;
-
-        var response = await next(ct);
-        cache.Set(cacheable.CacheKey, response, TimeSpan.FromSeconds(cacheable.AbsoluteExpirationSeconds));
-        return response;
+        return await cache.GetOrAddAsync($"query:{cacheable.CacheKey}", _ => next(ct), TimeSpan.FromSeconds(cacheable.AbsoluteExpirationSeconds), ct);
     }
 }

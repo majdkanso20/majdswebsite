@@ -16,6 +16,7 @@
     <Project Path="src/MajdsApp.Modules.Dashboard/MajdsApp.Modules.Dashboard.csproj" />
     <Project Path="src/MajdsApp.Modules.Exports/MajdsApp.Modules.Exports.csproj" />
     <Project Path="src/MajdsApp.Modules.Localization/MajdsApp.Modules.Localization.csproj" />
+    <Project Path="src/MajdsApp.Modules.ApiDocs/MajdsApp.Modules.ApiDocs.csproj" />
     <Project Path="src/MajdsApp.Modules.Roles/MajdsApp.Modules.Roles.csproj" />
     <Project Path="src/MajdsApp.Modules.Search/MajdsApp.Modules.Search.csproj" />
     <Project Path="src/MajdsApp.Modules.Settings/MajdsApp.Modules.Settings.csproj" />

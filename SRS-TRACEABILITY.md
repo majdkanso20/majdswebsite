@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 100 |
-| PARTIAL | 84 |
-| MISSING | 17 |
+| DONE | 107 |
+| PARTIAL | 80 |
+| MISSING | 14 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -34,9 +34,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Export | 5 | 4 | 1 | 0 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 5 | 0 | 0 |
-| F-Health | 4 | 1 | 2 | 1 |
-| F-ApiDocs | 4 | 1 | 2 | 1 |
-| F-Caching | 3 | 0 | 2 | 1 |
+| F-Health | 4 | 3 | 1 | 0 |
+| F-ApiDocs | 4 | 4 | 0 | 0 |
+| F-Caching | 3 | 2 | 1 | 0 |
 | F-Features | 4 | 4 | 0 | 0 |
 | F-Search | 4 | 4 | 0 | 0 |
 
@@ -124,9 +124,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - Jobs: DONE 001 (recurring jobs by interval or cron expression, plus persisted fire-and-forget and delayed jobs through `IBackgroundJobQueue`), 002 (queued jobs are stored in `BackgroundJobs` and survive a restart; a failure is retried with 10 s, 20 s, 40 s ... up to an hour, then left failed and the administrators are told; a failed recurring run is retried after 1, 2 and 4 minutes; a job left running by a restart is run again, and one that keeps crashing the process still ends up failed; tested), 003 (queue view with status filter, retry and delete, gated by `Jobs.View` / `Jobs.Manage`; recurring jobs show their last result, failure streak and next run, and can be run now), 004 (the queuing user's id and name and a parameter map are stored with the job and handed to it), 005 (audit retention, notification cleanup, export cleanup, orphaned uploaded files and abandoned plugin staging folders). Not done: no built-in feature uses the queue yet (exports and email delivery keep their own persisted queues), and a single node is assumed for the recurring scheduler.
 
 ## F-Health / F-ApiDocs / F-Caching
-- Health: DONE 004. PARTIAL 001 (DB and file storage only), 003 (correlation id, no trace propagation). MISSING 002 metrics.
-- ApiDocs: DONE 002 (bearer definition; no security requirement added, UI attach not verified). PARTIAL 001, 004 (development-only gate). MISSING 003 versioning.
-- Caching: PARTIAL 001 (no cache abstraction; `IMemoryCache` used directly), 003 (caches exist; invalidation not fully read). MISSING 002 Redis.
+- Health: DONE 001 (readiness checks the database, file storage, cache and email; a critical one down is a 503, a non-critical one is Degraded), 002 (`/metrics` in the Prometheus format: request rate, latency and errors by status code, guarded by `Metrics:Token`), 004 (readiness goes unhealthy when a critical dependency is down; tested). PARTIAL 003 (the correlation id is the W3C trace id, an incoming `traceparent` is continued, the id is carried as baggage and on every log line; spans are not exported to a tracing backend).
+- ApiDocs: DONE 001 (an OpenAPI document generated from the controllers, described as the `ResponseDto` envelope; a new endpoint appears by itself), 002 (a bearer scheme applied to every operation, so the UI's Authorize sends the token), 003 (API versioning by query or header with 1.0 as the default, one document per version; only 1.0 exists and a 2.0 controller in the test project proves a new version documents itself), 004 (off outside Development unless `Docs:Enabled`; then `Docs:Access` = `Permission` (`Docs.View`), `Authenticated` or `Open`). Not done: generating the Angular client from the document.
+- Caching: DONE 001 (`ICacheService`: get, set with a time to live, remove, get-or-add), 003 (permissions, settings, feature flags and cacheable queries use it and are invalidated on write; tested on the serializing path). PARTIAL 002 (Redis is selected by `Cache:Provider=Redis` and its wiring is tested, and a shared distributed cache is proven with two simulated servers, but nothing has been run against a live Redis server, so AC-CACHE-1 is not verified end to end).
 
 ## F-Features / F-Search
 - Features: all 4 DONE (per-user override is optional in the spec and absent).
@@ -135,26 +135,27 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 ## Non-functional requirements (updated 2026-09-24)
 - DONE: NFR-SEC-1 deny-by-default (fallback authorization policy; verified anonymous 401 on unmarked endpoints, Identity `/manage/*` still protected), NFR-SEC-4 rate limiting (auth endpoints 10/min per IP, exports and search 30/min per user, global 600/min; verified 429 with the standard envelope and `Retry-After`), NFR-SEC-6 no stack traces to clients, NFR-MAINT-1 modular projects, NFR-OBS-1 correlation and user id in logs.
 - PARTIAL: NFR-SEC-2 HTTPS redirect, config-driven CORS, HSTS (non-development only) and security headers (nosniff, frame deny, referrer policy, permissions policy, COOP, strict CSP; verified on responses). Remaining: the Angular host serves its own headers, which are not configured; HTTPS-only is not enforced in development. NFR-SEC-3 (sort allow-list only partly checked), SEC-5 (settings secrets encrypted at rest; SMTP config secrets still live in user-secrets), PERF-1..4 (nothing measured), SCALE-1 (SQLite and in-memory caches; limiter counters are per instance), OBS-2 (health only), A11Y-1, PRIV-1, PRIV-2.
-- MISSING: NFR-SCALE-2 Redis backplane for SignalR (hub itself exists), NFR-MAINT-3 CI and .NET analyzers (frontend ESLint and Stylelint now exist).
+- MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
-## Definition of Done — tests (updated 2026-09-24)
-- **Backend: 121 automated tests** in `src/MajdsApp.Tests` (114) and `src/MajdsApp.Tests.Plugins` (7, a separate process because EF caches its model per process), run with `dotnet test MajdsApp.slnx` (about 10 seconds). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request. 53 unit tests (redaction, secrets encryption, permission and settings registries, paging, response envelope, plugin manifest rejection) and 68 integration tests that host the real application in-process on a throwaway SQLite database built from the project's own migrations.
-- **Covered end to end:** deny-by-default and hardening headers, login and deactivated accounts, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, audit trail (changes, redaction, refusals, failures, filters, append-only), notifications and per-type opt-out, forgot/reset password and registration, and a real runtime plugin load (the sample Tasks plugin is built separately, dropped into a temporary plugins folder, and exercised through its API, permissions, menu and enable/disable).
-- **Frontend: 37 automated tests** (vitest via `ng test`): menu filtering and live plugin replacement, theme and skin persistence, the auth and error interceptors, the login page, the data grid (template overrides, card-layout labels, empty state) and the error state. Run with `npm test` in `src/majds-app-web`.
-- **Bugs the tests found and that are now fixed:** (1) removing the Administrator role from the last administrator by editing the user was allowed (FR-USER-007); (2) a user's cached permissions were not refreshed after their roles changed, so a newly granted permission did not apply until the cache expired (FR-AUTHZ-006, AC-AUTHZ-2).
-- **Not covered:** browser end-to-end tests (Playwright), the two-factor and Google sign-in flows, file upload and download, CSV export contents, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a CI pipeline that runs them.
-- **Documentation:** every project now has a README (24 in total: root, platform projects, all 15 modules, the sample plugin, the plugins folder, the tests, the frontend and the Razor site). Each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys. A CI pipeline now exists (see above).
+## Definition of Done — tests (updated 2026-09-25)
+- **Backend: 318 automated tests** in `src/MajdsApp.Tests` (284) and `src/MajdsApp.Tests.Plugins` (34, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
+- **Frontend: 104 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
+- **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
+- **Not covered:** browser end-to-end tests (Playwright), the two-factor and Google sign-in flows, the file upload and download endpoints over HTTP, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a live Redis server.
+- **Documentation:** every project has a README, including one for each module; each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys.
 
-## Outside the SRS but blocking
-- Gmail SMTP credentials are rejected (535), so no email works: registration confirmation, admin reset and forgot-password. Regenerate the app password.
+## Outside the SRS
+- Email works end to end (registration confirmation, forgot-password, admin reset, notification email). The 535 rejection was not a bad password: the API never read `Email:Smtp` into its options.
 - The SRS's P1 note says `Errors` stays `[JsonIgnore]`; this project deliberately serializes it, which the same note lists as an allowed revision, so validation messages reach the UI.
 
 ## Order the gaps were closed, and what is left
-Done (2026-09-24): notifications with SignalR and preferences; user-scope and encrypted settings; security hardening (deny-by-default, rate limiting, headers, HSTS); audit trail; frontend rules, skins, PWA build and container queries; automated tests; READMEs.
+Done (2026-09-24): notifications with SignalR and preferences; user-scope and encrypted settings; security hardening; audit trail; frontend rules, skins, PWA build and container queries; automated tests; READMEs; CI; working email.
 
-Still open, roughly by value:
-1. P5 remainder: digital signatures, per-plugin settings and database schema, lifecycle hooks, dependency resolution, applying changes without a restart.
-2. Browser end-to-end tests, a CI pipeline, and tests for two-factor, Google sign-in, files, jobs and SignalR delivery.
-3. F-Export (background imports), generic repository adoption (P3), Polly and Mapster (P4).
-4. SMS and push notification channels, localized templates, backend localization, Redis cache and SignalR backplane, OpenTelemetry metrics.
-5. Working SMTP credentials (currently rejected), so email can be demonstrated end to end.
+Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
+
+Still open, roughly by value (14 requirements are missing and 80 are partial):
+1. P5: per-plugin settings and database schema, lifecycle hooks, dependency resolution, frontend bundles and static assets, CSS isolation, shared-dependency checks, plugin localization, digital signatures, applying changes without a restart.
+2. P4: decorators, Polly resilience and Mapster mapping; P2: per-module options validated on start; P3: adopting the generic repository (most partial items are here and in P5).
+3. F-Notifications SMS and push channels; F-Files soft delete and a storage interface.
+4. Verification: browser end-to-end tests, a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

@@ -1,13 +1,13 @@
 using MajdsApp.Data;
+using MajdsApp.SharedKernel.Caching;
 using MajdsApp.SharedKernel.Features;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace MajdsApp.Modules.Features;
 
 /// <summary>Database-backed feature checker: override if present, else the definition's default.
 /// Cached like <c>SettingsProvider</c> and invalidated on change.</summary>
-public class FeatureChecker(ApplicationDbContext db, IMemoryCache cache) : IFeatureChecker
+public class FeatureChecker(ApplicationDbContext db, ICacheService cache) : IFeatureChecker
 {
     private const string CacheKey = "features:effective";
 
@@ -19,12 +19,11 @@ public class FeatureChecker(ApplicationDbContext db, IMemoryCache cache) : IFeat
 
     public void Invalidate() => cache.Remove(CacheKey);
 
-    private async Task<IReadOnlyDictionary<string, bool>> LoadAsync(CancellationToken ct) =>
-        await cache.GetOrCreateAsync(CacheKey, async entry =>
+    private Task<Dictionary<string, bool>> LoadAsync(CancellationToken ct) =>
+        cache.GetOrAddAsync(CacheKey, async token =>
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            var overrides = await db.Set<FeatureOverride>().AsNoTracking().ToDictionaryAsync(f => f.Name, f => f.IsEnabled, ct);
-            return (IReadOnlyDictionary<string, bool>)FeatureDefinitionRegistry.GetAll()
+            var overrides = await db.Set<FeatureOverride>().AsNoTracking().ToDictionaryAsync(f => f.Name, f => f.IsEnabled, token);
+            return FeatureDefinitionRegistry.GetAll()
                 .ToDictionary(f => f.Name, f => overrides.TryGetValue(f.Name, out var v) ? v : f.DefaultEnabled);
-        }) ?? new Dictionary<string, bool>();
+        }, TimeSpan.FromMinutes(5), ct);
 }

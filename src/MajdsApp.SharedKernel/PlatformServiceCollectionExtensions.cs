@@ -3,6 +3,7 @@ using FluentValidation;
 using MajdsApp.SharedKernel.Api;
 using MajdsApp.SharedKernel.Audit;
 using MajdsApp.SharedKernel.Behaviors;
+using MajdsApp.SharedKernel.Caching;
 using MajdsApp.SharedKernel.Features;
 using MajdsApp.SharedKernel.Localization;
 using MajdsApp.SharedKernel.Modules;
@@ -32,6 +33,7 @@ public static class PlatformServiceCollectionExtensions
         this IServiceCollection services, IConfiguration configuration, params Assembly[] moduleAssemblies)
     {
         services.AddHttpContextAccessor();
+        services.AddPlatformCaching(configuration);
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.TryAddScoped<IPermissionChecker, AllowAllPermissionChecker>();
         services.TryAddScoped<ISettingsProvider, DefaultSettingsProvider>();

@@ -1,5 +1,7 @@
 using MajdsApp.Configuration;
 using MajdsApp.Data;
+using MajdsApp.Modules.ApiDocs;
+using MajdsApp.Modules.Health;
 using MajdsApp.Modules.Localization;
 using MajdsApp.Services;
 using MajdsApp.SharedKernel;
@@ -8,7 +10,6 @@ using MajdsApp.SharedKernel.Modules;
 using MajdsApp.SharedKernel.Plugins;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +34,8 @@ var moduleAssemblies = new[]
     typeof(MajdsApp.Modules.Plugins.PluginsModule).Assembly,
     typeof(MajdsApp.Modules.Dashboard.DashboardModule).Assembly,
     typeof(MajdsApp.Modules.Exports.ExportsModule).Assembly,
-    typeof(MajdsApp.Modules.Localization.LocalizationModule).Assembly
+    typeof(MajdsApp.Modules.Localization.LocalizationModule).Assembly,
+    typeof(MajdsApp.Modules.ApiDocs.ApiDocsModule).Assembly
 };
 
 // P5: runtime-deployable plugins. Each subfolder of the plugins directory with a plugin.json +
@@ -159,19 +161,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Majd's App API", Version = "v1" });
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Paste the access token (no 'Bearer ' prefix needed here)."
-    });
-});
+builder.Services.AddPlatformApiDocs(); // API versioning and the OpenAPI documents (F-ApiDocs)
 
 var app = builder.Build();
 
@@ -185,12 +175,8 @@ using (var scope = app.Services.CreateScope())
     await MajdsApp.Modules.Plugins.PluginRegistrySync.SyncAsync(pluginDb, loadedPlugins, pluginCache);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+// Metrics wrap everything, including the exception handler, so an error the handler turns into a 403 or 500 is counted with its real status (F-Health).
+app.UsePlatformMetrics();
 app.UsePlatformCore();
 
 if (!app.Environment.IsDevelopment())
@@ -201,6 +187,7 @@ app.UseHttpsRedirection();
 app.UseCors(SpaCorsPolicy);
 
 app.UseAuthentication();
+app.UsePlatformApiDocs(); // after authentication: outside Development the docs need a signed-in user with Docs.View (F-ApiDocs)
 app.UsePlatformLocalization(); // after authentication: a signed-in user's saved language decides the response language when the client does not ask for one
 
 // Enforces the session-timeout setting: a sign-in older than the configured number of minutes is

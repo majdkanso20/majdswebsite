@@ -1,7 +1,7 @@
 using MajdsApp.Data;
+using MajdsApp.SharedKernel.Caching;
 using MajdsApp.SharedKernel.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace MajdsApp.Modules.Authorization;
 
@@ -11,22 +11,20 @@ namespace MajdsApp.Modules.Authorization;
 /// user grants, minus direct user denies — except the seeded "Admin" role, which implicitly holds
 /// every permission and can never be locked out (FR-AUTHZ-007).
 /// </summary>
-public class PermissionChecker(ApplicationDbContext db, ICurrentUser currentUser, IMemoryCache cache) : IPermissionChecker
+public class PermissionChecker(ApplicationDbContext db, ICurrentUser currentUser, ICacheService cache) : IPermissionChecker
 {
     public const string SuperAdminRoleName = "Admin";
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
     public async Task<bool> HasPermissionAsync(string permission, CancellationToken ct = default)
     {
         if (currentUser.UserId is null)
             return false;
 
-        var effective = await cache.GetOrCreateAsync(CacheKey(currentUser.UserId), async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            return await ComputeEffectivePermissionsAsync(currentUser.UserId, ct);
-        });
+        var effective = await cache.GetOrAddAsync(CacheKey(currentUser.UserId),
+            token => ComputeEffectivePermissionsAsync(currentUser.UserId, token), CacheTtl, ct);
 
-        return effective is not null && (effective.IsSuperAdmin || effective.Permissions.Contains(permission));
+        return effective.IsSuperAdmin || effective.Permissions.Contains(permission);
     }
 
     private async Task<EffectivePermissions> ComputeEffectivePermissionsAsync(string userId, CancellationToken ct)
@@ -62,14 +60,8 @@ public class PermissionChecker(ApplicationDbContext db, ICurrentUser currentUser
         if (currentUser.UserId is null)
             return [];
 
-        var effective = await cache.GetOrCreateAsync(CacheKey(currentUser.UserId), async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            return await ComputeEffectivePermissionsAsync(currentUser.UserId, ct);
-        });
-
-        if (effective is null)
-            return [];
+        var effective = await cache.GetOrAddAsync(CacheKey(currentUser.UserId),
+            token => ComputeEffectivePermissionsAsync(currentUser.UserId, token), CacheTtl, ct);
 
         return effective.IsSuperAdmin ? PermissionRegistry.GetAllPermissionNames() : effective.Permissions.ToList();
     }
@@ -86,5 +78,6 @@ public class PermissionChecker(ApplicationDbContext db, ICurrentUser currentUser
 
     private static string CacheKey(string userId) => $"permissions:{userId}";
 
-    private record EffectivePermissions(bool IsSuperAdmin, IReadOnlySet<string> Permissions);
+    /// <summary>What is cached per user. A record of plain types, because a shared cache stores it as JSON.</summary>
+    public sealed record EffectivePermissions(bool IsSuperAdmin, HashSet<string> Permissions);
 }

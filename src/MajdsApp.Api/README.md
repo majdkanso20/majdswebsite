@@ -8,7 +8,7 @@ The API host. It contains almost no logic: it loads modules and plugins, configu
 dotnet run --project src/MajdsApp.Api --launch-profile http     # http://localhost:5156
 ```
 
-Swagger UI is at `/swagger` in the Development environment only. Health probes: `/health/live` and `/health/ready` (public, not wrapped in the response envelope).
+API documentation is at `/swagger` (one OpenAPI document per API version; the **Authorize** button takes the token from `POST /api/identity/login`). It is open in Development; elsewhere it is off unless `Docs:Enabled` is `true` and then needs a signed-in user with `Docs.View` (`Docs:Access` relaxes that). Health probes are `/health/live` and `/health/ready`, and `/metrics` serves request rate, latency and errors in the Prometheus format (guarded by `Metrics:Token`); none of these is wrapped in the response envelope.
 
 ## Startup, in order
 
@@ -18,7 +18,7 @@ Swagger UI is at `/swagger` in the Development environment only. Health probes: 
 4. Registers the platform pipeline and every module (`AddPlatformCore`, `AddPlatformControllers`).
 5. After build: seeds the `Admin` and `User` roles and reconciles the plugin registry with the database.
 
-Middleware order: Swagger (Development only), correlation id, security headers, exception handling, HSTS (not Development), HTTPS redirection, CORS, authentication, session-timeout check, rate limiter, authorization, endpoints.
+Middleware order: metrics, correlation id, security headers, exception handling, HSTS (not Development), HTTPS redirection, CORS, authentication, API docs gate and Swagger, request language, session-timeout check, rate limiter, authorization, endpoints. Metrics sit outside the exception handler so an error turned into a 403 or 500 is counted with its real status.
 
 ## Sign-in
 

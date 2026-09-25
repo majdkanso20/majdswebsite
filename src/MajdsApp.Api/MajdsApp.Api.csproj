@@ -15,7 +15,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.12" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +38,7 @@
     <ProjectReference Include="..\MajdsApp.Modules.Dashboard\MajdsApp.Modules.Dashboard.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Exports\MajdsApp.Modules.Exports.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Localization\MajdsApp.Modules.Localization.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.ApiDocs\MajdsApp.Modules.ApiDocs.csproj" />
   </ItemGroup>
 
 </Project>

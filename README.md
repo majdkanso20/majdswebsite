@@ -69,6 +69,11 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `Authentication:Google:ClientId` `ClientSecret` | Enables "Continue with Google" | unset (off) |
 | `Authentication:Microsoft:ClientId` `ClientSecret` | Enables "Continue with Microsoft" | unset (off) |
 | `WebApp:BaseUrl` | Where admin-initiated password-reset links point (the Razor site) | `http://localhost:5132` |
+| `Cache:Provider` | `Memory` (one server), `Redis` (shared by every server) or `Distributed` (a distributed cache held in this process, for testing the shared path) | `Memory` |
+| `Cache:Redis:ConnectionString`, `Cache:KeyPrefix` | Redis address; a prefix so several applications can share one Redis | unset, `majds:` |
+| `Metrics:Token` / `Metrics:AllowAnonymous` / `Metrics:Enabled` | `/metrics` needs this bearer token; with none it is open only in Development (or when anonymous access is allowed); `false` turns it off | unset |
+| `Docs:Enabled` / `Docs:Access` | Outside Development the API docs (`/swagger`) are off unless `Docs:Enabled` is `true`; `Docs:Access` is `Permission` (needs `Docs.View`), `Authenticated` or `Open` | off, `Permission` |
+| `Jobs:Scheduler:Enabled` / `Jobs:Worker:Enabled` | Turn the recurring-job scheduler or the queue worker off on a server | on |
 | `MediatR:LicenseKey` | Required for production use of MediatR | unset |
 
 Runtime behavior that administrators change without a redeploy (application name, session timeout, self-registration, upload size, mail server, retention, feature flags) is under **Settings** and **Features** in the app.

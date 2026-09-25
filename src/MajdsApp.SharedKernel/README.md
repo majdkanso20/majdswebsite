@@ -80,3 +80,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Localization
 
 `Localization/IMessageCatalog.cs` translates the server's own text (English is the key; templates use `{0}`). The catalog and the request-language selection are in `MajdsApp.Modules.Localization`. `HttpContext.Localize(text)` translates into the current request's language; the exception middleware, the model-state response, the plugin gate and the rate limiter use it.
+
+## Caching
+
+`Caching/ICacheService.cs` is the platform's cache: get, set with a time to live, remove, and get-or-add. `Cache:Provider` chooses the backend by configuration: `Memory` (one server), `Redis` (`Cache:Redis:ConnectionString`; shared by every server) or `Distributed` (a distributed cache held in this process). Values must be serializable to JSON, since a distributed backend stores them outside the process. A cache that cannot be reached is a miss and is logged, never an error. Permissions, settings, feature flags and cacheable MediatR queries use it, so with Redis a write on one server invalidates the cache on all of them.

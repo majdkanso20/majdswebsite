@@ -1,8 +1,8 @@
 using MajdsApp.Data;
+using MajdsApp.SharedKernel.Caching;
 using MajdsApp.SharedKernel.Settings;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace MajdsApp.Modules.Settings;
 
@@ -11,7 +11,7 @@ namespace MajdsApp.Modules.Settings;
 /// the admin override in <see cref="SettingValue"/> if one exists, else the definition's default —
 /// resolved once per cache window, same shape as F-Authorization's <c>PermissionChecker</c>.
 /// </summary>
-public class SettingsProvider(ApplicationDbContext db, IMemoryCache cache, IDataProtectionProvider dataProtection) : ISettingsProvider
+public class SettingsProvider(ApplicationDbContext db, ICacheService cache, IDataProtectionProvider dataProtection) : ISettingsProvider
 {
     private const string CacheKey = "settings:effective";
 
@@ -32,11 +32,9 @@ public class SettingsProvider(ApplicationDbContext db, IMemoryCache cache, IData
 
     public async Task<IReadOnlyDictionary<string, string>> GetAllAsync(CancellationToken ct = default)
     {
-        var effective = await cache.GetOrCreateAsync(CacheKey, async entry =>
+        return await cache.GetOrAddAsync(CacheKey, async token =>
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-
-            var overrides = await db.Set<SettingValue>().ToDictionaryAsync(s => s.Id, s => s.Value, ct);
+            var overrides = await db.Set<SettingValue>().ToDictionaryAsync(s => s.Id, s => s.Value, token);
             var result = new Dictionary<string, string>();
             foreach (var definition in SettingDefinitionRegistry.GetAll())
             {
@@ -47,9 +45,7 @@ public class SettingsProvider(ApplicationDbContext db, IMemoryCache cache, IData
             }
 
             return result;
-        });
-
-        return effective ?? new Dictionary<string, string>();
+        }, TimeSpan.FromMinutes(5), ct);
     }
 
     public void Invalidate() => cache.Remove(CacheKey);
@@ -60,11 +56,9 @@ public class SettingsProvider(ApplicationDbContext db, IMemoryCache cache, IData
         if (string.IsNullOrEmpty(userId))
             return app;
 
-        var overrides = await cache.GetOrCreateAsync(UserCacheKey(userId), async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            return await db.Set<SettingUserValue>().Where(s => s.UserId == userId).ToDictionaryAsync(s => s.Name, s => s.Value, ct);
-        }) ?? new Dictionary<string, string>();
+        var overrides = await cache.GetOrAddAsync(UserCacheKey(userId),
+            token => db.Set<SettingUserValue>().Where(s => s.UserId == userId).ToDictionaryAsync(s => s.Name, s => s.Value, token),
+            TimeSpan.FromMinutes(5), ct);
 
         var allowed = SettingDefinitionRegistry.GetAll().Where(d => d.AllowUserOverride).Select(d => d.Name).ToHashSet();
         var result = new Dictionary<string, string>(app);
