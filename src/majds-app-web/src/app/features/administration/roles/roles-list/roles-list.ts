@@ -1,4 +1,5 @@
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
+import { LocalizationService } from '../../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -26,6 +27,7 @@ export class RolesList {
   private readonly rolesApi = inject(RolesApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
 
   readonly columns: GridColumn<RoleDto>[] = [
     { key: 'name', header: 'Name', sortable: true },
@@ -101,7 +103,7 @@ export class RolesList {
   }
 
   deleteRole(role: RoleDto): void {
-    if (!confirm(`Delete role '${role.name}'?`)) return;
+    if (!confirm(this.l10n.translate("Delete role '{0}'?", role.name))) return;
     this.rolesApi.delete(role.id).subscribe({
       next: () => {
         this.snackBar.open('Role deleted.', 'Dismiss', { duration: 3000 });

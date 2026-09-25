@@ -1,5 +1,6 @@
 using MajdsApp.Configuration;
 using MajdsApp.Data;
+using MajdsApp.Modules.Localization;
 using MajdsApp.Services;
 using MajdsApp.SharedKernel;
 using MajdsApp.SharedKernel.Data;
@@ -31,7 +32,8 @@ var moduleAssemblies = new[]
     typeof(MajdsApp.Modules.ExternalLogin.ExternalLoginModule).Assembly,
     typeof(MajdsApp.Modules.Plugins.PluginsModule).Assembly,
     typeof(MajdsApp.Modules.Dashboard.DashboardModule).Assembly,
-    typeof(MajdsApp.Modules.Exports.ExportsModule).Assembly
+    typeof(MajdsApp.Modules.Exports.ExportsModule).Assembly,
+    typeof(MajdsApp.Modules.Localization.LocalizationModule).Assembly
 };
 
 // P5: runtime-deployable plugins. Each subfolder of the plugins directory with a plugin.json +
@@ -199,6 +201,7 @@ app.UseHttpsRedirection();
 app.UseCors(SpaCorsPolicy);
 
 app.UseAuthentication();
+app.UsePlatformLocalization(); // after authentication: a signed-in user's saved language decides the response language when the client does not ask for one
 
 // Enforces the session-timeout setting: a sign-in older than the configured number of minutes is
 // rejected with 401, which the SPA turns into a redirect to the login page.

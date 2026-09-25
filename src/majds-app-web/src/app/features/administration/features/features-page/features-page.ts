@@ -8,6 +8,7 @@ import { environment } from '../../../../../environments/environment';
 import { ResponseDto } from '../../../../core/models/response-dto';
 import { FeaturesService } from '../../../../core/services/features.service';
 import { PermissionService } from '../../../../core/services/permission.service';
+import { LocalizationService } from '../../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface FeatureDto {
@@ -28,6 +29,7 @@ interface FeatureDto {
 export class FeaturesPage {
   private readonly http = inject(HttpClient);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
   private readonly featuresService = inject(FeaturesService);
   readonly canEdit = inject(PermissionService).has('Features.Edit');
 
@@ -41,7 +43,7 @@ export class FeaturesPage {
     try {
       await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/features/set`, { name: feature.name, enabled }));
       await this.featuresService.loadAsync(); // menu and routes react immediately
-      this.snackBar.open(`${feature.displayName}: ${enabled ? 'enabled' : 'disabled'}.`, 'Dismiss', { duration: 3000 });
+      this.snackBar.open(this.l10n.translate(enabled ? '{0}: enabled.' : '{0}: disabled.', feature.displayName), 'Dismiss', { duration: 3000 });
     } catch {
       this.snackBar.open('Something went wrong.', 'Dismiss', { duration: 4000 });
     }

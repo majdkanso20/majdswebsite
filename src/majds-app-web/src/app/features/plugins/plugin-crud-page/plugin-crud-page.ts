@@ -1,3 +1,4 @@
+import { LocalizationService } from '../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
@@ -33,6 +34,7 @@ export class PluginCrudPage {
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
 
   // The dynamically-registered route's own path segment doubles as the API path segment by
   // convention (PluginsService registers both from the same manifest `route` value).
@@ -115,7 +117,7 @@ export class PluginCrudPage {
   }
 
   deleteRow(row: PluginRecord): void {
-    if (!confirm('Delete this record?')) return;
+    if (!confirm(this.l10n.translate('Delete this record?'))) return;
     firstValueFrom(this.http.post<ResponseDto<null>>(`${this.apiBase}/delete`, { id: row['id'] })).then(
       () => {
         this.snackBar.open('Deleted.', 'Dismiss', { duration: 3000 });

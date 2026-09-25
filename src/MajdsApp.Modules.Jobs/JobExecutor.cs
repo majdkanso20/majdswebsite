@@ -51,7 +51,7 @@ public class JobExecutor(ApplicationDbContext db, IUserNotificationPublisher not
             var failuresInARow = JobSchedule.ConsecutiveFailures(previous) + 1;
 
             if (trigger == "Manual" || failuresInARow > JobSchedule.MaxRetries)
-                await notifications.PublishToRoleAsync("Admin", "Background job failed", $"{job.Name}: {run.Error}", NotificationTypes.Administration, CancellationToken.None);
+                await notifications.PublishToRoleAsync("Admin", "Background job failed", $"The job '{job.Name}' failed: {run.Error}", NotificationTypes.Administration, CancellationToken.None);
         }
 
         return true;

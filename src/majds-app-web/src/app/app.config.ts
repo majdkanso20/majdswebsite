@@ -8,6 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatedPaginatorIntl, TranslatingSnackBar } from './core/i18n/translating-material';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { languageInterceptor } from './core/interceptors/language.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { PluginsService } from './core/services/plugins.service';
@@ -16,7 +17,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([languageInterceptor, authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     // Installable PWA with an offline app shell (FR-MOB-007). Production builds only: a service worker
     // in `ng serve` would serve stale bundles during development.

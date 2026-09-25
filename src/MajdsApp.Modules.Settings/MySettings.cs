@@ -44,7 +44,8 @@ public class UpdateMySettingsCommandValidator : AbstractValidator<UpdateMySettin
     }
 }
 
-public class UpdateMySettingsCommandHandler(ApplicationDbContext db, ISettingsProvider settings, ICurrentUser currentUser)
+public class UpdateMySettingsCommandHandler(
+    ApplicationDbContext db, ISettingsProvider settings, ICurrentUser currentUser, MajdsApp.SharedKernel.Localization.IMessageCatalog catalog)
     : IRequestHandler<UpdateMySettingsCommand>
 {
     public async Task Handle(UpdateMySettingsCommand request, CancellationToken ct)
@@ -62,8 +63,7 @@ public class UpdateMySettingsCommandHandler(ApplicationDbContext db, ISettingsPr
             if (!IsValid(item.Value, definition.DataType))
                 throw new ValidationException($"'{item.Value}' is not a valid value for '{item.Name}'.");
 
-            if (item.Name == "Appearance.Timezone" && !TimeZoneInfo.TryFindSystemTimeZoneById(item.Value, out _))
-                throw new ValidationException($"'{item.Value}' is not a known time zone.");
+            SettingValueRules.Check(item.Name, item.Value, catalog);
 
             var row = existing.FirstOrDefault(s => s.Name == item.Name);
             var appValue = app.GetValueOrDefault(item.Name, definition.DefaultValue);

@@ -1,5 +1,7 @@
 using MajdsApp.Data;
+using MajdsApp.SharedKernel.Localization;
 using MajdsApp.SharedKernel.Notifications;
+using MajdsApp.SharedKernel.Settings;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +12,8 @@ namespace MajdsApp.Modules.Notifications;
 /// choices, writes and pushes the in-app notification in real time, and queues email for the
 /// background worker. Callers depend only on <see cref="IUserNotificationPublisher"/>.
 /// </summary>
-public class NotificationPublisher(ApplicationDbContext db, IHubContext<NotificationHub> hub) : IUserNotificationPublisher
+public class NotificationPublisher(
+    ApplicationDbContext db, IHubContext<NotificationHub> hub, IMessageCatalog catalog, ISettingsProvider settings) : IUserNotificationPublisher
 {
     public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) =>
         DispatchAsync([userId], title, message, type, ct, link);
@@ -46,13 +49,19 @@ public class NotificationPublisher(ApplicationDbContext db, IHubContext<Notifica
         {
             var channels = choices.TryGetValue(userId, out var c) ? c : NotificationChannel.All;
 
+            // Each recipient gets the text in their own language (F-Localization FR-I18N-002): their saved language, else the
+            // application default. Text with no translation (for example one an administrator wrote by hand) is left as written.
+            var culture = (await settings.GetAllForUserAsync(userId, ct)).GetValueOrDefault("General.DefaultLanguage") ?? "en";
+            var localizedTitle = catalog.Translate(title, culture);
+            var localizedMessage = catalog.Translate(message, culture);
+
             if (channels.HasFlag(NotificationChannel.InApp))
-                inApp.Add(new Notification { UserId = userId, Type = type, Title = title, Message = message, Link = link, CreatedAt = now });
+                inApp.Add(new Notification { UserId = userId, Type = type, Title = localizedTitle, Message = localizedMessage, Link = link, CreatedAt = now });
 
             if (channels.HasFlag(NotificationChannel.Email))
                 db.Set<NotificationDelivery>().Add(new NotificationDelivery
                 {
-                    UserId = userId, Channel = NotificationChannel.Email, Type = type, Title = title, Message = message,
+                    UserId = userId, Channel = NotificationChannel.Email, Type = type, Title = localizedTitle, Message = localizedMessage,
                     Status = DeliveryStatus.Pending, CreatedAt = now, NextAttemptAt = now
                 });
         }

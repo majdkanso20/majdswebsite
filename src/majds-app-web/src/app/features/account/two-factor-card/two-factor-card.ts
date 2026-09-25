@@ -9,6 +9,7 @@ import QRCode from 'qrcode';
 import { AccountService } from '../../../core/services/account.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
 import { TwoFactorService, TwoFactorState } from '../../../core/services/two-factor.service';
+import { LocalizationService } from '../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** Two-factor authentication setup and management (F-Account). */
@@ -24,6 +25,7 @@ export class TwoFactorCard {
   private readonly account = inject(AccountService);
   private readonly appSettings = inject(AppSettingsService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
 
   readonly state = signal<TwoFactorState | null>(null);
   readonly busy = signal(false);
@@ -90,7 +92,7 @@ export class TwoFactorCard {
   }
 
   async disable(): Promise<void> {
-    if (!confirm('Turn off two-factor authentication? Your account will be protected by your password only.')) return;
+    if (!confirm(this.l10n.translate('Turn off two-factor authentication? Your account will be protected by your password only.'))) return;
 
     await this.run(async () => {
       this.state.set(await this.twoFactor.disable());

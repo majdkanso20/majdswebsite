@@ -1,3 +1,4 @@
+import { FormattingService } from '../../../../core/i18n/formatting.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -20,11 +21,13 @@ export class AuditLogDetailDialog {
 
   readonly entry = signal<AuditLogEntryDetailDto | null>(null);
 
+  private readonly fmt = inject(FormattingService);
+
   constructor() {
     this.api.get(this.data.id).subscribe((entry) => this.entry.set(entry));
   }
 
   when(entry: AuditLogEntryDetailDto): string {
-    return new Date(entry.createdAt + 'Z').toLocaleString();
+    return this.fmt.date(entry.createdAt);
   }
 }

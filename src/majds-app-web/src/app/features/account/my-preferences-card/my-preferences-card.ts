@@ -25,9 +25,11 @@ export class MyPreferencesCard {
 
   readonly languages = LANGUAGES;
   readonly timezones = ['UTC', ...Intl.supportedValuesOf('timeZone').filter((z) => z !== 'UTC')];
+  readonly currencies = Intl.supportedValuesOf('currency');
 
   readonly language = signal('en');
   readonly timezone = signal('UTC');
+  readonly currency = signal('USD');
   readonly defaults = signal<Record<string, string>>({});
   readonly saving = signal(false);
 
@@ -36,6 +38,7 @@ export class MyPreferencesCard {
       const byName = (n: string): MySetting | undefined => rows.find((r) => r.name === n);
       this.language.set(byName('General.DefaultLanguage')?.value ?? 'en');
       this.timezone.set(byName('Appearance.Timezone')?.value ?? 'UTC');
+      this.currency.set(byName('Appearance.Currency')?.value ?? 'USD');
       this.defaults.set(Object.fromEntries(rows.map((r) => [r.name, r.defaultValue])));
     });
   }
@@ -45,7 +48,8 @@ export class MyPreferencesCard {
     try {
       await this.settings.saveAsync([
         { name: 'General.DefaultLanguage', value: this.language() },
-        { name: 'Appearance.Timezone', value: this.timezone() }
+        { name: 'Appearance.Timezone', value: this.timezone() },
+        { name: 'Appearance.Currency', value: this.currency() }
       ]);
       await this.localization.set(this.language());
       this.snackBar.open('Preferences saved.', 'Dismiss', { duration: 3000 });
@@ -59,5 +63,6 @@ export class MyPreferencesCard {
   reset(): void {
     this.language.set(this.defaults()['General.DefaultLanguage'] ?? 'en');
     this.timezone.set(this.defaults()['Appearance.Timezone'] ?? 'UTC');
+    this.currency.set(this.defaults()['Appearance.Currency'] ?? 'USD');
   }
 }

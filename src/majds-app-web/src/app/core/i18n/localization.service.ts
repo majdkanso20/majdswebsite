@@ -66,8 +66,14 @@ export class LocalizationService {
     }
   }
 
-  translate(key: string): string {
-    return this.dictionary()[key] ?? key;
+  /**
+   * The text for <paramref>key</paramref> in the active language, with <c>{0}</c>, <c>{1}</c> ... filled from <paramref>args</paramref>.
+   * Write a message once as a parameterized key ("Delete {0}?") instead of joining translated fragments, because word order differs
+   * between languages. A missing translation falls back to the English key, so nothing is ever blank (AC-I18N-2).
+   */
+  translate(key: string, ...args: (string | number)[]): string {
+    const text = this.dictionary()[key] ?? key;
+    return args.length === 0 ? text : text.replace(/\{(\d+)\}/g, (match, index: string) => String(args[Number(index)] ?? match));
   }
 
   private isSupported(code: string): boolean {

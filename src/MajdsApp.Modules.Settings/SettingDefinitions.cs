@@ -52,6 +52,11 @@ public static class SettingDefinitions
             "Appearance.Timezone", "Appearance", "Time zone", SettingDataType.String, "UTC",
             isVisibleToClient: true, description: "IANA time zone used to display dates and times (for example Asia/Amman).",
             allowUserOverride: true);
+
+        public static readonly SettingDefinition Currency = new(
+            "Appearance.Currency", "Appearance", "Currency", SettingDataType.String, "USD",
+            isVisibleToClient: true, description: "ISO 4217 currency code used to display amounts of money (for example JOD).",
+            allowUserOverride: true);
     }
 
     public static class Security

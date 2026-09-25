@@ -8,7 +8,7 @@
     } @else if (failed()) {
       <app-empty-state icon="cloud_off" message="This widget could not be loaded." />
     } @else if (kpi(); as kpi) {
-      <p class="tile__value">{{ kpi.value }}</p>
+      <p class="tile__value">{{ kpiValue() }}</p>
       @if (kpi.caption) {
         <p class="tile__caption">{{ kpi.caption | translate }}</p>
       }
@@ -16,7 +16,7 @@
       <div class="tile__chart" role="img" [attr.aria-label]="chartSummary()">
         @for (point of chart.points; track point.label) {
           <div class="tile__bar-column">
-            <span class="tile__bar-value">{{ point.value }}</span>
+            <span class="tile__bar-value">{{ point.value | localNumber }}</span>
             <span class="tile__bar" [style.height.%]="(point.value / chartMax()) * 100"></span>
             <span class="tile__bar-label">{{ point.label }}</span>
           </div>
@@ -33,7 +33,7 @@
               <span class="tile__feed-meta">
                 {{ item.subtitle }}
                 @if (item.at) {
-                  · {{ item.at | date: 'short' }}
+                  · {{ item.at | localDate: 'short' }}
                 }
               </span>
             </li>

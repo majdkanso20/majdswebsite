@@ -23,9 +23,9 @@
           <div class="exports__details">
             <strong>{{ job.title | translate }} ({{ job.format.toUpperCase() }})</strong>
             <span class="exports__meta">
-              {{ job.status | translate }} · {{ job.createdAt + 'Z' | date: 'short' }}
+              {{ job.status | translate }} · {{ job.createdAt | localDate: 'short' }}
               @if (job.size) {
-                · {{ (job.size / 1024).toFixed(0) }} KB
+                · {{ job.size / 1024 | localNumber: 0 }} KB
               }
             </span>
             @if (job.error) {

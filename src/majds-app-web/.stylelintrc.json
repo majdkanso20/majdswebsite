@@ -18,6 +18,12 @@
     "declaration-property-value-disallowed-list": {
       "/^(color|background|background-color|border|border-color|outline-color|fill|stroke)$/": [
         "/^(white|black|red|green|blue|gray|grey)$/i"
+      ],
+      "text-align": [
+        "/^(left|right)$/"
+      ],
+      "clear": [
+        "/^(left|right)$/"
       ]
     },
     "selector-class-pattern": null,
@@ -38,6 +44,19 @@
         "ignorePseudoElements": [
           "ng-deep"
         ]
+      }
+    ],
+    "property-disallowed-list": [
+      [
+        "/^(margin|padding)-(left|right)$/",
+        "/^border-(left|right)(-(width|style|color))?$/",
+        "/^border-(top|bottom)-(left|right)-radius$/",
+        "/^(left|right)$/",
+        "float",
+        "/^scroll-(margin|padding)-(left|right)$/"
+      ],
+      {
+        "message": "Use the logical property (margin-inline-start, padding-inline-end, border-inline-*, inset-inline-*, border-start-start-radius ...) so the layout flips for right-to-left languages (FR-I18N-006)."
       }
     ]
   },

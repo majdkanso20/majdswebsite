@@ -1,7 +1,8 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
+import { LocalDatePipe, LocalNumberPipe } from '../../../core/i18n/format.pipes';
+import { FormattingService } from '../../../core/i18n/formatting.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { ChartData, DashboardService, DashboardWidget, FeedData, KpiData, WidgetData } from '../../../core/services/dashboard.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -15,13 +16,14 @@ import { LoadingState } from '../../../shared/components/loading-state/loading-s
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-widget-tile',
-  imports: [DatePipe, MatCardModule, TranslatePipe, LoadingState, EmptyState],
+  imports: [LocalDatePipe, LocalNumberPipe, MatCardModule, TranslatePipe, LoadingState, EmptyState],
   styleUrl: './widget-tile.scss',
   templateUrl: './widget-tile.html'
 })
 export class WidgetTile implements OnInit {
   private readonly api = inject(DashboardService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fmt = inject(FormattingService);
 
   readonly widget = input.required<DashboardWidget>();
 
@@ -30,6 +32,12 @@ export class WidgetTile implements OnInit {
 
   readonly loading = computed(() => this.data() === undefined && !this.failed());
   readonly kpi = computed(() => (this.widget().kind === 'kpi' ? (this.data() as KpiData | null) : null));
+  /** A KPI that is a number is shown with the language's digits and separators; anything else is shown as sent. */
+  readonly kpiValue = computed(() => {
+    const value = this.kpi()?.value ?? '';
+    return value.trim() !== '' && Number.isFinite(Number(value)) ? this.fmt.number(Number(value)) : value;
+  });
+
   readonly chart = computed(() => (this.widget().kind === 'chart' ? (this.data() as ChartData | null) : null));
   readonly feed = computed(() => (this.widget().kind === 'feed' ? (this.data() as FeedData | null) : null));
 

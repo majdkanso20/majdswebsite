@@ -1,6 +1,7 @@
 using FluentValidation;
 using MajdsApp.SharedKernel.Api;
 using MajdsApp.SharedKernel.Exceptions;
+using MajdsApp.SharedKernel.Localization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +10,8 @@ namespace MajdsApp.SharedKernel.Middleware;
 /// <summary>
 /// Catches every unhandled exception and converts it into a <see cref="ResponseDto{T}"/> (FR-ERR-001/002)
 /// — no stack traces reach the client; full detail (with correlation id, via <see cref="CorrelationIdMiddleware"/>'s
-/// log-context enrichment) is logged server-side only.
+/// log-context enrichment) is logged server-side only. The message and each error are translated into the request's language
+/// (F-Localization FR-I18N-002) using the culture the request-localization middleware settled on.
 /// </summary>
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
@@ -52,9 +54,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
     private static Task WriteAsync(HttpContext context, ResponseStatusCode code, string message, IEnumerable<string>? errors = null)
     {
+        // An exception thrown before the request-localization middleware ran simply gets English.
+        string Localize(string text) => context.Localize(text);
+
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)code;
-        var response = ResponseDto.Fail<object>(code, message, errors);
+        var response = ResponseDto.Fail<object>(code, Localize(message), errors?.Select(Localize).ToList());
         return context.Response.WriteAsJsonAsync(response);
     }
 }

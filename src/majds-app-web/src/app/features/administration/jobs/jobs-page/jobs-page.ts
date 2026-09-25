@@ -7,10 +7,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { DataGrid } from '../../../../shared/components/data-grid/data-grid';
 import { GridColumn, GridPage, GridSort } from '../../../../shared/components/data-grid/data-grid.model';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { FormattingService } from '../../../../core/i18n/formatting.service';
+import { LocalizationService } from '../../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { BackgroundJobDto, BackgroundJobStatus, JobDto, JobRunDto, JobsService } from '../jobs.service';
-
-const asLocal = (utc: string | null) => (utc ? new Date(utc + 'Z').toLocaleString() : '—');
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,27 +22,31 @@ const asLocal = (utc: string | null) => (utc ? new Date(utc + 'Z').toLocaleStrin
 export class JobsPage {
   private readonly jobsApi = inject(JobsService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
+  private readonly fmt = inject(FormattingService);
+
+  private readonly local = (utc: string | null): string => (utc ? this.fmt.date(utc) : '—');
 
   readonly jobColumns: GridColumn<JobDto>[] = [
     { key: 'name', header: 'Job' },
     { key: 'intervalMinutes', header: 'Every', value: (j) => j.cron ?? JobsPage.formatInterval(j.intervalMinutes) },
-    { key: 'lastRunAt', header: 'Last run', value: (j) => asLocal(j.lastRunAt) },
-    { key: 'lastSuccess', header: 'Last result', value: (j) => JobsPage.lastResult(j) },
-    { key: 'nextRunAt', header: 'Next run', value: (j) => asLocal(j.nextRunAt) }
+    { key: 'lastRunAt', header: 'Last run', value: (j) => this.local(j.lastRunAt) },
+    { key: 'lastSuccess', header: 'Last result', value: (j) => this.lastResult(j) },
+    { key: 'nextRunAt', header: 'Next run', value: (j) => this.local(j.nextRunAt) }
   ];
 
   readonly runColumns: GridColumn<JobRunDto>[] = [
-    { key: 'startedAt', header: 'When', sortable: true, value: (r) => asLocal(r.startedAt) },
+    { key: 'startedAt', header: 'When', sortable: true, value: (r) => this.local(r.startedAt) },
     { key: 'jobName', header: 'Job', sortable: true },
     { key: 'trigger', header: 'Trigger' },
     { key: 'durationMs', header: 'Duration', sortable: true, value: (r) => `${r.durationMs} ms` },
-    { key: 'success', header: 'Result', value: (r) => (r.success ? 'OK' : `Failed: ${r.error ?? ''}`) }
+    { key: 'success', header: 'Result', value: (r) => (r.success ? this.l10n.translate('OK') : this.l10n.translate('Failed: {0}', r.error ?? '')) }
   ];
 
   readonly queueColumns: GridColumn<BackgroundJobDto>[] = [
-    { key: 'createdAt', header: 'Queued', sortable: true, value: (j) => asLocal(j.createdAt) },
+    { key: 'createdAt', header: 'Queued', sortable: true, value: (j) => this.local(j.createdAt) },
     { key: 'type', header: 'Job', sortable: true },
-    { key: 'status', header: 'Status', value: (j) => (j.status === 'Pending' ? `Pending, next try ${asLocal(j.nextAttemptAt)}` : j.status) },
+    { key: 'status', header: 'Status', value: (j) => (j.status === 'Pending' ? this.l10n.translate('Pending, next try {0}', this.local(j.nextAttemptAt)) : this.l10n.translate(j.status)) },
     { key: 'attempts', header: 'Attempts', sortable: true, value: (j) => `${j.attempts} / ${j.maxAttempts}` },
     { key: 'userName', header: 'Queued by', value: (j) => j.userName ?? '—' },
     { key: 'lastError', header: 'Last error', value: (j) => j.lastError ?? '' }
@@ -102,7 +106,7 @@ export class JobsPage {
   retry(job: BackgroundJobDto): void {
     this.jobsApi.retry(job.id).subscribe({
       next: () => {
-        this.snackBar.open(`"${job.type}" was queued again.`, 'Dismiss', { duration: 3000 });
+        this.snackBar.open(this.l10n.translate('"{0}" was queued again.', job.type), 'Dismiss', { duration: 3000 });
         this.loadQueue();
       },
       error: (err) => this.showError(err)
@@ -110,7 +114,7 @@ export class JobsPage {
   }
 
   remove(job: BackgroundJobDto): void {
-    if (!confirm(`Delete this "${job.type}" job?`)) return;
+    if (!confirm(this.l10n.translate('Delete this "{0}" job?', job.type))) return;
     this.jobsApi.delete(job.id).subscribe({
       next: () => {
         this.snackBar.open('The job was deleted.', 'Dismiss', { duration: 3000 });
@@ -147,10 +151,10 @@ export class JobsPage {
     });
   }
 
-  private static lastResult(job: JobDto): string {
+  private lastResult(job: JobDto): string {
     if (job.lastSuccess === null) return '—';
-    if (job.lastSuccess) return 'OK';
-    return job.consecutiveFailures > 1 ? `Failed (${job.consecutiveFailures} in a row)` : 'Failed';
+    if (job.lastSuccess) return this.l10n.translate('OK');
+    return job.consecutiveFailures > 1 ? this.l10n.translate('Failed ({0} in a row)', job.consecutiveFailures) : this.l10n.translate('Failed');
   }
 
   private load(): void {

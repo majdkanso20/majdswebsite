@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 96 |
-| PARTIAL | 87 |
-| MISSING | 18 |
+| DONE | 100 |
+| PARTIAL | 84 |
+| MISSING | 17 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -28,7 +28,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Audit | 6 | 5 | 1 | 0 |
 | F-Notifications | 9 | 3 | 5 | 1 |
 | F-Files | 6 | 2 | 3 | 1 |
-| F-Localization | 6 | 1 | 4 | 1 |
+| F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 3 | 2 | 0 |
 | F-Data | 6 | 1 | 5 | 0 |
 | F-Export | 5 | 4 | 1 | 0 |
@@ -109,7 +109,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - DONE: 003, 004. PARTIAL: 001 (concrete disk class, no `IFileStorage`, no cloud), 002 (blocked-extension list, size cap, no content sniffing), 005 (streamed, not chunked). MISSING: 006 soft delete and cleanup job.
 
 ## F-Localization
-- DONE: 003 runtime language switch (not re-verified in the running app). PARTIAL: 001 frontend keys only; 004 browser-locale dates, no user timezone or currency; 005 fallback to English; 006 RTL direction set, logical properties used sparingly. MISSING: 002 backend localization and `Accept-Language`.
+- DONE: 002 the server answers in the request's language: the client's `Accept-Language` (the Angular app sends the language on screen), else the signed-in user's saved language, else the application default; error and validation messages (the platform's own and FluentValidation's built-in translations), notification texts (written per recipient) and the account emails (right to left for Arabic) are translated, `GET /api/localization/languages` and `GET /api/localization/resources?culture=` exist. 003 language switch at runtime without a reload, per-language file loaded on demand (tested). 004 dates in the user's time zone (`Appearance.Timezone`), numbers and currency (`Appearance.Currency`, a new personal setting) formatted by the active language through `localDate`, `localNumber` and `localCurrency`; server timestamps are read as UTC. 005 default language (`General.DefaultLanguage`) and fallback: a missing translation or an unsupported language shows the English source, never a blank (tested at both ends). 006 the direction flips with the language (tested), and lint now rejects physical `left`/`right` CSS so new styles stay right-to-left safe; no page-by-page visual audit in a browser was done.
+- PARTIAL: 001 all of the interface's own text and every message the server writes is keyed and translated, and tests fail when one is missing (a scan of the templates for the frontend, a scan of the source for the backend). Not covered: text from ASP.NET Identity (for example password-policy errors), model-binding errors, plugin text (plugins cannot ship their own translations yet, P5 FR-PLUG-023), and Swagger.
 
 ## F-Errors
 - DONE: 001, 002, 004 (a central interceptor handles 401, 403, 429, unreachable server and 5xx with a translated message, and leaves field errors to each screen). PARTIAL: 003 Serilog is referenced and enriched but never configured as the logger; 005 no sinks configured.

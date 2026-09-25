@@ -20,6 +20,15 @@
         }
       </mat-select>
     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'Currency' | translate }}</mat-label>
+      <mat-select [ngModel]="currency()" (ngModelChange)="currency.set($event)">
+        @for (code of currencies; track code) {
+          <mat-option [value]="code">{{ code }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   </mat-card-content>
   <mat-card-actions>
     <button mat-flat-button color="primary" [disabled]="saving()" (click)="save()">{{ 'Save' | translate }}</button>

@@ -76,3 +76,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Jobs
 
 `Jobs/IRecurringJob.cs` (interval or cron) and `Jobs/IBackgroundJob.cs` (a one-off job plus `IBackgroundJobQueue` to queue it). The scheduler, the persisted queue and the retry rules live in `MajdsApp.Modules.Jobs`.
+
+## Localization
+
+`Localization/IMessageCatalog.cs` translates the server's own text (English is the key; templates use `{0}`). The catalog and the request-language selection are in `MajdsApp.Modules.Localization`. `HttpContext.Localize(text)` translates into the current request's language; the exception middleware, the model-state response, the plugin gate and the rate limiter use it.

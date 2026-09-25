@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using MajdsApp.SharedKernel.Api;
+using MajdsApp.SharedKernel.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
@@ -55,7 +56,7 @@ public static class RateLimiting
 
                 context.HttpContext.Response.ContentType = "application/json";
                 await context.HttpContext.Response.WriteAsJsonAsync(
-                    ResponseDto.Fail<object>(ResponseStatusCode.TooManyRequests), ct);
+                    ResponseDto.Fail<object>(ResponseStatusCode.TooManyRequests, context.HttpContext.Localize("Too many requests. Please wait a moment and try again.")), ct);
             };
         });
 

@@ -7,6 +7,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { DataGrid } from '../../../shared/components/data-grid/data-grid';
 import { GridColumn, GridPage, GridSort } from '../../../shared/components/data-grid/data-grid.model';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { FormattingService } from '../../../core/i18n/formatting.service';
+import { LocalizationService } from '../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { FileDto, FilesService } from '../files.service';
 
@@ -20,12 +22,14 @@ import { FileDto, FilesService } from '../files.service';
 export class FilesList {
   private readonly filesApi = inject(FilesService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
+  private readonly fmt = inject(FormattingService);
 
   readonly columns: GridColumn<FileDto>[] = [
     { key: 'fileName', header: 'Name', sortable: true },
     { key: 'size', header: 'Size', sortable: true, value: (f) => FilesList.formatSize(f.size) },
     { key: 'ownerName', header: 'Owner', value: (f) => f.ownerName ?? '—' },
-    { key: 'createdAt', header: 'Uploaded', sortable: true, value: (f) => new Date(f.createdAt + 'Z').toLocaleString() }
+    { key: 'createdAt', header: 'Uploaded', sortable: true, value: (f) => this.fmt.date(f.createdAt) }
   ];
 
   readonly rows = signal<FileDto[]>([]);
@@ -82,7 +86,7 @@ export class FilesList {
   }
 
   remove(file: FileDto): void {
-    if (!confirm(`Delete "${file.fileName}"?`)) return;
+    if (!confirm(this.l10n.translate('Delete "{0}"?', file.fileName))) return;
     this.filesApi.delete(file.id).subscribe({
       next: () => {
         this.snackBar.open('File deleted.', 'Dismiss', { duration: 3000 });

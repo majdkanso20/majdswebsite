@@ -1,4 +1,5 @@
 using MajdsApp.SharedKernel.Api;
+using MajdsApp.SharedKernel.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -21,7 +22,7 @@ public class PluginGateFilter(IPluginStateCache pluginState) : IAsyncActionFilte
             && assemblyName.StartsWith("MajdsApp.Plugins.", StringComparison.Ordinal)
             && !pluginState.IsEnabled(assemblyName))
         {
-            context.Result = new ObjectResult(ResponseDto.Fail<object>(ResponseStatusCode.Forbidden, "This plugin is currently disabled."))
+            context.Result = new ObjectResult(ResponseDto.Fail<object>(ResponseStatusCode.Forbidden, context.HttpContext.Localize("This plugin is currently disabled.")))
             {
                 StatusCode = (int)ResponseStatusCode.Forbidden
             };

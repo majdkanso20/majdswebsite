@@ -2,6 +2,7 @@ using FluentValidation;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;
+using MajdsApp.SharedKernel.Localization;
 using MajdsApp.SharedKernel.Notifications;
 using MajdsApp.SharedKernel.Security;
 using MediatR;
@@ -14,7 +15,8 @@ namespace MajdsApp.Modules.Notifications;
 [RequiresPermission(Permissions.Notifications.Send)]
 public record TestEmailChannelCommand : IRequest, IAuditableCommand;
 
-public class TestEmailChannelCommandHandler(ApplicationDbContext db, ICurrentUser currentUser, IEmailMessageSender? sender = null)
+public class TestEmailChannelCommandHandler(
+    ApplicationDbContext db, ICurrentUser currentUser, IMessageCatalog catalog, IEmailMessageSender? sender = null)
     : IRequestHandler<TestEmailChannelCommand>
 {
     public async Task Handle(TestEmailChannelCommand request, CancellationToken ct)
@@ -27,7 +29,9 @@ public class TestEmailChannelCommandHandler(ApplicationDbContext db, ICurrentUse
 
         try
         {
-            await sender.SendAsync(email, "Test email", "<p>This is a test email from the notification settings.</p>", ct);
+            var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            await sender.SendAsync(email, catalog.Translate("Test email", culture),
+                $"<p>{catalog.Translate("This is a test email from the notification settings.", culture)}</p>", ct);
         }
         catch (Exception ex)
         {

@@ -22,7 +22,9 @@ public class UpdateSettingsCommandValidator : AbstractValidator<UpdateSettingsCo
     }
 }
 
-public class UpdateSettingsCommandHandler(ApplicationDbContext db, ISettingsProvider settingsProvider, Microsoft.AspNetCore.DataProtection.IDataProtectionProvider dataProtection)
+public class UpdateSettingsCommandHandler(
+    ApplicationDbContext db, ISettingsProvider settingsProvider, Microsoft.AspNetCore.DataProtection.IDataProtectionProvider dataProtection,
+    MajdsApp.SharedKernel.Localization.IMessageCatalog catalog)
     : IRequestHandler<UpdateSettingsCommand>
 {
     public async Task Handle(UpdateSettingsCommand request, CancellationToken ct)
@@ -36,6 +38,8 @@ public class UpdateSettingsCommandHandler(ApplicationDbContext db, ISettingsProv
 
             if (!IsValidForType(item.Value, definition.DataType))
                 throw new ValidationException($"'{item.Value}' is not a valid value for '{item.Name}'.");
+
+            if (!definition.IsSensitive) SettingValueRules.Check(item.Name, item.Value, catalog);
 
             var existing = await db.Set<SettingValue>().FindAsync([item.Name], ct);
 

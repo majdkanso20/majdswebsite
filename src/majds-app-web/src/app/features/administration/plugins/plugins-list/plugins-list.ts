@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LocalizationService } from '../../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { PluginsService } from '../../../../core/services/plugins.service';
@@ -29,6 +30,7 @@ import { InstalledPluginDto, PendingPluginChangeDto, PluginsApiService } from '.
 export class PluginsList {
   private readonly api = inject(PluginsApiService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
   private readonly dialog = inject(MatDialog);
   private readonly plugins$ = inject(PluginsService);
   readonly canManage = inject(PermissionService).has('Plugins.Manage');
@@ -44,7 +46,7 @@ export class PluginsList {
     await this.run(async () => {
       await firstValueFrom(this.api.setEnabled(plugin.id, enabled));
       await this.plugins$.loadAsync(); // menu and route access follow immediately, no reload
-      this.snackBar.open(`${plugin.name}: ${enabled ? 'enabled' : 'disabled'}.`, 'Dismiss', { duration: 3000 });
+      this.snackBar.open(this.l10n.translate(enabled ? '{0}: enabled.' : '{0}: disabled.', plugin.name), 'Dismiss', { duration: 3000 });
     });
   }
 
@@ -58,21 +60,21 @@ export class PluginsList {
   }
 
   async uninstall(plugin: InstalledPluginDto): Promise<void> {
-    if (!confirm(`Uninstall ${plugin.name}? It stops working now, its permissions are removed from every role and user, and its files are deleted the next time the API starts. Its data is kept.`)) return;
+    if (!confirm(this.l10n.translate('Uninstall {0}? It stops working now, its permissions are removed from every role and user, and its files are deleted the next time the API starts. Its data is kept.', plugin.name))) return;
 
     await this.run(async () => {
       await firstValueFrom(this.api.uninstall(plugin.id));
       await this.plugins$.loadAsync();
-      this.snackBar.open(`${plugin.name} was uninstalled. Its files are removed at the next start.`, 'Dismiss', { duration: 5000 });
+      this.snackBar.open(this.l10n.translate('{0} was uninstalled. Its files are removed at the next start.', plugin.name), 'Dismiss', { duration: 5000 });
     });
   }
 
   async rollback(plugin: InstalledPluginDto): Promise<void> {
-    if (!confirm(`Restore the previous version of ${plugin.name}? It takes effect the next time the API starts.`)) return;
+    if (!confirm(this.l10n.translate('Restore the previous version of {0}? It takes effect the next time the API starts.', plugin.name))) return;
 
     await this.run(async () => {
       const staged = await firstValueFrom(this.api.rollback(plugin.id));
-      this.snackBar.open(`Version ${staged.version} of ${plugin.name} will be restored at the next start.`, 'Dismiss', { duration: 5000 });
+      this.snackBar.open(this.l10n.translate('Version {0} of {1} will be restored at the next start.', staged.version, plugin.name), 'Dismiss', { duration: 5000 });
     });
   }
 

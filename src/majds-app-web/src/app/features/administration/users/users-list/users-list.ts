@@ -2,6 +2,7 @@ import { ExportFormat } from '../../../../core/utils/download';
 import { ImportDialog, ImportDialogData } from '../../../../shared/components/import-dialog/import-dialog';
 import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
+import { LocalizationService } from '../../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -31,6 +32,7 @@ export class UsersList {
   private readonly rolesApi = inject(RolesApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly l10n = inject(LocalizationService);
   private readonly exportsApi = inject(ExportsService);
   private readonly router = inject(Router);
 
@@ -156,7 +158,7 @@ export class UsersList {
   }
 
   resetTwoFactor(user: UserDto): void {
-    if (!confirm(`Turn off two-factor authentication for ${user.email}? They can set it up again afterwards.`)) return;
+    if (!confirm(this.l10n.translate('Turn off two-factor authentication for {0}? They can set it up again afterwards.', user.email))) return;
     this.usersApi.resetTwoFactor(user.id).subscribe({
       next: () => {
         this.snackBar.open('Two-factor authentication was reset.', 'Dismiss', { duration: 3000 });
@@ -167,7 +169,7 @@ export class UsersList {
   }
 
   deleteUser(user: UserDto): void {
-    if (!confirm(`Delete ${user.email}? This can't be undone from the UI.`)) return;
+    if (!confirm(this.l10n.translate("Delete {0}? This can't be undone from the UI.", user.email))) return;
     this.usersApi.delete(user.id).subscribe({
       next: () => {
         this.snackBar.open('User deleted.', 'Dismiss', { duration: 3000 });
@@ -179,7 +181,7 @@ export class UsersList {
 
   resetPassword(user: UserDto): void {
     this.usersApi.resetPassword(user.id).subscribe({
-      next: () => this.snackBar.open(`Password reset email sent to ${user.email}.`, 'Dismiss', { duration: 4000 }),
+      next: () => this.snackBar.open(this.l10n.translate('Password reset email sent to {0}.', user.email), 'Dismiss', { duration: 4000 }),
       error: (err) => this.showError(err)
     });
   }

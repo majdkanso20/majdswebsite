@@ -4,6 +4,7 @@ using MajdsApp.Data;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MajdsApp.Configuration;
+using MajdsApp.SharedKernel.Localization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -14,28 +15,48 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
 {
     private readonly SmtpOptions _options = smtpOptions.Value;
 
-    public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink) =>
-        SendEmailAsync(email, "Confirm your email — Majd's App",
-            $"""
-             <p>Welcome to Majd's App!</p>
-             <p>Please confirm your account by <a href="{confirmationLink}">clicking here</a>.</p>
-             """);
+    public async Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
+    {
+        var t = await TranslatorAsync(user.Id);
+        await SendEmailAsync(email, t.T("Confirm your email — Majd's App"), t.Body(
+            t.T("Welcome to Majd's App!"),
+            string.Format(t.T("Please confirm your account by {0}."), $"<a href=\"{confirmationLink}\">{t.T("clicking here")}</a>")));
+    }
 
-    public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink) =>
-        SendEmailAsync(email, "Reset your password — Majd's App",
-            $"""
-             <p>You requested a password reset for your Majd's App account.</p>
-             <p>Please reset your password by <a href="{resetLink}">clicking here</a>.</p>
-             <p>If you didn't request this, you can safely ignore this email.</p>
-             """);
+    public async Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink)
+    {
+        var t = await TranslatorAsync(user.Id);
+        await SendEmailAsync(email, t.T("Reset your password — Majd's App"), t.Body(
+            t.T("You requested a password reset for your Majd's App account."),
+            string.Format(t.T("Please reset your password by {0}."), $"<a href=\"{resetLink}\">{t.T("clicking here")}</a>"),
+            t.T("If you didn't request this, you can safely ignore this email.")));
+    }
 
-    public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode) =>
-        SendEmailAsync(email, "Your password reset code — Majd's App",
-            $"""
-             <p>You requested a password reset for your Majd's App account.</p>
-             <p>Your reset code is: <strong>{resetCode}</strong></p>
-             <p>If you didn't request this, you can safely ignore this email.</p>
-             """);
+    public async Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
+    {
+        var t = await TranslatorAsync(user.Id);
+        await SendEmailAsync(email, t.T("Your password reset code — Majd's App"), t.Body(
+            t.T("You requested a password reset for your Majd's App account."),
+            string.Format(t.T("Your reset code is: {0}"), $"<strong>{resetCode}</strong>"),
+            t.T("If you didn't request this, you can safely ignore this email.")));
+    }
+
+    /// <summary>Translates email text into the recipient's saved language (F-Localization FR-I18N-002); English when they have none.</summary>
+    private sealed class Translator(IMessageCatalog? catalog, string culture)
+    {
+        public string T(string text) => catalog?.Translate(text, culture) ?? text;
+
+        public string Body(params string[] paragraphs) =>
+            $"<div dir=\"{(culture.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? "rtl" : "ltr")}\">" + string.Concat(paragraphs.Select(p => $"<p>{p}</p>")) + "</div>";
+    }
+
+    private async Task<Translator> TranslatorAsync(string userId)
+    {
+        using var scope = services.CreateScope();
+        var settings = scope.ServiceProvider.GetRequiredService<MajdsApp.SharedKernel.Settings.ISettingsProvider>();
+        var culture = (await settings.GetAllForUserAsync(userId)).GetValueOrDefault("General.DefaultLanguage") ?? "en";
+        return new Translator(services.GetService<IMessageCatalog>(), culture);
+    }
 
     public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
         SendEmailAsync(toEmail, subject, htmlBody);

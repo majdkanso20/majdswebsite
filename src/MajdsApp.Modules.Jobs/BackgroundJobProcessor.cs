@@ -100,7 +100,7 @@ public class BackgroundJobProcessor(
 
             if (job.Status == BackgroundJobStatus.Failed)
                 await notifications.PublishToRoleAsync("Admin", "Background job failed",
-                    $"{job.Type} failed after {job.Attempts} attempts: {job.LastError}", NotificationTypes.Administration, CancellationToken.None);
+                    $"The job '{job.Type}' failed after {job.Attempts} attempts: {job.LastError}", NotificationTypes.Administration, CancellationToken.None);
         }
 
         return true;

@@ -1,7 +1,7 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { LocalDatePipe, LocalNumberPipe } from '../../../core/i18n/format.pipes';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { ExportJob, ExportsService } from '../../../core/services/exports.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -14,7 +14,7 @@ import { LoadingState } from '../../../shared/components/loading-state/loading-s
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-exports-page',
-  imports: [DatePipe, MatButtonModule, MatIconModule, TranslatePipe, EmptyState, LoadingState],
+  imports: [LocalDatePipe, LocalNumberPipe, MatButtonModule, MatIconModule, TranslatePipe, EmptyState, LoadingState],
   styleUrl: './exports-page.scss',
   templateUrl: './exports-page.html'
 })

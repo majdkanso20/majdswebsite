@@ -1,3 +1,4 @@
+import { FormattingService } from '../../../../core/i18n/formatting.service';
 import { ExportFormat } from '../../../../core/utils/download';
 import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -35,9 +36,10 @@ export class AuditLogList {
   private readonly exportsApi = inject(ExportsService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
+  private readonly fmt = inject(FormattingService);
 
   readonly columns: GridColumn<AuditLogEntryDto>[] = [
-    { key: 'createdAt', header: 'When', sortable: true, value: (a) => new Date(a.createdAt + 'Z').toLocaleString() },
+    { key: 'createdAt', header: 'When', sortable: true, value: (a) => this.fmt.date(a.createdAt) },
     { key: 'action', header: 'Action', sortable: true },
     { key: 'userName', header: 'User', sortable: true, value: (a) => a.userName ?? '—' },
     { key: 'outcome', header: 'Outcome', sortable: true },

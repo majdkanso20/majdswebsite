@@ -40,7 +40,10 @@ public static class TabularReader
         var headers = grid[0].Select(h => h.Trim()).ToList();
         var missing = requiredColumns.Where(required => !headers.Contains(required, StringComparer.OrdinalIgnoreCase)).ToList();
         if (missing.Count > 0)
-            throw new ValidationException($"The file is missing the required column(s): {string.Join(", ", missing)}.");
+        {
+            var names = string.Join(", ", missing);
+            throw new ValidationException($"The file is missing the required column(s): {names}.");
+        }
 
         var rows = new List<ImportRow>();
         for (var i = 1; i < grid.Count; i++)

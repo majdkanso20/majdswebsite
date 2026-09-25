@@ -4,6 +4,7 @@ using MajdsApp.SharedKernel.Api;
 using MajdsApp.SharedKernel.Audit;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Features;
+using MajdsApp.SharedKernel.Localization;
 using MajdsApp.SharedKernel.Modules;
 using MajdsApp.SharedKernel.Notifications;
 using MajdsApp.SharedKernel.Plugins;
@@ -38,6 +39,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddScoped<IAuditChangeBuffer, AuditChangeBuffer>();
         services.TryAddScoped<IUserNotificationPublisher, NullNotificationPublisher>();
         services.TryAddScoped<MajdsApp.SharedKernel.Jobs.IBackgroundJobQueue, MajdsApp.SharedKernel.Jobs.NullBackgroundJobQueue>();
+        services.TryAddSingleton<MajdsApp.SharedKernel.Localization.IMessageCatalog, MajdsApp.SharedKernel.Localization.NullMessageCatalog>();
         services.TryAddScoped<IFeatureChecker, DefaultFeatureChecker>();
         services.TryAddSingleton<IPluginStateCache, AllowAllPluginStateCache>();
         services.AddMemoryCache();
@@ -89,7 +91,7 @@ public static class PlatformServiceCollectionExtensions
                     .Where(entry => entry.Value?.Errors.Count > 0)
                     .SelectMany(entry => entry.Value!.Errors.Select(e => $"{entry.Key}: {e.ErrorMessage}"));
 
-                var response = ResponseDto.Fail<object>(ResponseStatusCode.ValidationError, "Validation failed.", errors);
+                var response = ResponseDto.Fail<object>(ResponseStatusCode.ValidationError, context.HttpContext.Localize("Validation failed."), errors);
                 return new BadRequestObjectResult(response) { StatusCode = (int)ResponseStatusCode.ValidationError };
             };
         });
