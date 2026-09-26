@@ -144,6 +144,10 @@ if (!string.IsNullOrEmpty(smtpUsername) && !string.IsNullOrEmpty(smtpPassword))
 {
     builder.Services.AddTransient<IEmailSender<ApplicationUser>, SmtpEmailSender>();
     builder.Services.AddTransient<MajdsApp.SharedKernel.Notifications.IEmailMessageSender, SmtpEmailSender>();
+    // Retry, a timeout and a circuit breaker around sending, added by decorating the sender rather than editing it (P4 FR-XC-004/006).
+    builder.Services.AddModuleOptions<MajdsApp.SharedKernel.Resilience.OutboundResilienceOptions>(builder.Configuration, "Resilience");
+    builder.Services.AddSingleton<EmailPipeline>();
+    builder.Services.Decorate<MajdsApp.SharedKernel.Notifications.IEmailMessageSender, ResilientEmailMessageSender>();
 }
 
 builder.Services.AddPlatformCore(builder.Configuration, allModuleAssemblies);

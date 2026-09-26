@@ -59,9 +59,10 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
     }
 
     public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
-        SendEmailAsync(toEmail, subject, htmlBody);
+        SendEmailAsync(toEmail, subject, htmlBody, ct);
 
-    private async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
+    // The token is passed to every network call so a timeout or shutdown (see ResilientEmailMessageSender) really stops the send.
+    private async Task SendEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
     {
         // Admin-entered settings (Email.*, password stored encrypted) win over the server configuration
         // when non-empty, so credentials can be rotated from the UI without a redeploy.
@@ -74,12 +75,12 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
             var settings = scope.ServiceProvider.GetRequiredService<MajdsApp.SharedKernel.Settings.ISettingsProvider>();
             async Task<string> OrAsync(string name, string fallback)
             {
-                var value = await settings.GetAsync(name);
+                var value = await settings.GetAsync(name, ct);
                 return string.IsNullOrWhiteSpace(value) ? fallback : value;
             }
 
             host = await OrAsync("Email.SmtpHost", _options.Host);
-            port = int.TryParse(await settings.GetAsync("Email.SmtpPort"), out var p) && p > 0 ? p : _options.Port;
+            port = int.TryParse(await settings.GetAsync("Email.SmtpPort", ct), out var p) && p > 0 ? p : _options.Port;
             username = await OrAsync("Email.SmtpUsername", _options.Username);
             password = await OrAsync("Email.SmtpPassword", _options.Password);
             fromEmail = await OrAsync("Email.FromEmail", _options.FromEmail);
@@ -92,10 +93,10 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
         using var client = new SmtpClient();
-        await client.ConnectAsync(host, port, SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(username, password);
-        await client.SendAsync(message);
-        await client.DisconnectAsync(true);
+        await client.ConnectAsync(host, port, SecureSocketOptions.StartTls, ct);
+        await client.AuthenticateAsync(username, password, ct);
+        await client.SendAsync(message, ct);
+        await client.DisconnectAsync(true, ct);
 
         logger.LogInformation("Sent email '{Subject}' to {Email}", subject, toEmail);
     }
