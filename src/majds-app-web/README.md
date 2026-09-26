@@ -67,3 +67,9 @@ English text is the translation key (`{{ 'Save' | translate }}`); a missing key 
 ## Testing
 
 Specs sit next to the code (`*.spec.ts`). Present coverage: menu filtering and plugin replacement, theme and skins, both interceptors, the login page, the data grid and the error state. Add a spec with any new shared component or service.
+
+## Browser end-to-end tests
+
+`npm run e2e` runs `e2e/tests` in a real Chrome against the real API on a throwaway database. It starts both servers itself on ports of its own (API 5299, app 4299), so it never touches a development database or a running dev server, and the API creates its first administrator from `Bootstrap:AdminEmail` / `Bootstrap:AdminPassword`, so there is nothing to set up by hand. Set `E2E_BROWSER_CHANNEL=msedge` to use Edge. `npm run e2e:headed` shows the browser. On a failure, screenshots and traces are kept in `test-results/` (open one with `npx playwright show-trace`).
+
+They cover signing in and out, the Arabic right-to-left layout and its persistence after a reload, the phone-width header, a plugin's own screen mounted in a shadow root, and deleting a role that has users. Tests that need the sample Tasks plugin skip themselves when it is not built into `plugins/`. CI runs them in the `e2e` job.

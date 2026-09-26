@@ -78,6 +78,8 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `Paging:MaxPageSize` | The largest page any list endpoint returns (1 to 1000) | 100 |
 | `Plugins:Trust:RequireSignature` / `Plugins:Trust:Signers:<keyId>` | Only install plugin packages signed by a trusted publisher (base64 ECDSA P-256 public key per key id) | off / none |
 | `Logging:Level` / `Logging:Console` / `Logging:File:Enabled` / `Logging:File:Path` / `Logging:File:RetainedFiles` | Serilog: the least severe event written, the console sink, and a daily rolling file (kept for that many days) | Information / on / on / `App_Data/logs` / 14 |
+| `Bootstrap:AdminEmail` / `Bootstrap:AdminPassword` | Creates the first administrator, on an installation with no users only (keep the password in user secrets or an environment variable and remove it afterwards) | unset |
+| `Database:MigrateOnStart` | Applies pending database migrations when the API starts | off |
 | `MediatR:LicenseKey` | Required for production use of MediatR | unset |
 
 Runtime behavior that administrators change without a redeploy (application name, session timeout, self-registration, upload size, mail server, retention, feature flags) is under **Settings** and **Features** in the app.

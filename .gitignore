@@ -41,3 +41,7 @@ plugins/.pending/
 plugins/.previous/
 plugins/.staging/
 plugins/*/.uninstall
+
+# Playwright
+test-results/
+playwright-report/

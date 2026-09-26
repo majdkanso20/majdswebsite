@@ -178,8 +178,13 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    // Database:MigrateOnStart brings the database up to date at start (off by default: production deployments usually run migrations as a separate step).
+    if (app.Configuration.GetValue<bool>("Database:MigrateOnStart"))
+        await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
     await MajdsApp.Modules.Authorization.RoleSeeder.SeedAsync(roleManager);
+    await MajdsApp.AdminBootstrap.RunAsync(scope.ServiceProvider, app.Configuration, app.Logger); // the very first administrator, on an empty installation only
 
     var pluginDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var pluginCache = scope.ServiceProvider.GetRequiredService<MajdsApp.Modules.Plugins.PluginStateCache>();

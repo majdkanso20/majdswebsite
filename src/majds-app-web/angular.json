@@ -64,6 +64,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "e2e": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -76,6 +87,9 @@
             },
             "development": {
               "buildTarget": "majds-app-web:build:development"
+            },
+            "e2e": {
+              "buildTarget": "majds-app-web:build:e2e"
             }
           },
           "defaultConfiguration": "development"
