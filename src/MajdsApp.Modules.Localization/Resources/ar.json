@@ -133,5 +133,7 @@
   "'{0}' is not a permission.": "'{0}' ليست صلاحية.",
   "'{0}' cannot be both granted and denied.": "لا يمكن منح '{0}' ورفضها في آن واحد.",
   "Passwords must be at least {0} characters.": "يجب ألا تقل كلمة المرور عن {0} حرفاً.",
-  "The minimum password length must be between 6 and 128.": "يجب أن يكون الحد الأدنى لطول كلمة المرور بين 6 و128."
+  "The minimum password length must be between 6 and 128.": "يجب أن يكون الحد الأدنى لطول كلمة المرور بين 6 و128.",
+  "Choose a different role to move the users to.": "اختر دوراً مختلفاً لنقل المستخدمين إليه.",
+  "'{0}' is not a notification type.": "'{0}' ليس نوع إشعار."
 }

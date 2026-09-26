@@ -54,4 +54,23 @@ public class PluginDiagnosticsTests(PluginHostFactory factory)
         plainPermissions.Should().NotContain(p => p.StartsWith("Tasks."));
         adminPermissions.Should().Contain("Tasks.View");
     }
+
+    private record Group(string Name, List<string> Permissions);
+
+    [Fact]
+    public async Task A_disabled_plugins_permissions_leave_the_role_editor_and_come_back_when_it_is_enabled()
+    {
+        var admin = await factory.SignInAsync("pd.admin4@example.com", "Admin");
+        try
+        {
+            await admin.PostAsync("/api/plugins/set-enabled", new { pluginId = "MajdsApp.Plugins.Tasks", enabled = false });
+            (await admin.GetAsync<List<Group>>("/api/permissions/tree")).Data!.Should().NotContain(g => g.Name == "Tasks");
+        }
+        finally
+        {
+            await admin.PostAsync("/api/plugins/set-enabled", new { pluginId = "MajdsApp.Plugins.Tasks", enabled = true });
+        }
+
+        (await admin.GetAsync<List<Group>>("/api/permissions/tree")).Data!.Should().Contain(g => g.Name == "Tasks");
+    }
 }

@@ -39,6 +39,8 @@ public static class LoggingSetup
     {
         const string template = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {CorrelationId} {SourceContext} {Message:lj}{NewLine}{Exception}";
 
+        // preserveStaticLogger: each host keeps its own logger instead of replacing the process-wide one, so a second host in the same process
+        // (an integration test) cannot take over this one's output.
         builder.Host.UseSerilog((context, services, logger) =>
         {
             // Read here, not earlier, so the final configuration (including anything a host or test overrides) is what counts.
@@ -60,6 +62,6 @@ public static class LoggingSetup
                 logger.WriteTo.File(System.IO.Path.Combine(folder, "majds-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: options.File.RetainedFiles,
                     outputTemplate: template, shared: true);
             }
-        });
+        }, preserveStaticLogger: true);
     }
 }

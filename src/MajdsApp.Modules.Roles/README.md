@@ -26,3 +26,7 @@ All responses use the `ResponseDto<T>` envelope unless noted.
 ## Tests
 
 Covered by the integration tests in `src/MajdsApp.Tests` (run `dotnet test src/MajdsApp.Tests`).
+
+## Deleting a role that has users (FR-ROLE-004)
+
+`POST /api/roles/delete` takes `{ roleId, reassignToRoleId }`. A role that still has users is refused (409) unless `reassignToRoleId` names another role; then everyone who held it takes that role instead (anyone who already has it just loses the deleted one), their cached permissions are refreshed, and the role is deleted in the same transaction. The role list's delete button asks which role takes over. A built-in role can never be deleted.

@@ -6,8 +6,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 134 |
-| PARTIAL | 67 |
+| DONE | 139 |
+| PARTIAL | 62 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -19,11 +19,11 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | P5 Plugins | 42 | 25 | 17 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 4 | 5 | 0 |
-| U3 App shell | 8 | 5 | 3 | 0 |
-| F-Authorization | 8 | 6 | 2 | 0 |
+| U3 App shell | 8 | 6 | 2 | 0 |
+| F-Authorization | 8 | 7 | 1 | 0 |
 | F-Users | 8 | 6 | 2 | 0 |
-| F-Roles | 5 | 3 | 2 | 0 |
-| F-Account | 6 | 4 | 2 | 0 |
+| F-Roles | 5 | 5 | 0 | 0 |
+| F-Account | 6 | 5 | 1 | 0 |
 | F-Settings | 6 | 5 | 1 | 0 |
 | F-Audit | 6 | 5 | 1 | 0 |
 | F-Notifications | 9 | 4 | 5 | 0 |
@@ -74,19 +74,21 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 ## U3 — App shell (updated 2026-09-24)
 - DONE: 001, 002 nested menu groups (Administration), 004, 006, 008 plugin menu entries follow enable/disable live without a reload (verified).
-- PARTIAL: 003 no separate settings entry in the user menu. 005 a shared error-state component now exists, but loading/empty/error do not all support template overrides. 007 skip link, labelled navigation and visible focus are in place (skip link focus verified; its appear-on-focus styling could not be, the browser pane never reports focus); no contrast audit.
+- DONE: 003 the user menu has a Settings entry for anyone who may open the settings page.
+- PARTIAL: 005 a shared error-state component now exists, but loading/empty/error do not all support template overrides. 007 skip link, labelled navigation and visible focus are in place (skip link focus verified; its appear-on-focus styling could not be, the browser pane never reports focus); no contrast audit.
 
 ## F-Authorization
 - DONE: 001, 002, 005, 006 (role-permission and user-role edits both refresh the cache; tested), 007 (last administrator protected on delete, deactivate and role removal; tested).
 - DONE: 003 direct user grants and denies (`GET /api/users/permissions/get` explains what the roles give, what was set on the user and the result; `POST /api/users/permissions/update` replaces the set; a deny wins over a role grant, a grant adds to the roles, both take effect at once, and an administrator holds everything anyway; unknown or contradictory permissions are refused; a Permissions dialog on the Users page edits them; tested).
-- PARTIAL: 004 done in the behavior, no action filter. 008 discovery by assembly scan only; disabled plugins' permissions still listed.
+- DONE: 008 (permissions are found by scanning the assemblies, and a disabled plugin's permissions are left out of the role editor and come back when it is enabled; grants already made are kept; tested).
+- PARTIAL: 004 done in the behavior, no action filter.
 
 ## F-Users / F-Roles
 - Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). PARTIAL: 001 (the list API filters by status and role; the screen has no status selector), 002 (password only, no emailed set-password link).
-- Roles DONE: 001, 002, 005. PARTIAL: 003 (default-role auto-assignment not confirmed), 004 (blocks deletion, no reassignment).
+- Roles DONE: 001, 002, 005. DONE: 003 (a new account gets the default role and creating a new default role clears the old one; tested through self-registration), 004 (deleting a role that has users needs the role that takes them over; the delete dialog asks; the users keep access, permission caches are refreshed, and moving to itself or to an unknown role is refused; tested).
 
 ## F-Account
-- DONE: 001, 002, 005 (notification preferences matrix), 006. PARTIAL: 003 (no remove; type check trusts the client), 004 (2FA, language and time zone are stored per user; time zone is not yet applied to date display).
+- DONE: 001, 002, 005 (notification preferences matrix), 006. DONE: 003 (an unknown notification type is a 400, and choosing every channel again removes the stored choice; tested). PARTIAL: (none here), 004 (2FA, language and time zone are stored per user; time zone is not yet applied to date display).
 
 ## F-Settings (updated 2026-09-24)
 - DONE: 001 definitions declare whether a user may override them (`AllowUserOverride`); 002 precedence User > Application > code default (verified through the API: an application change reached one user but not the user who had overridden it); 003 typed getters plus a permission-guarded Application update and a self-scoped `settings/my` and `settings/update-mine` for the User scope (validates that the setting allows user override and, for time zone, that it exists); 004 caching with invalidation for both scopes.
@@ -139,10 +141,10 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 415 automated tests** in `src/MajdsApp.Tests` (331) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 419 automated tests** in `src/MajdsApp.Tests` (334) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 121 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
-- **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
+- **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
 - **Not covered:** browser end-to-end tests (Playwright), the two-factor and Google sign-in flows, the file upload and download endpoints over HTTP, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a live Redis server.
 - **Documentation:** every project has a README, including one for each module; each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys.
 
@@ -155,7 +157,7 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 67 are partial):
+Still open, roughly by value (no requirement is missing and 62 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels and a shared channel interface; F-Files storage interface.

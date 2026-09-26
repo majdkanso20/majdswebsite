@@ -137,6 +137,11 @@
         <a mat-menu-item routerLink="/account">
           <mat-icon>manage_accounts</mat-icon><span>{{ 'My account' | translate }}</span>
         </a>
+        @if (canOpenSettings()) {
+          <a mat-menu-item routerLink="/administration/settings">
+            <mat-icon>settings</mat-icon><span>{{ 'Settings' | translate }}</span>
+          </a>
+        }
         <button mat-menu-item (click)="signOut()">
           <mat-icon>logout</mat-icon><span>{{ 'Sign out' | translate }}</span>
         </button>

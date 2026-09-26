@@ -55,6 +55,8 @@ export class Shell {
   private readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
   private readonly permissionService = inject(PermissionService);
+  /** The user menu offers Settings only to someone who may open it (FR-SHELL-003). */
+  protected readonly canOpenSettings = () => this.permissionService.has('Settings.View');
   private readonly appSettingsService = inject(AppSettingsService);
   private readonly router = inject(Router);
 

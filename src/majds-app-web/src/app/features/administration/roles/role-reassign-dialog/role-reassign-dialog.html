@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>{{ l10n.translate("Delete role '{0}'?", data.role.name) }}</h2>
+
+<mat-dialog-content>
+  <p>{{ l10n.translate('{0} users have this role. Choose the role that takes them over.', '' + data.role.userCount) }}</p>
+  <mat-form-field appearance="outline" class="role-reassign__field">
+    <mat-label>{{ 'Move users to' | translate }}</mat-label>
+    <mat-select [(ngModel)]="target" name="target">
+      @for (candidate of candidates(); track candidate.id) {
+        <mat-option [value]="candidate.id">{{ candidate.displayName ?? candidate.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+  <button mat-flat-button color="warn" type="button" [disabled]="!target" (click)="confirm()">{{ 'Move users and delete' | translate }}</button>
+</mat-dialog-actions>

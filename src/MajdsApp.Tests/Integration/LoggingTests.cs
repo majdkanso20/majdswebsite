@@ -29,8 +29,13 @@ public class LoggingTests
             var response = await admin.Http.GetAsync("/api/settings/my");   // handled by a MediatR request, whose start is logged
             var correlation = response.Headers.GetValues("X-Correlation-Id").Single();
 
-            await Task.Delay(200);
-            var log = ReadLog(folder);
+            // The line is written as the request is handled; give a busy machine a moment rather than reading at once.
+            var log = "";
+            for (var attempt = 0; attempt < 30 && !log.Contains(correlation); attempt++)
+            {
+                await Task.Delay(100);
+                log = ReadLog(folder);
+            }
 
             log.Should().Contain(correlation);
             log.Should().MatchRegex(@"\[(INF|WRN|ERR)\]");

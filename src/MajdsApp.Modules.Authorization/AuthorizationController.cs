@@ -6,11 +6,22 @@ using Microsoft.AspNetCore.Mvc;
 namespace MajdsApp.Modules.Authorization;
 
 [Authorize]
-public class PermissionsController : ApiControllerBase
+public class PermissionsController(MajdsApp.SharedKernel.Plugins.IPluginStateCache pluginState) : ApiControllerBase
 {
-    /// <summary>Full permission tree for the role editor (FR-AUTHZ-002).</summary>
+    /// <summary>Full permission tree for the role editor (FR-AUTHZ-002). A disabled plugin's permissions are left out, since nothing they protect is reachable
+    /// while it is off (FR-AUTHZ-008); grants already made are kept and reappear when it is enabled.</summary>
     [HttpGet("tree")]
-    public ResponseDto<IReadOnlyList<PermissionGroup>> Tree() => Ok(PermissionRegistry.GetAllGroups());
+    public ResponseDto<IReadOnlyList<PermissionGroup>> Tree()
+    {
+        var hidden = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => a.GetName().Name is { } name && name.StartsWith("MajdsApp.Plugins.", StringComparison.Ordinal) && !pluginState.IsEnabled(name))
+            .SelectMany(PermissionRegistry.GetPermissionNames)
+            .ToHashSet();
+
+        return Ok<IReadOnlyList<PermissionGroup>>(PermissionRegistry.GetAllGroups()
+            .Where(g => !g.Permissions.All(hidden.Contains))
+            .ToList());
+    }
 }
 
 [Authorize]

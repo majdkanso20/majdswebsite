@@ -14,6 +14,7 @@ import { HasPermissionDirective } from '../../../../core/directives/has-permissi
 import { RolesApiService } from '../roles-api.service';
 import { RoleDto } from '../role.models';
 import { RoleFormDialog, RoleFormDialogData, RoleFormResult } from '../role-form-dialog/role-form-dialog';
+import { RoleReassignDialog, RoleReassignDialogData } from '../role-reassign-dialog/role-reassign-dialog';
 import { RolePermissionsDialog, RolePermissionsDialogData } from '../role-permissions-dialog/role-permissions-dialog';
 
 @Component({
@@ -103,8 +104,23 @@ export class RolesList {
   }
 
   deleteRole(role: RoleDto): void {
+    // A role with users cannot just disappear: ask which role takes them over first (FR-ROLE-004).
+    if (role.userCount > 0) {
+      this.dialog
+        .open<RoleReassignDialog, RoleReassignDialogData, string>(RoleReassignDialog, { data: { role } })
+        .afterClosed()
+        .subscribe((target) => {
+          if (target) this.performDelete(role, target);
+        });
+      return;
+    }
+
     if (!confirm(this.l10n.translate("Delete role '{0}'?", role.name))) return;
-    this.rolesApi.delete(role.id).subscribe({
+    this.performDelete(role);
+  }
+
+  private performDelete(role: RoleDto, reassignTo?: string): void {
+    this.rolesApi.delete(role.id, reassignTo).subscribe({
       next: () => {
         this.snackBar.open('Role deleted.', 'Dismiss', { duration: 3000 });
         this.load();

@@ -43,11 +43,23 @@ public class UpdateMySubscriptionsCommandHandler(ApplicationDbContext db, ICurre
         var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Authentication is required.");
         var existing = await db.Set<NotificationSubscription>().Where(s => s.UserId == userId).ToListAsync(ct);
 
-        foreach (var item in request.Items.Where(i => NotificationTypes.All.Contains(i.Type)))
+        // A type the client made up is an error, not something to skip quietly (F-Account FR-ACC-003).
+        foreach (var unknown in request.Items.Select(i => i.Type).Distinct().Where(t => !NotificationTypes.All.Contains(t)))
+            throw new FluentValidation.ValidationException($"'{unknown}' is not a notification type.");
+
+        foreach (var item in request.Items)
         {
             var channels = (item.InApp ? NotificationChannel.InApp : NotificationChannel.None)
                 | (item.Email ? NotificationChannel.Email : NotificationChannel.None);
             var row = existing.FirstOrDefault(s => s.Type == item.Type);
+
+            // Every channel on is the default, so choosing it removes the stored choice rather than keeping a row that says the same thing.
+            if (channels == NotificationChannel.All)
+            {
+                if (row is not null) db.Set<NotificationSubscription>().Remove(row);
+                continue;
+            }
+
             if (row is null)
                 db.Set<NotificationSubscription>().Add(new NotificationSubscription { UserId = userId, Type = item.Type, Channels = channels });
             else

@@ -39,8 +39,9 @@ export class RolesApiService {
       .pipe(map(() => undefined));
   }
 
-  delete(roleId: string): Observable<void> {
-    return this.http.post<ResponseDto<null>>(`${this.baseUrl}/delete`, { roleId }).pipe(map(() => undefined));
+  /** Deletes a role; when it still has users, `reassignToRoleId` says which role takes them over (FR-ROLE-004). */
+  delete(roleId: string, reassignToRoleId?: string): Observable<void> {
+    return this.http.post<ResponseDto<null>>(`${this.baseUrl}/delete`, { roleId, reassignToRoleId }).pipe(map(() => undefined));
   }
 
   getPermissionTree(): Observable<PermissionGroup[]> {
