@@ -337,5 +337,8 @@
   "OK": "ناجح",
   "Pending, next try {0}": "قيد الانتظار، المحاولة التالية {0}",
   "Failed ({0} in a row)": "فشلت ({0} متتالية)",
-  "Failed: {0}": "فشلت: {0}"
+  "Failed: {0}": "فشلت: {0}",
+  "This plugin screen was built for a different version of the platform and cannot be shown.": "بُنيت شاشة هذه الإضافة لإصدار مختلف من المنصة ولا يمكن عرضها.",
+  "This plugin screen could not be loaded.": "تعذّر تحميل شاشة هذه الإضافة.",
+  "Loading…": "جارٍ التحميل…"
 }

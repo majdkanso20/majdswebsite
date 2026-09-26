@@ -95,7 +95,11 @@ public class SetPluginEnabledCommandHandler(
     }
 }
 
-public record PluginMenuEntryDto(string PluginId, string Label, string Icon, string Route, string? Permission, int Order);
+/// <param name="Element">The custom element that renders this entry, or null when the shell's own metadata-driven page does.</param>
+/// <param name="EntryUrl">Where the bundle that defines the element is served (relative to the API's address), and <paramref name="StylesUrl"/> its stylesheet.</param>
+public record PluginMenuEntryDto(
+    string PluginId, string Label, string Icon, string Route, string? Permission, int Order,
+    string? Element = null, string? EntryUrl = null, string? StylesUrl = null, int? Contract = null, int? Angular = null);
 
 /// <summary>Enabled plugins' menu contributions for the Angular shell (P5 FR-PLUG-020/U3 FR-SHELL-008).
 /// Authenticated only — the frontend applies the same permission filter to these as to the
@@ -113,7 +117,10 @@ public class GetPluginMenuQueryHandler(ApplicationDbContext db, IReadOnlyList<Lo
         return loadedPlugins
             .Where(p => p.Succeeded && enabledSet.Contains(p.Manifest.Id))
             .SelectMany(p => p.Manifest.Menu.Select(m =>
-                new PluginMenuEntryDto(p.Manifest.Id, m.Label, m.Icon, m.Route, m.Permission, m.Order)))
+                m.Element is not null && p.Manifest.Frontend is { } f
+                    ? new PluginMenuEntryDto(p.Manifest.Id, m.Label, m.Icon, m.Route, m.Permission, m.Order, m.Element,
+                        $"/plugins/{p.Manifest.Id}/{f.Entry}", f.Styles is null ? null : $"/plugins/{p.Manifest.Id}/{f.Styles}", f.Contract, f.Angular)
+                    : new PluginMenuEntryDto(p.Manifest.Id, m.Label, m.Icon, m.Route, m.Permission, m.Order)))
             .OrderBy(m => m.Order)
             .ToList();
     }

@@ -1,0 +1,12 @@
+@switch (state()) {
+  @case ('incompatible') {
+    <app-error-state message="This plugin screen was built for a different version of the platform and cannot be shown." [retryable]="false" />
+  }
+  @case ('failed') {
+    <app-error-state message="This plugin screen could not be loaded." (retry)="init()" />
+  }
+  @case ('loading') {
+    <p class="plugin-element-page__loading" role="status">{{ 'Loading…' | translate }}</p>
+  }
+}
+<div #host class="plugin-element-page__host"></div>

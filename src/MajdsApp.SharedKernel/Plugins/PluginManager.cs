@@ -19,6 +19,7 @@ public class PluginManifestJson
     public string? MaxHostVersion { get; set; }
     public List<PluginMenuEntryJson> Menu { get; set; } = [];
     public List<PluginDependencyJson> Dependencies { get; set; } = [];
+    public PluginFrontendJson? Frontend { get; set; }
 }
 
 public class PluginDependencyJson
@@ -35,6 +36,15 @@ public class PluginMenuEntryJson
     public string Route { get; set; } = "";
     public string? Permission { get; set; }
     public int Order { get; set; }
+    public string? Element { get; set; }
+}
+
+public class PluginFrontendJson
+{
+    public string Entry { get; set; } = "";
+    public string? Styles { get; set; }
+    public int Contract { get; set; }
+    public int? Angular { get; set; }
 }
 
 /// <summary>One discovered plugin — either loaded successfully (<see cref="Assembly"/>/<see cref="Module"/>
@@ -93,11 +103,14 @@ public static class PluginManager
 
     internal static PluginManifest ToManifest(PluginManifestJson raw) =>
         new(raw.Id, raw.Name, raw.Version, raw.Author, raw.ModuleType,
-            raw.Menu.Select(m => new PluginMenuEntry(m.Label, m.Icon, m.Route, m.Permission, m.Order)).ToList(),
+            raw.Menu.Select(m => new PluginMenuEntry(m.Label, m.Icon, m.Route, m.Permission, m.Order, string.IsNullOrWhiteSpace(m.Element) ? null : m.Element)).ToList(),
             string.IsNullOrWhiteSpace(raw.MinHostVersion) ? null : raw.MinHostVersion,
             string.IsNullOrWhiteSpace(raw.MaxHostVersion) ? null : raw.MaxHostVersion,
             raw.Dependencies.Where(d => !string.IsNullOrWhiteSpace(d.Id))
-                .Select(d => new PluginDependency(d.Id, string.IsNullOrWhiteSpace(d.MinVersion) ? null : d.MinVersion, string.IsNullOrWhiteSpace(d.MaxVersion) ? null : d.MaxVersion)).ToList());
+                .Select(d => new PluginDependency(d.Id, string.IsNullOrWhiteSpace(d.MinVersion) ? null : d.MinVersion, string.IsNullOrWhiteSpace(d.MaxVersion) ? null : d.MaxVersion)).ToList(),
+            raw.Frontend is { } f && !string.IsNullOrWhiteSpace(f.Entry)
+                ? new PluginFrontend(f.Entry, string.IsNullOrWhiteSpace(f.Styles) ? null : f.Styles, f.Contract, f.Angular)
+                : null);
 
     /// <summary>Null when the plugin supports this platform version; otherwise the reason it does not (P5 FR-PLUG-009).</summary>
     public static string? HostCompatibilityProblem(PluginManifest manifest)
@@ -138,6 +151,18 @@ public static class PluginManager
         // A plugin built for another platform version is rejected with a diagnostic rather than loaded (P5 FR-PLUG-009).
         if (HostCompatibilityProblem(manifest) is { } incompatible)
             throw new InvalidOperationException(incompatible);
+
+        // A menu entry that shows a custom element needs the bundle that defines it, and the bundle has to be in the package (FR-PLUG-014).
+        if (manifest.Menu.Any(m => m.Element is not null) && manifest.Frontend is null)
+            throw new InvalidOperationException("A menu entry names an element, but plugin.json has no frontend entry.");
+        if (manifest.Frontend is { } frontend)
+        {
+            if (frontend.Contract < 1)
+                throw new InvalidOperationException("The frontend needs a contract version (1 or later).");
+            foreach (var file in new[] { frontend.Entry, frontend.Styles }.OfType<string>())
+                if (PluginAssets.Resolve(new LoadedPlugin(manifest, null, null, null, pluginDir), file) is null)
+                    throw new FileNotFoundException($"Frontend file '{file}' was not found in the package's frontend folder.");
+        }
 
         var assemblyPath = Path.Combine(pluginDir, "backend", raw.Assembly);
         if (!File.Exists(assemblyPath))

@@ -6,6 +6,25 @@
   "assembly": "MajdsApp.Plugins.Tasks.dll",
   "moduleType": "MajdsApp.Plugins.Tasks.TasksModule",
   "menu": [
-    { "label": "Tasks", "icon": "checklist", "route": "tasks", "permission": "Tasks.View", "order": 45 }
-  ]
+    {
+      "label": "Tasks",
+      "icon": "checklist",
+      "route": "tasks",
+      "permission": "Tasks.View",
+      "order": 45
+    },
+    {
+      "label": "Tasks overview",
+      "icon": "insights",
+      "route": "tasks-overview",
+      "permission": "Tasks.View",
+      "order": 46,
+      "element": "majds-tasks-overview"
+    }
+  ],
+  "frontend": {
+    "entry": "main.js",
+    "styles": "styles.css",
+    "contract": 1
+  }
 }

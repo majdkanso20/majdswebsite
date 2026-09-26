@@ -1,5 +1,6 @@
 {
   "Tasks": "المهام",
   "Longest task title": "أطول عنوان للمهمة",
-  "How many characters a task title may have (1 to 500).": "عدد الأحرف المسموح به في عنوان المهمة (من 1 إلى 500)."
+  "How many characters a task title may have (1 to 500).": "عدد الأحرف المسموح به في عنوان المهمة (من 1 إلى 500).",
+  "Tasks overview": "نظرة عامة على المهام"
 }

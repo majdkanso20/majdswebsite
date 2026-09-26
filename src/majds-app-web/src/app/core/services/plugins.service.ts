@@ -14,6 +14,11 @@ interface PluginMenuEntryDto {
   route: string;
   permission: string | null;
   order: number;
+  element?: string | null;
+  entryUrl?: string | null;
+  stylesUrl?: string | null;
+  contract?: number | null;
+  angular?: number | null;
 }
 
 /**
@@ -73,9 +78,25 @@ export class PluginsService {
             () => this.isRouteEnabled(entry.route) || this.router.createUrlTree(['/dashboard']),
             ...(entry.permission ? [permissionGuard(entry.permission)] : [])
           ],
-          loadComponent: () =>
-            import('../../features/plugins/plugin-crud-page/plugin-crud-page').then((m) => m.PluginCrudPage),
-          data: { pluginId: entry.pluginId }
+          // An entry that names an element is drawn by the plugin's own pre-built UI (FR-PLUG-014/015); the others use the metadata-driven page.
+          ...(entry.element && entry.entryUrl
+            ? {
+                loadComponent: () =>
+                  import('../../features/plugins/plugin-element-page/plugin-element-page').then((m) => m.PluginElementPage),
+                data: {
+                  pluginId: entry.pluginId,
+                  element: entry.element,
+                  entryUrl: entry.entryUrl,
+                  stylesUrl: entry.stylesUrl ?? null,
+                  contract: entry.contract ?? 0,
+                  angular: entry.angular ?? null
+                }
+              }
+            : {
+                loadComponent: () =>
+                  import('../../features/plugins/plugin-crud-page/plugin-crud-page').then((m) => m.PluginCrudPage),
+                data: { pluginId: entry.pluginId }
+              })
         });
       }
       this.router.resetConfig(this.router.config);

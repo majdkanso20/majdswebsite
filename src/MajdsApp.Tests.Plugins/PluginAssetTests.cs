@@ -21,7 +21,7 @@ public class PluginAssetTests(PluginHostFactory factory)
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/javascript");
         response.Headers.CacheControl!.NoCache.Should().BeTrue();
         response.Headers.ETag.Should().NotBeNull();
-        (await response.Content.ReadAsStringAsync()).Should().Contain("MajdsApp.Plugins.Tasks");
+        (await response.Content.ReadAsStringAsync()).Should().Contain("majds-tasks-overview");
     }
 
     [Fact]
