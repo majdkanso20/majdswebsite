@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MajdsApp.Modules.Plugins;
 
-public record PluginChangeDto(string Id, string Name, string Version, string Action, string? PreviousVersion, string Sha256, bool RestartRequired);
+public record PluginChangeDto(string Id, string Name, string Version, string Action, string? PreviousVersion, string Sha256, bool RestartRequired, string? SignedBy = null);
 
 public record PendingPluginChangeDto(string Id, string Name, string Version, string Action, DateTime StagedAt);
 
@@ -26,7 +26,7 @@ public class InstallPluginCommandHandler(PluginHostOptions options) : IRequestHa
     {
         var staged = PluginInstaller.Stage(request.Content, request.ExpectedSha256, options);
         return Task.FromResult(new PluginChangeDto(
-            staged.Manifest.Id, staged.Manifest.Name, staged.Manifest.Version, staged.Action, staged.PreviousVersion, staged.Sha256, RestartRequired: true));
+            staged.Manifest.Id, staged.Manifest.Name, staged.Manifest.Version, staged.Action, staged.PreviousVersion, staged.Sha256, RestartRequired: true, staged.SignedBy));
     }
 }
 
@@ -45,7 +45,7 @@ public class RollbackPluginCommandHandler(PluginHostOptions options) : IRequestH
     {
         var staged = PluginInstaller.StageRollback(request.PluginId, options);
         return Task.FromResult(new PluginChangeDto(
-            staged.Manifest.Id, staged.Manifest.Name, staged.Manifest.Version, staged.Action, staged.PreviousVersion, staged.Sha256, RestartRequired: true));
+            staged.Manifest.Id, staged.Manifest.Name, staged.Manifest.Version, staged.Action, staged.PreviousVersion, staged.Sha256, RestartRequired: true, staged.SignedBy));
     }
 }
 

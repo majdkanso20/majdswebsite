@@ -59,3 +59,20 @@
     gap: var(--app-space-2);
   }
 }
+
+.plugins-list__checks {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-block: 4px;
+  }
+}
+
+.plugins-list__check--bad {
+  color: var(--mat-sys-error);
+}

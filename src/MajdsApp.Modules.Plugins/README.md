@@ -32,6 +32,10 @@ A plugin is loaded once, at startup, because its endpoints, handlers and entity 
 3. **Uninstall** stops the plugin immediately (its API answers 403, its menu entry disappears), removes its registry entry, and removes its permissions from every role and user that held them. A marker is written and the files are deleted at the next start. **Its data is always kept**; dropping a plugin's tables needs a reviewed migration and is not offered.
 4. **Rollback** stages the `.previous` version to be restored at the next start.
 
+## Signatures (FR-PLUG-036)
+
+A publisher can sign a package: build the zip, then `PluginSignature.Sign(bytes, ecdsaPrivateKey, "acme")` (in `MajdsApp.SharedKernel.Plugins`) returns it with a `plugin.sig` added, holding the key id and an ECDSA P-256 signature over a digest of every file's name and SHA-256 (so adding, removing, renaming or changing a file breaks it). The administrator trusts a publisher by adding the base64 of its public key (`ExportSubjectPublicKeyInfo`) as `Plugins:Trust:Signers:acme`. When a package carries a signature it must verify against a trusted key or the upload is refused; `Plugins:Trust:RequireSignature=true` also refuses unsigned packages. The upload result and the audit trail show who signed it. The signature file itself is checked and never installed.
+
 ## Trust policy
 
 `Plugins:Trust:RequireAllowList` (default `false`) and `Plugins:Trust:Allowed` (a list of `{ "Id": "...", "Sha256": "..." }`). With the allow-list required, only a package whose id **and** SHA-256 are listed can be installed. Turn it on in production. The response to an install includes the package's SHA-256 so it can be compared with what the publisher published. There is no digital-signature check.
@@ -68,14 +72,15 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 ## Notes
 
 - Enable and disable take effect immediately; the assembly stays loaded until the process restarts.
-- Not implemented: digital signatures, applying changes without a restart.
+- Not implemented: plugin-shipped database migrations, applying changes without a restart.
 - See `plugins/README.md` and `MajdsApp.Plugins.Tasks` for how to author and package a plugin.
 
 ## Configuration keys
 
 - `Plugins:Directory` (default `<repo>/plugins`)
 - `Plugins:Trust:RequireAllowList`, `Plugins:Trust:Allowed`
+- `Plugins:Trust:RequireSignature`, `Plugins:Trust:Signers:<keyId>`
 
 ## Tests
 
-`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), translations (`PluginLocalizationTests`), frontend files (`PluginAssetTests`), and the frontend declaration (`PluginFrontendTests`).
+`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), translations (`PluginLocalizationTests`), frontend files (`PluginAssetTests`), the frontend declaration (`PluginFrontendTests`), signatures (`PluginSignatureTests`) and state, checks and permissions (`PluginDiagnosticsTests`).

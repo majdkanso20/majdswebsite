@@ -37,6 +37,9 @@
             @if (hostRange(plugin); as range) {
               <span class="plugins-list__meta">{{ 'Platform versions' | translate }}: {{ range }}</span>
             }
+            <mat-chip-set>
+              <mat-chip [highlighted]="plugin.state === 'Failed'">{{ plugin.state | translate }}</mat-chip>
+            </mat-chip-set>
             @if (plugin.pendingUninstall) {
               <mat-chip-set>
                 <mat-chip highlighted>{{ 'Uninstalling at next start' | translate }}</mat-chip>
@@ -55,6 +58,20 @@
             [attr.aria-label]="plugin.name"
           />
         </div>
+
+        @if (plugin.diagnostics.length > 0) {
+          <details class="plugins-list__detail" [open]="hasProblem(plugin)">
+            <summary>{{ 'Compatibility checks' | translate }}</summary>
+            <ul class="plugins-list__checks">
+              @for (check of plugin.diagnostics; track check.check + check.detail) {
+                <li [class.plugins-list__check--bad]="!check.ok">
+                  <mat-icon aria-hidden="true">{{ check.ok ? 'check_circle' : 'error' }}</mat-icon>
+                  <span><strong>{{ check.check | translate }}:</strong> {{ check.detail }}</span>
+                </li>
+              }
+            </ul>
+          </details>
+        }
 
         @if (plugin.menuEntries.length > 0) {
           <p class="plugins-list__detail">
@@ -76,6 +93,12 @@
 
         @if (canManage && !plugin.pendingUninstall) {
           <div class="plugins-list__actions">
+            @if (plugin.settingsGroup) {
+              <a mat-stroked-button routerLink="/administration/settings">
+                <mat-icon>tune</mat-icon>
+                {{ 'Settings' | translate }}
+              </a>
+            }
             @if (plugin.canRollback) {
               <button mat-stroked-button type="button" (click)="rollback(plugin)">
                 <mat-icon>history</mat-icon>

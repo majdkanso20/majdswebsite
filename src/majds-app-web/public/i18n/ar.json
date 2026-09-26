@@ -340,5 +340,13 @@
   "Failed: {0}": "فشلت: {0}",
   "This plugin screen was built for a different version of the platform and cannot be shown.": "بُنيت شاشة هذه الإضافة لإصدار مختلف من المنصة ولا يمكن عرضها.",
   "This plugin screen could not be loaded.": "تعذّر تحميل شاشة هذه الإضافة.",
-  "Loading…": "جارٍ التحميل…"
+  "Loading…": "جارٍ التحميل…",
+  "Enabled": "مفعّلة",
+  "Disabled": "معطّلة",
+  "Uninstalling": "قيد إلغاء التثبيت",
+  "Compatibility checks": "فحوصات التوافق",
+  "Platform version": "إصدار المنصة",
+  "Dependency": "الاعتمادية",
+  "UI contract": "عقد الواجهة",
+  "Load": "التحميل"
 }

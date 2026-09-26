@@ -125,5 +125,9 @@
   "The longest task title must be between 1 and 500.": "يجب أن يكون أطول عنوان للمهمة بين 1 و500.",
   "The title is longer than the limit set for tasks.": "العنوان أطول من الحد المحدد للمهام.",
   "If this was not you, contact your administrator at once.": "إذا لم تكن أنت، فتواصل مع المسؤول فوراً.",
-  "'{0}' is not a column this list can be sorted by. Use one of: {1}.": "لا يمكن ترتيب هذه القائمة حسب '{0}'. استخدم أحد: {1}."
+  "'{0}' is not a column this list can be sorted by. Use one of: {1}.": "لا يمكن ترتيب هذه القائمة حسب '{0}'. استخدم أحد: {1}.",
+  "The package's signature file is not valid.": "ملف توقيع الحزمة غير صالح.",
+  "The package is signed by '{0}', which is not a trusted publisher.": "الحزمة موقّعة من '{0}' وهو ناشر غير موثوق.",
+  "The package's signature by '{0}' does not match its contents. It was changed after it was signed, or is not from that publisher.": "توقيع '{0}' على الحزمة لا يطابق محتواها. تم تغييرها بعد التوقيع أو أنها ليست من هذا الناشر.",
+  "This platform only installs signed plugins, and this package has no signature.": "تقبل هذه المنصة الإضافات الموقّعة فقط، وهذه الحزمة بلا توقيع."
 }

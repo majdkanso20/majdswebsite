@@ -10,6 +10,7 @@ import { PluginsList } from './plugins-list';
 const plugin = (over: Partial<InstalledPluginDto> = {}): InstalledPluginDto => ({
   id: 'Acme.Tasks', name: 'Tasks', version: '1.0.0', author: 'Acme', isEnabled: true, lastError: null, discoveredAt: '2026-09-25T00:00:00',
   permissions: ['Tasks.View', 'Tasks.Edit'], menuEntries: ['Tasks'], canRollback: false, pendingUninstall: false,
+  state: 'Enabled', diagnostics: [{ check: 'Platform version', ok: true, detail: 'fine' }], settingsGroup: null,
   minHostVersion: null, maxHostVersion: null, ...over
 });
 
@@ -107,6 +108,31 @@ describe('PluginsList', () => {
 
     expect(element.textContent).toContain('Uninstalling at next start');
     expect(element.querySelector('.plugins-list__actions')).toBeNull();
+  });
+
+  it('shows the state of each plugin and the compatibility checks, opening them when one failed', async () => {
+    const { element } = await create([
+      plugin({ state: 'Failed', diagnostics: [{ check: 'Dependency', ok: false, detail: 'Acme.Base (1.0.0 to any) is not installed.' }] })
+    ]);
+
+    expect(element.textContent).toContain('Failed');
+    expect(element.textContent).toContain('Acme.Base (1.0.0 to any) is not installed.');
+    expect(element.querySelector('.plugins-list__check--bad')).not.toBeNull();
+    expect((element.querySelector('details') as HTMLDetailsElement).open).toBe(true);
+  });
+
+  it('keeps the checks closed when everything passes', async () => {
+    const { element } = await create([plugin()]);
+
+    expect(element.textContent).toContain('Compatibility checks');
+    expect(element.querySelector('.plugins-list__check--bad')).toBeNull();
+    expect((element.querySelector('details') as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it('offers a settings shortcut only for a plugin that defines settings', async () => {
+    const { element } = await create([plugin({ settingsGroup: 'Tasks' }), plugin({ id: 'Acme.Other', name: 'Other', settingsGroup: null })]);
+
+    expect(element.querySelectorAll('a[href="/administration/settings"]').length).toBe(1);
   });
 
   it('cancels a pending change and reloads', async () => {

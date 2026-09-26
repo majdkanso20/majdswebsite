@@ -20,6 +20,18 @@ export interface InstalledPluginDto {
   pendingUninstall: boolean;
   minHostVersion: string | null;
   maxHostVersion: string | null;
+  /** Enabled, Disabled, Failed (it could not be loaded) or Uninstalling (FR-PLUG-030). */
+  state: 'Enabled' | 'Disabled' | 'Failed' | 'Uninstalling';
+  /** What the host checked about this plugin and how each check came out (FR-PLUG-041). */
+  diagnostics: PluginDiagnosticDto[];
+  /** The group its settings appear under on the settings page, or null when it has none (FR-PLUG-040). */
+  settingsGroup: string | null;
+}
+
+export interface PluginDiagnosticDto {
+  check: string;
+  ok: boolean;
+  detail: string;
 }
 
 /** A verified package staged to be installed, upgraded or rolled back at the next start. */

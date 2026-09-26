@@ -87,6 +87,10 @@ export class PluginsList {
   }
 
   /** True when the plugin declares a platform version range, shown so an incompatibility is visible before it bites. */
+  hasProblem(plugin: InstalledPluginDto): boolean {
+    return plugin.diagnostics.some((check) => !check.ok);
+  }
+
   hostRange(plugin: InstalledPluginDto): string | null {
     if (!plugin.minHostVersion && !plugin.maxHostVersion) return null;
     return `${plugin.minHostVersion ?? '…'} – ${plugin.maxHostVersion ?? '…'}`;

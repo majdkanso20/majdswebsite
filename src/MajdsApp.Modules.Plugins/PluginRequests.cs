@@ -12,7 +12,11 @@ namespace MajdsApp.Modules.Plugins;
 public record PluginDto(
     string Id, string Name, string Version, string Author, bool IsEnabled, string? LastError, DateTime DiscoveredAt,
     IReadOnlyList<string> Permissions, IReadOnlyList<string> MenuEntries, bool CanRollback, bool PendingUninstall,
-    string? MinHostVersion, string? MaxHostVersion, IReadOnlyList<string> Dependencies);
+    string? MinHostVersion, string? MaxHostVersion, IReadOnlyList<string> Dependencies,
+    string State, IReadOnlyList<PluginDiagnosticDto> Diagnostics, string? SettingsGroup);
+
+/// <summary>One compatibility check for the management screen (P5 FR-PLUG-041): what was checked, whether it passed, and the detail.</summary>
+public record PluginDiagnosticDto(string Check, bool Ok, string Detail);
 
 [RequiresPermission(Permissions.Plugins.View)]
 public record ListPluginsQuery : IRequest<IReadOnlyList<PluginDto>>;
@@ -29,12 +33,51 @@ public class ListPluginsQueryHandler(ApplicationDbContext db, IReadOnlyList<Load
         {
             var plugin = loaded.FirstOrDefault(l => l.Manifest.Id == p.Id);
             var permissions = plugin?.Assembly is { } assembly ? MajdsApp.Modules.Authorization.PermissionRegistry.GetPermissionNames(assembly) : [];
+            var state = pendingUninstall.Contains(p.Id) ? "Uninstalling" : p.LastError is not null || plugin is not { Succeeded: true } ? "Failed" : p.IsEnabled ? "Enabled" : "Disabled";
             return new PluginDto(p.Id, p.Name, p.Version, p.Author, p.IsEnabled, p.LastError, p.DiscoveredAt,
                 permissions, plugin?.Manifest.Menu.Select(m => m.Label).ToList() ?? [],
                 PluginInstaller.HasPreviousVersion(options.Directory, p.Id), pendingUninstall.Contains(p.Id),
                 plugin?.Manifest.MinHostVersion, plugin?.Manifest.MaxHostVersion,
-                plugin?.Manifest.DependsOn.Select(d => d.Id).ToList() ?? []);
+                plugin?.Manifest.DependsOn.Select(d => d.Id).ToList() ?? [],
+                state, plugin is null ? [] : Diagnose(plugin, rows), SettingsGroupOf(plugin));
         }).ToList();
+    }
+
+    /// <summary>The checks the host makes on a plugin, with the result of each, so an administrator can see why one is not working.</summary>
+    private static List<PluginDiagnosticDto> Diagnose(LoadedPlugin plugin, IReadOnlyList<InstalledPlugin> rows)
+    {
+        var manifest = plugin.Manifest;
+        var checks = new List<PluginDiagnosticDto>();
+
+        var host = PluginManager.HostCompatibilityProblem(manifest);
+        checks.Add(new("Platform version", host is null, host ?? $"This platform is {PluginHost.Version}; the plugin supports {manifest.MinHostVersion ?? "any older"} to {manifest.MaxHostVersion ?? "any newer"}."));
+
+        foreach (var dependency in manifest.DependsOn)
+        {
+            var row = rows.FirstOrDefault(r => r.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase));
+            var range = $"{dependency.MinVersion ?? "any"} to {dependency.MaxVersion ?? "any"}";
+            checks.Add(row is null
+                ? new("Dependency", false, $"{dependency.Id} ({range}) is not installed.")
+                : new("Dependency", row.IsEnabled && row.LastError is null, $"{dependency.Id} {row.Version} (needs {range}){(row.IsEnabled ? "" : ", disabled")}{(row.LastError is null ? "" : ", failed to load")}."));
+        }
+
+        if (manifest.Frontend is { } frontend)
+            checks.Add(new("UI contract", frontend.Contract == PluginHost.UiContract, $"The plugin's screens were built for contract {frontend.Contract}; the shell speaks {PluginHost.UiContract}."));
+
+        if (plugin.LoadError is not null)
+            checks.Add(new("Load", false, plugin.LoadError));
+
+        return checks;
+    }
+
+    /// <summary>The group its settings appear under on the settings page, or null when the plugin defines none (FR-PLUG-013/040).</summary>
+    private static string? SettingsGroupOf(LoadedPlugin? plugin)
+    {
+        var name = plugin?.Assembly?.GetName().Name;
+        const string prefix = "MajdsApp.Plugins.";
+        if (name is null || !name.StartsWith(prefix, StringComparison.Ordinal)) return null;
+        var key = name[prefix.Length..] + ".";
+        return MajdsApp.SharedKernel.Settings.SettingDefinitionRegistry.GetAll().FirstOrDefault(d => d.Name.StartsWith(key, StringComparison.Ordinal))?.Group;
     }
 }
 

@@ -6,7 +6,7 @@ using FluentValidation;
 
 namespace MajdsApp.SharedKernel.Plugins;
 
-public record StagedPlugin(PluginManifest Manifest, string Action, string Sha256, string? PreviousVersion);
+public record StagedPlugin(PluginManifest Manifest, string Action, string Sha256, string? PreviousVersion, string? SignedBy = null);
 
 /// <summary>A change waiting for the next start: a staged install, upgrade or rollback, or an uninstall.</summary>
 public record PendingPluginChange(string Id, string Name, string Version, string Action, DateTime StagedAt);
@@ -61,6 +61,8 @@ public static class PluginInstaller
         if (!string.IsNullOrWhiteSpace(expectedSha256) && !FixedTimeEqualsHex(expectedSha256, sha256))
             throw new ValidationException("The package does not match the checksum you provided. It may be corrupted or not the publisher's file.");
 
+        var signedBy = CheckSignature(bytes, options);
+
         var staging = Path.Combine(options.Directory, ".staging", Guid.NewGuid().ToString("N"));
         try
         {
@@ -87,7 +89,7 @@ public static class PluginInstaller
             File.WriteAllText(Path.Combine(staging, MetaFile), JsonSerializer.Serialize(new StageMeta(action, sha256, DateTime.UtcNow), Json));
             Directory.Move(staging, pending);
 
-            return new StagedPlugin(manifest, action, sha256, installedManifest?.Version);
+            return new StagedPlugin(manifest, action, sha256, installedManifest?.Version, signedBy);
         }
         finally
         {
@@ -293,6 +295,7 @@ public static class PluginInstaller
             foreach (var entry in zip.Entries)
             {
                 if (entry.FullName.EndsWith('/')) continue; // directory entry
+                if (entry.FullName.Equals(PluginSignature.FileName, StringComparison.OrdinalIgnoreCase)) continue; // checked before unpacking, not installed
                 var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
                 if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
                     throw new ValidationException($"The package contains an unsafe path ('{entry.FullName}').");
@@ -331,6 +334,23 @@ public static class PluginInstaller
             a.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && FixedTimeEqualsHex(a.Sha256, sha256));
         if (!approved)
             throw new ValidationException($"This package is not on the approved list (id {id}, SHA-256 {sha256}). Ask an administrator to approve it in Plugins:Trust.");
+    }
+
+    /// <summary>The id of the trusted publisher that signed the package, or null when it is unsigned. A signature that does not verify is always refused; with
+    /// <c>Plugins:Trust:RequireSignature</c> an unsigned package is refused too (P5 FR-PLUG-036).</summary>
+    private static string? CheckSignature(byte[] package, PluginHostOptions options)
+    {
+        ZipArchive zip;
+        try { zip = new ZipArchive(new MemoryStream(package), ZipArchiveMode.Read); }
+        catch (InvalidDataException) { throw new ValidationException("The file is not a valid .zip package."); }
+
+        using (zip)
+        {
+            var signer = PluginSignature.Verify(zip, options.TrustedSigners);
+            if (signer is null && options.RequireSignature)
+                throw new ValidationException("This platform only installs signed plugins, and this package has no signature.");
+            return signer;
+        }
     }
 
     /// <summary>Loads the module type in a throwaway context, without running any plugin code, so a package whose module cannot load is

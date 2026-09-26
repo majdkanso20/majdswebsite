@@ -76,6 +76,7 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `Jobs:Scheduler:Enabled` / `Jobs:Worker:Enabled` | Turn the recurring-job scheduler or the queue worker off on a server | on |
 | `Resilience:MaxRetries` / `RetryDelayMilliseconds` / `TimeoutSeconds` / `BreakMinimumCalls` / `BreakSamplingSeconds` / `BreakSeconds` | How outbound mail retries, times out and pauses when the mail server keeps failing | 2 / 500 / 30 / 5 / 30 / 30 |
 | `Paging:MaxPageSize` | The largest page any list endpoint returns (1 to 1000) | 100 |
+| `Plugins:Trust:RequireSignature` / `Plugins:Trust:Signers:<keyId>` | Only install plugin packages signed by a trusted publisher (base64 ECDSA P-256 public key per key id) | off / none |
 | `MediatR:LicenseKey` | Required for production use of MediatR | unset |
 
 Runtime behavior that administrators change without a redeploy (application name, session timeout, self-registration, upload size, mail server, retention, feature flags) is under **Settings** and **Features** in the app.
