@@ -27,3 +27,5 @@ plugins/
 Settings: declare `SettingDefinition`s (names starting with your plugin key, for example `Tasks.MaxTitleLength`) and they show on the settings page; add a `validator` to check values. See `MajdsApp.Plugins.Tasks/TaskSettings.cs`.
 
 Translations: put `localization/ar.json` (English text to Arabic text) in the package; it is picked up for menu labels and server messages.
+
+Frontend: put pre-built files in `frontend/`; they are served at `/plugins/<id>/<file>` while the plugin is enabled.

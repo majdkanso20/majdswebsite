@@ -1,5 +1,6 @@
 using MajdsApp.SharedKernel.Modules;
 using MajdsApp.SharedKernel.Plugins;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,4 +15,6 @@ public class PluginsModule : IFeatureModule
         services.AddSingleton<PluginStateCache>();
         services.AddSingleton<IPluginStateCache>(sp => sp.GetRequiredService<PluginStateCache>());
     }
+
+    public void MapEndpoints(IEndpointRouteBuilder endpoints) => PluginAssetEndpoint.Map(endpoints);
 }

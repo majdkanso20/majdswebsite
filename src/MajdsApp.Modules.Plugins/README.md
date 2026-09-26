@@ -45,6 +45,10 @@ A plugin is loaded once, at startup, because its endpoints, handlers and entity 
 
 A plugin declares settings the same way a module does (nested static classes holding `SettingDefinition` fields; see `MajdsApp.Plugins.Tasks/TaskSettings.cs`). They appear on the standard settings page under the plugin's group and are read through `ISettingsProvider`. A definition may carry a `validator` (returns a message, or null when the value is fine) that runs when an administrator saves it. A plugin's setting names must start with its key (the assembly name after `MajdsApp.Plugins.`, so `Tasks.` for `MajdsApp.Plugins.Tasks`); others are ignored, and a platform setting always wins a name clash.
 
+## Frontend files
+
+A package may hold pre-built frontend files in `frontend/` (a compiled bundle, styles, images, fonts; `.js .mjs .css .html .json .map .svg .png .jpg .gif .webp .ico .woff .woff2 .txt` only). They are served at `GET /plugins/{pluginId}/{path}` (for example `/plugins/MajdsApp.Plugins.Tasks/main.js`) without sign-in, because they are code and not data. Only an enabled plugin is served (a disabled one is a 404), nothing outside `frontend/` is reachable, and each response carries an ETag and `Cache-Control: no-cache`, so the browser asks before reusing a file and an upgrade shows up at once. Loading the bundle in the shell is not built yet.
+
 ## Plugin translations
 
 A plugin may ship `localization/<language>.json` (for example `localization/ar.json`) next to `plugin.json`: a flat object keyed by the English text, in the platform's format, with `{0}` placeholders allowed. The platform adds these entries to its own for server messages, notifications and emails, and serves them with the rest at `GET /api/localization/resources`, so the shell translates the plugin's menu labels. A plugin can add entries but never replace one the platform already translates; a missing or malformed file leaves English. See `MajdsApp.Plugins.Tasks/localization/ar.json`.
@@ -70,4 +74,4 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 
 ## Tests
 
-`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), and translations (`PluginLocalizationTests`).
+`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), translations (`PluginLocalizationTests`), and frontend files (`PluginAssetTests`).

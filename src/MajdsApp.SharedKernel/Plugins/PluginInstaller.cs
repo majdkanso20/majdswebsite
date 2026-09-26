@@ -33,6 +33,15 @@ public static class PluginInstaller
 
     private static readonly Regex SafeId = new(@"^[A-Za-z][A-Za-z0-9._-]{1,99}$", RegexOptions.Compiled);
     private static readonly string[] AllowedExtensions = [".dll", ".pdb", ".json", ".txt", ".md", ".xml"];
+
+    /// <summary>Under <c>frontend/</c> only the kinds of file the host serves are accepted (FR-PLUG-014/016); everywhere else the list above applies.</summary>
+    private static bool IsAllowedFile(string entryFullName)
+    {
+        var extension = Path.GetExtension(entryFullName).ToLowerInvariant();
+        return entryFullName.StartsWith(PluginAssets.Folder + "/", StringComparison.OrdinalIgnoreCase)
+            ? PluginAssets.ContentTypes.ContainsKey(extension)
+            : AllowedExtensions.Contains(extension);
+    }
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true };
 
     private record StageMeta(string Action, string Sha256, DateTime StagedAt);
@@ -287,7 +296,7 @@ public static class PluginInstaller
                 var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
                 if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
                     throw new ValidationException($"The package contains an unsafe path ('{entry.FullName}').");
-                if (!AllowedExtensions.Contains(Path.GetExtension(entry.Name).ToLowerInvariant()))
+                if (!IsAllowedFile(entry.FullName))
                     throw new ValidationException($"The package contains a file type that is not allowed ('{entry.Name}').");
 
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);

@@ -31,6 +31,8 @@ public static class PluginPackages
                     Add(zip, "backend/" + Path.GetFileName(file), File.ReadAllBytes(file));
             foreach (var file in Directory.Exists(Path.Combine(built, "localization")) ? Directory.GetFiles(Path.Combine(built, "localization")) : [])
                 Add(zip, "localization/" + Path.GetFileName(file), File.ReadAllBytes(file));
+            foreach (var file in Directory.Exists(Path.Combine(built, "frontend")) ? Directory.GetFiles(Path.Combine(built, "frontend"), "*", SearchOption.AllDirectories) : [])
+                Add(zip, "frontend/" + Path.GetRelativePath(Path.Combine(built, "frontend"), file).Replace(Path.DirectorySeparatorChar, '/'), File.ReadAllBytes(file));
             extra?.Invoke(zip);
         }
 
@@ -54,6 +56,14 @@ public static class PluginPackages
         File.WriteAllText(Path.Combine(target, "plugin.json"), json.ToJsonString());
         foreach (var file in Directory.GetFiles(built, "MajdsApp.Plugins.Tasks.*"))
             File.Copy(file, Path.Combine(target, "backend", Path.GetFileName(file)), overwrite: true);
+        var frontend = Path.Combine(built, "frontend");
+        if (Directory.Exists(frontend))
+            foreach (var file in Directory.GetFiles(frontend, "*", SearchOption.AllDirectories))
+            {
+                var to = Path.Combine(target, "frontend", Path.GetRelativePath(frontend, file));
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                File.Copy(file, to, overwrite: true);
+            }
         if (Directory.Exists(Path.Combine(built, "localization")))
         {
             Directory.CreateDirectory(Path.Combine(target, "localization"));

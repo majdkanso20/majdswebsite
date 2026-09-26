@@ -33,6 +33,7 @@
   <ItemGroup>
     <None Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="frontend\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
