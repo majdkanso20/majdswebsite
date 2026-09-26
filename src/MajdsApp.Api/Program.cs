@@ -7,6 +7,7 @@ using MajdsApp.Services;
 using MajdsApp.SharedKernel;
 using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Modules;
+using MajdsApp.SharedKernel.Configuration;
 using MajdsApp.SharedKernel.Plugins;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -136,7 +137,7 @@ MajdsApp.SharedKernel.Security.RateLimiting.AddPlatformRateLimiting(builder.Serv
 
 // Same conditional SMTP wiring as MajdsApp's Program.cs (see that file for the full rationale) —
 // needed here too since F-Users' admin-initiated password reset (FR-USER-006) sends real email.
-builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Email:Smtp"));
+builder.Services.AddModuleOptions<SmtpOptions>(builder.Configuration, "Email:Smtp"); // bound and checked at start (P2 FR-MOD-004)
 var smtpUsername = builder.Configuration["Email:Smtp:Username"];
 var smtpPassword = builder.Configuration["Email:Smtp:Password"];
 if (!string.IsNullOrEmpty(smtpUsername) && !string.IsNullOrEmpty(smtpPassword))

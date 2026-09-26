@@ -3,6 +3,8 @@ using System.Threading.RateLimiting;
 using MajdsApp.SharedKernel.Api;
 using MajdsApp.SharedKernel.Localization;
 using Microsoft.AspNetCore.Builder;
+using System.ComponentModel.DataAnnotations;
+using MajdsApp.SharedKernel.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
@@ -26,15 +28,33 @@ public static class RateLimitPolicies
 /// <c>RateLimiting</c> configuration section so a deployment can tune them without code changes.
 /// Rejections use the standard <see cref="ResponseDto{T}"/> envelope with a <c>Retry-After</c> header.
 /// </summary>
+/// <summary>The <c>RateLimiting</c> section.</summary>
+public class RateLimitOptions
+{
+    [Range(1, 1_000_000, ErrorMessage = "RateLimiting:AuthPermitLimit must be between 1 and 1000000.")]
+    public int AuthPermitLimit { get; set; } = 10;
+
+    [Range(1, 1_000_000, ErrorMessage = "RateLimiting:ExpensivePermitLimit must be between 1 and 1000000.")]
+    public int ExpensivePermitLimit { get; set; } = 30;
+
+    [Range(1, 10_000_000, ErrorMessage = "RateLimiting:GlobalPermitLimit must be between 1 and 10000000.")]
+    public int GlobalPermitLimit { get; set; } = 600;
+
+    [Range(1, 86_400, ErrorMessage = "RateLimiting:WindowSeconds must be between 1 and 86400.")]
+    public int WindowSeconds { get; set; } = 60;
+}
+
 public static class RateLimiting
 {
     public static IServiceCollection AddPlatformRateLimiting(this IServiceCollection services, IConfiguration configuration)
     {
-        var section = configuration.GetSection("RateLimiting");
-        var authLimit = section.GetValue("AuthPermitLimit", 10);
-        var expensiveLimit = section.GetValue("ExpensivePermitLimit", 30);
-        var globalLimit = section.GetValue("GlobalPermitLimit", 600);
-        var window = TimeSpan.FromSeconds(section.GetValue("WindowSeconds", 60));
+        // Checked when the application starts (P2 FR-MOD-004): a limit of zero or a negative window would otherwise only show up as every request being refused.
+        services.AddModuleOptions<RateLimitOptions>(configuration, "RateLimiting");
+        var limits = configuration.GetSection("RateLimiting").Get<RateLimitOptions>() ?? new RateLimitOptions();
+        var authLimit = limits.AuthPermitLimit;
+        var expensiveLimit = limits.ExpensivePermitLimit;
+        var globalLimit = limits.GlobalPermitLimit;
+        var window = TimeSpan.FromSeconds(limits.WindowSeconds);
 
         services.AddRateLimiter(options =>
         {

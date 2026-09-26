@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using MajdsApp.SharedKernel.Configuration;
 using MajdsApp.SharedKernel.Modules;
 using MajdsApp.SharedKernel.Security;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +16,15 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MajdsApp.Modules.ApiDocs;
 
+/// <summary>The <c>Docs</c> section: whether the API docs are on outside Development and who may read them.</summary>
+public class DocsOptions
+{
+    public bool Enabled { get; set; }
+
+    [RegularExpression("^(?i:Permission|Authenticated|Open)$", ErrorMessage = "Docs:Access must be Permission, Authenticated or Open.")]
+    public string Access { get; set; } = "Permission";
+}
+
 public static class Permissions
 {
     public static class Docs
@@ -27,7 +38,9 @@ public class ApiDocsModule : IFeatureModule
 {
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        // Nothing to register here: it needs the MVC builder, so the host calls AddPlatformApiDocs after the controllers are added.
+        // The versioning and Swagger wiring needs the MVC builder, so the host calls AddPlatformApiDocs after the controllers are added.
+        // The module's own settings are bound and checked at start here (P2 FR-MOD-004).
+        services.AddModuleOptions<DocsOptions>(configuration, "Docs");
     }
 }
 
