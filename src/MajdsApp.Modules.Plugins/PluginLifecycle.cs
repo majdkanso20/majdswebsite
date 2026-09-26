@@ -6,6 +6,7 @@ using MajdsApp.SharedKernel.Exceptions;
 using MajdsApp.SharedKernel.Plugins;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MajdsApp.Modules.Plugins;
 
@@ -63,13 +64,19 @@ public class UninstallPluginCommandValidator : AbstractValidator<UninstallPlugin
 }
 
 public class UninstallPluginCommandHandler(
-    ApplicationDbContext db, PluginStateCache cache, IReadOnlyList<LoadedPlugin> loaded, PluginHostOptions options, PermissionChecker permissions)
+    ApplicationDbContext db, PluginStateCache cache, IReadOnlyList<LoadedPlugin> loaded, PluginHostOptions options, PermissionChecker permissions,
+    IServiceProvider services, ILogger<UninstallPluginCommandHandler> logger)
     : IRequestHandler<UninstallPluginCommand>
 {
     public async Task Handle(UninstallPluginCommand request, CancellationToken ct)
     {
         var plugin = await db.Set<InstalledPlugin>().FirstOrDefaultAsync(p => p.Id == request.PluginId, ct)
             ?? throw new NotFoundException($"Plugin '{request.PluginId}' was not found.");
+
+        var dependents = loaded.Where(l => l.Succeeded && l.Manifest.Id != plugin.Id && l.Manifest.DependsOn.Any(d => d.Id == plugin.Id)).Select(l => l.Manifest.Name).ToList();
+        var dependentNames = string.Join(", ", dependents);
+        if (dependents.Count > 0)
+            throw new ConflictException($"'{plugin.Name}' is needed by {dependentNames}; uninstall those first.");
 
         PluginInstaller.MarkForUninstall(plugin.Id, options); // throws if there is nothing on disk, before anything else changes
         try
@@ -106,6 +113,10 @@ public class UninstallPluginCommandHandler(
             PluginInstaller.CancelPending(plugin.Id, options); // the database change failed: do not leave a marker behind
             throw;
         }
+
+        // FR-PLUG-031: the plugin's own clean-up. The uninstall has happened, so a failure here is logged, not raised.
+        if (loaded.FirstOrDefault(l => l.Manifest.Id == plugin.Id) is { } running)
+            await PluginHooks.RunAsync(running, services, (h, c) => h.OnUninstallAsync(c, ct), "OnUninstall", logger);
     }
 }
 

@@ -18,6 +18,14 @@ public class PluginManifestJson
     public string? MinHostVersion { get; set; }
     public string? MaxHostVersion { get; set; }
     public List<PluginMenuEntryJson> Menu { get; set; } = [];
+    public List<PluginDependencyJson> Dependencies { get; set; } = [];
+}
+
+public class PluginDependencyJson
+{
+    public string Id { get; set; } = "";
+    public string? MinVersion { get; set; }
+    public string? MaxVersion { get; set; }
 }
 
 public class PluginMenuEntryJson
@@ -79,14 +87,17 @@ public static class PluginManager
             }
         }
 
-        return results;
+        // A plugin whose dependencies are missing, too old or too new, or circular is left out with a diagnostic; the rest load in dependency order.
+        return PluginDependencyResolver.Resolve(results);
     }
 
     internal static PluginManifest ToManifest(PluginManifestJson raw) =>
         new(raw.Id, raw.Name, raw.Version, raw.Author, raw.ModuleType,
             raw.Menu.Select(m => new PluginMenuEntry(m.Label, m.Icon, m.Route, m.Permission, m.Order)).ToList(),
             string.IsNullOrWhiteSpace(raw.MinHostVersion) ? null : raw.MinHostVersion,
-            string.IsNullOrWhiteSpace(raw.MaxHostVersion) ? null : raw.MaxHostVersion);
+            string.IsNullOrWhiteSpace(raw.MaxHostVersion) ? null : raw.MaxHostVersion,
+            raw.Dependencies.Where(d => !string.IsNullOrWhiteSpace(d.Id))
+                .Select(d => new PluginDependency(d.Id, string.IsNullOrWhiteSpace(d.MinVersion) ? null : d.MinVersion, string.IsNullOrWhiteSpace(d.MaxVersion) ? null : d.MaxVersion)).ToList());
 
     /// <summary>Null when the plugin supports this platform version; otherwise the reason it does not (P5 FR-PLUG-009).</summary>
     public static string? HostCompatibilityProblem(PluginManifest manifest)

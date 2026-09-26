@@ -172,7 +172,7 @@ using (var scope = app.Services.CreateScope())
 
     var pluginDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var pluginCache = scope.ServiceProvider.GetRequiredService<MajdsApp.Modules.Plugins.PluginStateCache>();
-    await MajdsApp.Modules.Plugins.PluginRegistrySync.SyncAsync(pluginDb, loadedPlugins, pluginCache);
+    await MajdsApp.Modules.Plugins.PluginRegistrySync.SyncAsync(pluginDb, loadedPlugins, pluginCache, app.Services, app.Logger);
 }
 
 // Metrics wrap everything, including the exception handler, so an error the handler turns into a 403 or 500 is counted with its real status (F-Health).

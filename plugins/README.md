@@ -19,3 +19,7 @@ plugins/
 - **Trust:** plugin code runs in the API process with full trust. Only put reviewed code here.
 
 `MajdsApp.Plugins.Tasks/` is the included sample. See `src/MajdsApp.Plugins.Tasks/README.md` for how to build and package one.
+
+## Dependencies and hooks
+
+`plugin.json` may add `"dependencies": [{ "id": "Other.Plugin", "minVersion": "1.0.0" }]`; the plugin is loaded only when they are installed and in range. Implement `IPluginLifecycle` on the module class named in `moduleType` to run code on install, upgrade, enable, disable and uninstall (see `MajdsApp.Plugins.Tasks/TasksModule.cs` and `src/MajdsApp.Modules.Plugins/README.md`).

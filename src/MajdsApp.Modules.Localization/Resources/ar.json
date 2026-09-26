@@ -116,5 +116,10 @@
   "Your password reset code — Majd's App": "رمز إعادة تعيين كلمة المرور — تطبيق مجد",
   "Your reset code is: {0}": "رمز إعادة التعيين الخاص بك: {0}",
   "'{0}' is not a supported language.": "'{0}' ليست لغة مدعومة.",
-  "'{0}' is not a valid currency code (for example USD).": "'{0}' ليس رمز عملة صالحًا (مثل USD)."
+  "'{0}' is not a valid currency code (for example USD).": "'{0}' ليس رمز عملة صالحًا (مثل USD).",
+  "'{0}' could not be loaded and cannot be enabled: {1}": "تعذّر تحميل '{0}' ولا يمكن تفعيلها: {1}",
+  "'{0}' is needed by {1}; disable those first.": "'{0}' مطلوبة لدى {1}؛ عطّلها أولاً.",
+  "'{0}' is needed by {1}; uninstall those first.": "'{0}' مطلوبة لدى {1}؛ ألغِ تثبيتها أولاً.",
+  "'{0}' needs {1}, which must be enabled first.": "'{0}' تحتاج إلى {1}، ويجب تفعيلها أولاً.",
+  "'{0}' was not enabled. {1}": "لم يتم تفعيل '{0}'. {1}"
 }
