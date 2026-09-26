@@ -14,7 +14,8 @@ namespace MajdsApp.Modules.Notifications;
 /// background worker. Callers depend only on <see cref="IUserNotificationPublisher"/>.
 /// </summary>
 public class NotificationPublisher(
-    ApplicationDbContext db, IHubContext<NotificationHub> hub, IMessageCatalog catalog, ISettingsProvider settings, IObjectMapper mapper) : IUserNotificationPublisher
+    ApplicationDbContext db, IHubContext<NotificationHub> hub, ISettingsProvider settings, IObjectMapper mapper,
+    INotificationTemplateRenderer templates) : IUserNotificationPublisher
 {
     public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) =>
         DispatchAsync([userId], title, message, type, ct, link);
@@ -53,18 +54,24 @@ public class NotificationPublisher(
             // Each recipient gets the text in their own language (F-Localization FR-I18N-002): their saved language, else the
             // application default. Text with no translation (for example one an administrator wrote by hand) is left as written.
             var culture = (await settings.GetAllForUserAsync(userId, ct)).GetValueOrDefault("General.DefaultLanguage") ?? "en";
-            var localizedTitle = catalog.Translate(title, culture);
-            var localizedMessage = catalog.Translate(message, culture);
+            // Each channel's wording comes from the template for that type and channel, in the recipient's language (FR-NOTIF-003).
+            var content = new NotificationContent(title, message, link);
 
             if (channels.HasFlag(NotificationChannel.InApp))
-                inApp.Add(new Notification { UserId = userId, Type = type, Title = localizedTitle, Message = localizedMessage, Link = link, CreatedAt = now });
+            {
+                var rendered = templates.Render(NotificationChannel.InApp, type, content, culture);
+                inApp.Add(new Notification { UserId = userId, Type = type, Title = rendered.Title, Message = rendered.Message, Link = link, CreatedAt = now });
+            }
 
             if (channels.HasFlag(NotificationChannel.Email))
+            {
+                var rendered = templates.Render(NotificationChannel.Email, type, content, culture);
                 db.Set<NotificationDelivery>().Add(new NotificationDelivery
                 {
-                    UserId = userId, Channel = NotificationChannel.Email, Type = type, Title = localizedTitle, Message = localizedMessage,
+                    UserId = userId, Channel = NotificationChannel.Email, Type = type, Title = rendered.Title, Message = rendered.Message, Body = rendered.HtmlBody,
                     Status = DeliveryStatus.Pending, CreatedAt = now, NextAttemptAt = now
                 });
+            }
         }
 
         db.Set<Notification>().AddRange(inApp);

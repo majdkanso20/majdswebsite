@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Notifications;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;

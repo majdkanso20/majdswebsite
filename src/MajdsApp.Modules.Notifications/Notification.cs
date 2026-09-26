@@ -1,10 +1,9 @@
+using MajdsApp.SharedKernel.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MajdsApp.Modules.Notifications;
 
-[Flags]
-public enum NotificationChannel { None = 0, InApp = 1, Email = 2, All = InApp | Email }
 
 /// <summary>An in-app notification addressed to one user (F-Notifications data model).</summary>
 public class Notification
@@ -43,6 +42,9 @@ public class NotificationDelivery
     public string Type { get; set; } = "General";
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>The whole email body, produced by the template renderer at dispatch time in the recipient's language; null for a delivery made before templates existed.</summary>
+    public string? Body { get; set; }
     public DeliveryStatus Status { get; set; }
     public int Attempts { get; set; }
     public string? LastError { get; set; }
@@ -82,6 +84,7 @@ public class NotificationDeliveryConfiguration : IEntityTypeConfiguration<Notifi
         builder.Property(d => d.Type).HasMaxLength(50);
         builder.Property(d => d.Title).HasMaxLength(200);
         builder.Property(d => d.Message).HasMaxLength(2000);
+        builder.Property(d => d.Body).HasMaxLength(8000);
         builder.Property(d => d.LastError).HasMaxLength(1000);
         builder.HasIndex(d => new { d.Status, d.NextAttemptAt });
     }

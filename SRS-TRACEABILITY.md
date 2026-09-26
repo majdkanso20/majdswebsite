@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 119 |
+| DONE | 120 |
 | PARTIAL | 81 |
-| MISSING | 1 |
+| MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -26,7 +26,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Account | 6 | 4 | 2 | 0 |
 | F-Settings | 6 | 5 | 1 | 0 |
 | F-Audit | 6 | 5 | 1 | 0 |
-| F-Notifications | 9 | 3 | 5 | 1 |
+| F-Notifications | 9 | 4 | 5 | 0 |
 | F-Files | 6 | 3 | 3 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 3 | 2 | 0 |
@@ -102,7 +102,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - DONE: 005 SignalR hub `/hubs/notifications` pushes to the user in real time (verified live: toast and badge without reload). 006 per-type x channel preferences with an Account matrix, honored by the dispatcher (verified: opted-out type not delivered). 007 email goes through a queue with retry and exponential backoff, then Failed after 3 attempts (verified: rows retried against the rejecting Gmail server).
 - PARTIAL: 001 dispatcher is `NotificationPublisher` (same `IUserNotificationPublisher` interface, now typed) rather than a separate `INotificationDispatcher`. 002 two channels (in-app, email); no SMS or push, and no shared `INotificationChannel` interface yet. 004 type stored on the notification; delivery status tracked for queued channels only, no severity or payload. 009 new channel still needs dispatcher edits.
 - PARTIAL (008): email provider settings (host, port, user, encrypted password, from) are editable in Settings with a "Send test email" action; SMS/push providers do not exist.
-- MISSING: 003 localized templates (messages are plain strings).
+- DONE: 003 templates per channel and type in the recipient's language (`INotificationTemplateRenderer`; the default renderer translates the text and lays email out as HTML whose direction follows the language, with all text encoded; an `INotificationTemplate` registered for a type and channel replaces the default for exactly that pair, and `SecurityEmailTemplate` is the example; the rendered body is stored with the queued delivery; tested).
 - Note: real email delivery is blocked by the rejected Gmail credentials; the retry path is proven, a successful send is not.
 
 ## F-Files
@@ -138,7 +138,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 379 automated tests** in `src/MajdsApp.Tests` (306) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 384 automated tests** in `src/MajdsApp.Tests` (311) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 115 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -154,8 +154,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (1 requirement is missing and 81 are partial):
+Still open, roughly by value (no requirement is missing and 81 are partial):
 1. P5: per-plugin database schema, digital signatures, applying changes without a restart, native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: adopting the generic repository (most partial items are here and in P5).
-3. F-Notifications localized templates (FR-NOTIF-003), SMS and push channels; F-Files storage interface.
+3. F-Notifications SMS and push channels and a shared channel interface; F-Files storage interface.
 4. Verification: browser end-to-end tests, a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.
