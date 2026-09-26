@@ -23,3 +23,5 @@ plugins/
 ## Dependencies and hooks
 
 `plugin.json` may add `"dependencies": [{ "id": "Other.Plugin", "minVersion": "1.0.0" }]`; the plugin is loaded only when they are installed and in range. Implement `IPluginLifecycle` on the module class named in `moduleType` to run code on install, upgrade, enable, disable and uninstall (see `MajdsApp.Plugins.Tasks/TasksModule.cs` and `src/MajdsApp.Modules.Plugins/README.md`).
+
+Settings: declare `SettingDefinition`s (names starting with your plugin key, for example `Tasks.MaxTitleLength`) and they show on the settings page; add a `validator` to check values. See `MajdsApp.Plugins.Tasks/TaskSettings.cs`.

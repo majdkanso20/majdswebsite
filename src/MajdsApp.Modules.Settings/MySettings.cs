@@ -64,6 +64,7 @@ public class UpdateMySettingsCommandHandler(
                 throw new ValidationException($"'{item.Value}' is not a valid value for '{item.Name}'.");
 
             SettingValueRules.Check(item.Name, item.Value, catalog);
+            if (definition.Validate(item.Value) is { } problem) throw new ValidationException(problem);
 
             var row = existing.FirstOrDefault(s => s.Name == item.Name);
             var appValue = app.GetValueOrDefault(item.Name, definition.DefaultValue);

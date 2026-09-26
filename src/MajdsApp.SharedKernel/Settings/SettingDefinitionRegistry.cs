@@ -9,15 +9,25 @@ namespace MajdsApp.SharedKernel.Settings;
 /// </summary>
 public static class SettingDefinitionRegistry
 {
+    private const string ModulePrefix = "MajdsApp.Modules.";
+    private const string PluginPrefix = "MajdsApp.Plugins.";
+
     public static IReadOnlyList<SettingDefinition> GetAll()
     {
-        var moduleAssemblies = AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => a.GetName().Name?.StartsWith("MajdsApp.Modules.", StringComparison.Ordinal) == true);
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(a => (Assembly: a, Name: a.GetName().Name ?? string.Empty))
+            .Where(a => a.Name.StartsWith(ModulePrefix, StringComparison.Ordinal) || a.Name.StartsWith(PluginPrefix, StringComparison.Ordinal))
+            .OrderBy(a => a.Name.StartsWith(ModulePrefix, StringComparison.Ordinal) ? 0 : 1); // the platform's own settings win any clash
 
         var definitions = new List<SettingDefinition>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var assembly in moduleAssemblies)
+        foreach (var (assembly, assemblyName) in assemblies)
         {
+            // A plugin's settings are namespaced by the plugin (P5 FR-PLUG-013): a plugin named MajdsApp.Plugins.Tasks may only define
+            // "Tasks.*", so it can neither replace a platform setting nor another plugin's.
+            var pluginKey = assemblyName.StartsWith(PluginPrefix, StringComparison.Ordinal) ? assemblyName[PluginPrefix.Length..] : null;
+
             foreach (var outerType in assembly.GetTypes().Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true, IsNested: false }))
             {
                 foreach (var groupType in outerType.GetNestedTypes(BindingFlags.Public).Where(t => t is { IsClass: true, IsAbstract: true, IsSealed: true }))
@@ -27,7 +37,11 @@ public static class SettingDefinitionRegistry
                         .Where(f => f.FieldType == typeof(SettingDefinition))
                         .Select(f => (SettingDefinition)f.GetValue(null)!);
 
-                    definitions.AddRange(values);
+                    foreach (var definition in values)
+                    {
+                        if (pluginKey is not null && !definition.Name.StartsWith(pluginKey + ".", StringComparison.Ordinal)) continue;
+                        if (seen.Add(definition.Name)) definitions.Add(definition);
+                    }
                 }
             }
         }

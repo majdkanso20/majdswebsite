@@ -121,5 +121,7 @@
   "'{0}' is needed by {1}; disable those first.": "'{0}' مطلوبة لدى {1}؛ عطّلها أولاً.",
   "'{0}' is needed by {1}; uninstall those first.": "'{0}' مطلوبة لدى {1}؛ ألغِ تثبيتها أولاً.",
   "'{0}' needs {1}, which must be enabled first.": "'{0}' تحتاج إلى {1}، ويجب تفعيلها أولاً.",
-  "'{0}' was not enabled. {1}": "لم يتم تفعيل '{0}'. {1}"
+  "'{0}' was not enabled. {1}": "لم يتم تفعيل '{0}'. {1}",
+  "The longest task title must be between 1 and 500.": "يجب أن يكون أطول عنوان للمهمة بين 1 و500.",
+  "The title is longer than the limit set for tasks.": "العنوان أطول من الحد المحدد للمهام."
 }

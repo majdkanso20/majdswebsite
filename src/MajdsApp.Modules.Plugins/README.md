@@ -41,6 +41,10 @@ A plugin is loaded once, at startup, because its endpoints, handlers and entity 
 - **Dependencies.** A manifest may list `"dependencies": [{ "id": "Acme.Base", "minVersion": "1.2.0", "maxVersion": "2.0.0" }]` (both versions optional). At start plugins are ordered so each comes after what it needs. A plugin whose dependency is not installed, is outside the range, failed to load, or is part of a cycle is **not loaded**: it is listed with the reason in `LastError`, and so are the plugins that depend on it. Later, a plugin cannot be enabled while a dependency is disabled, and cannot be disabled or uninstalled while an enabled plugin needs it (409 with the names).
 - **Hooks.** A plugin's module may also implement `IPluginLifecycle` (in `MajdsApp.SharedKernel.Plugins`; every method has an empty default): `OnInstall` and `OnUpgrade(fromVersion)` run at the first start that sees the plugin, or a different version of it (a rollback counts), and a failure is shown as the plugin's error; `OnEnable` runs before the plugin is switched on and, if it throws, the plugin stays off and the administrator sees why; `OnDisable` and `OnUninstall` run after the change has happened, and a failure is only logged. A hook gets a service scope, so it can use the database, files and settings. Write each one so it is safe to run twice. The sample Tasks plugin implements them and logs.
 
+## Plugin settings
+
+A plugin declares settings the same way a module does (nested static classes holding `SettingDefinition` fields; see `MajdsApp.Plugins.Tasks/TaskSettings.cs`). They appear on the standard settings page under the plugin's group and are read through `ISettingsProvider`. A definition may carry a `validator` (returns a message, or null when the value is fine) that runs when an administrator saves it. A plugin's setting names must start with its key (the assembly name after `MajdsApp.Plugins.`, so `Tasks.` for `MajdsApp.Plugins.Tasks`); others are ignored, and a platform setting always wins a name clash.
+
 ## Recurring jobs
 
 - *Plugin staging cleanup* (daily) removes `.staging` scratch folders left behind for a day. Staged changes in `.pending` are never touched.
@@ -52,7 +56,7 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 ## Notes
 
 - Enable and disable take effect immediately; the assembly stays loaded until the process restarts.
-- Not implemented: digital signatures, per-plugin settings, applying changes without a restart.
+- Not implemented: digital signatures, applying changes without a restart.
 - See `plugins/README.md` and `MajdsApp.Plugins.Tasks` for how to author and package a plugin.
 
 ## Configuration keys
@@ -62,4 +66,4 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 
 ## Tests
 
-`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`).
+`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), and settings (`PluginSettingsTests`).

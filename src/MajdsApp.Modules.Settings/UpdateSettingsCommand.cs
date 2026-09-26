@@ -40,6 +40,7 @@ public class UpdateSettingsCommandHandler(
                 throw new ValidationException($"'{item.Value}' is not a valid value for '{item.Name}'.");
 
             if (!definition.IsSensitive) SettingValueRules.Check(item.Name, item.Value, catalog);
+            if (!definition.IsSensitive && definition.Validate(item.Value) is { } problem) throw new ValidationException(problem);
 
             var existing = await db.Set<SettingValue>().FindAsync([item.Name], ct);
 

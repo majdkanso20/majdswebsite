@@ -21,7 +21,8 @@ public sealed class SettingDefinition(
     string? description = null,
     bool allowUserOverride = false,
     bool isSensitive = false,
-    bool isInternal = false)
+    bool isInternal = false,
+    Func<string, string?>? validator = null)
 {
     public string Name { get; } = name;
     public string Group { get; } = group;
@@ -41,4 +42,8 @@ public sealed class SettingDefinition(
     /// <summary>Stored like any setting but written by a feature's own screen (for example the dashboard layout),
     /// so it is not listed on the settings pages.</summary>
     public bool IsInternal { get; } = isInternal;
+
+    /// <summary>Optional rule for the value, beyond its type: returns the message to show when the value is not acceptable, or null when it is.
+    /// A plugin uses this to validate its own settings (P5 FR-PLUG-013).</summary>
+    public string? Validate(string value) => validator?.Invoke(value);
 }

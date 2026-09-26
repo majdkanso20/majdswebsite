@@ -4,6 +4,7 @@ using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;
 using MajdsApp.SharedKernel.Paging;
 using MajdsApp.SharedKernel.Search;
+using MajdsApp.SharedKernel.Settings;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,9 +59,11 @@ public record CreateTaskCommand(string Title, string? Description, string Status
 
 public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
 {
-    public CreateTaskCommandValidator()
+    public CreateTaskCommandValidator(ISettingsProvider settings)
     {
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Title).NotEmpty();
+        RuleFor(x => x.Title).MustAsync(async (title, ct) => title is null || title.Length <= await settings.GetIntegerAsync(TaskSettingDefinitions.Tasks.MaxTitleLength.Name, ct))
+            .WithMessage("The title is longer than the limit set for tasks.");
         RuleFor(x => x.Status).Must(s => Enum.TryParse<TaskItemStatus>(s, out _)).WithMessage("Invalid status.");
     }
 }
@@ -89,9 +92,11 @@ public record UpdateTaskCommand(Guid Id, string Title, string? Description, stri
 
 public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
 {
-    public UpdateTaskCommandValidator()
+    public UpdateTaskCommandValidator(ISettingsProvider settings)
     {
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Title).NotEmpty();
+        RuleFor(x => x.Title).MustAsync(async (title, ct) => title is null || title.Length <= await settings.GetIntegerAsync(TaskSettingDefinitions.Tasks.MaxTitleLength.Name, ct))
+            .WithMessage("The title is longer than the limit set for tasks.");
         RuleFor(x => x.Status).Must(s => Enum.TryParse<TaskItemStatus>(s, out _)).WithMessage("Invalid status.");
     }
 }
