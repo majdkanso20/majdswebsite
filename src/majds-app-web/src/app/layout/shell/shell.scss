@@ -17,7 +17,12 @@
 }
 
 .shell-header__title {
+  flex: 0 1 auto;
+  min-width: 0; // lets a long application name shrink with an ellipsis instead of pushing the buttons off a small screen
+  overflow: hidden;
   font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shell-header__spacer {
@@ -60,6 +65,12 @@
   flex-direction: column;
   text-align: start;
   white-space: normal;
+
+  // Material wraps a menu item's content in one span, which makes the title and the message run together on a single line.
+  strong,
+  span {
+    display: block;
+  }
 }
 
 .shell-notification {

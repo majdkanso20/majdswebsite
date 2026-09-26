@@ -1,3 +1,4 @@
+import { Direction, Directionality } from '@angular/cdk/bidi';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -23,6 +24,7 @@ const STORAGE_KEY = 'majds-app.language';
 @Injectable({ providedIn: 'root' })
 export class LocalizationService {
   private readonly http = inject(HttpClient);
+  private readonly directionality = inject(Directionality);
   private readonly dictionary = signal<Readonly<Record<string, string>>>({});
 
   readonly language = signal('en');
@@ -56,6 +58,7 @@ export class LocalizationService {
     const rtl = LANGUAGES.find((l) => l.code === code)?.rtl ?? false;
     document.documentElement.lang = code;
     document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+    this.tellMaterial(rtl ? 'rtl' : 'ltr');
 
     if (remember) {
       try {
@@ -74,6 +77,17 @@ export class LocalizationService {
   translate(key: string, ...args: (string | number)[]): string {
     const text = this.dictionary()[key] ?? key;
     return args.length === 0 ? text : text.replace(/\{(\d+)\}/g, (match, index: string) => String(args[Number(index)] ?? match));
+  }
+
+  /**
+   * Angular Material and the CDK read the page direction once, when the service is created, and do not watch the <html dir> attribute.
+   * After a runtime language switch they would still think the page is left to right: the sidenav would move to the right while the content
+   * kept its left margin and slid underneath it. Updating the shared Directionality (and announcing the change) makes them re-lay-out.
+   */
+  private tellMaterial(direction: Direction): void {
+    if (this.directionality.value === direction) return;
+    this.directionality.valueSignal.set(direction);
+    this.directionality.change.emit(direction);
   }
 
   private isSupported(code: string): boolean {

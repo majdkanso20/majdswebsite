@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Directionality } from '@angular/cdk/bidi';
 import { LocalizationService } from './localization.service';
 
 describe('LocalizationService', () => {
@@ -43,6 +44,23 @@ describe('LocalizationService', () => {
     await service.set('en');
     expect(service.translate('Save')).toBe('Save');
     expect(document.documentElement.dir).toBe('ltr');
+  });
+
+  it('tells Angular Material the direction changed, so its layout (the sidenav margin) follows a runtime switch', async () => {
+    const service = create();
+    const directionality = TestBed.inject(Directionality);
+    const seen: string[] = [];
+    directionality.change.subscribe((d) => seen.push(d));
+    expect(directionality.value).toBe('ltr');
+
+    const toArabic = service.set('ar');
+    http.expectOne('/i18n/ar.json').flush({});
+    await toArabic;
+    expect(directionality.value).toBe('rtl');
+
+    await service.set('en');
+    expect(directionality.value).toBe('ltr');
+    expect(seen).toEqual(['rtl', 'ltr']);
   });
 
   it('shows the English text for a key nobody translated, never a blank (AC-I18N-2)', async () => {

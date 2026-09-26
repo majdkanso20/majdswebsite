@@ -1,3 +1,9 @@
+:host {
+  display: block;
+  flex: 0 1 min(320px, 40vw); // shrinks on a narrow screen so the header buttons stay on screen
+  min-width: 2.75rem;
+}
+
 .global-search {
   display: flex;
   align-items: center;
@@ -6,8 +12,7 @@
   padding-inline: 12px;
   border-radius: 18px;
   background: color-mix(in srgb, currentColor 12%, transparent);
-  min-width: 0;
-  width: min(320px, 40vw);
+  width: 100%;
 }
 
 .global-search__icon {
