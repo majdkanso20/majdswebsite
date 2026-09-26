@@ -6,9 +6,9 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 118 |
+| DONE | 119 |
 | PARTIAL | 81 |
-| MISSING | 2 |
+| MISSING | 1 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
@@ -27,7 +27,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Settings | 6 | 5 | 1 | 0 |
 | F-Audit | 6 | 5 | 1 | 0 |
 | F-Notifications | 9 | 3 | 5 | 1 |
-| F-Files | 6 | 2 | 3 | 1 |
+| F-Files | 6 | 3 | 3 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 3 | 2 | 0 |
 | F-Data | 6 | 1 | 5 | 0 |
@@ -106,7 +106,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - Note: real email delivery is blocked by the rejected Gmail credentials; the retry path is proven, a successful send is not.
 
 ## F-Files
-- DONE: 003, 004. PARTIAL: 001 (concrete disk class, no `IFileStorage`, no cloud), 002 (blocked-extension list, size cap, no content sniffing), 005 (streamed, not chunked). MISSING: 006 soft delete and cleanup job.
+- DONE: 003, 004. PARTIAL: 001 (concrete disk class, no `IFileStorage`, no cloud), 002 (blocked-extension list, size cap, no content sniffing), 005 (streamed, not chunked). DONE: 006 soft delete (deleting sets `DeletedAt`/`DeletedBy`, a global query filter hides the file from every query at once, and `PurgeDeletedFilesJob` removes the bytes and the record after `Files.DeletedRetentionDays`, default 30; the orphan sweep leaves a soft-deleted file's bytes alone; tested).
 
 ## F-Localization
 - DONE: 002 the server answers in the request's language: the client's `Accept-Language` (the Angular app sends the language on screen), else the signed-in user's saved language, else the application default; error and validation messages (the platform's own and FluentValidation's built-in translations), notification texts (written per recipient) and the account emails (right to left for Arabic) are translated, `GET /api/localization/languages` and `GET /api/localization/resources?culture=` exist. 003 language switch at runtime without a reload, per-language file loaded on demand (tested). 004 dates in the user's time zone (`Appearance.Timezone`), numbers and currency (`Appearance.Currency`, a new personal setting) formatted by the active language through `localDate`, `localNumber` and `localCurrency`; server timestamps are read as UTC. 005 default language (`General.DefaultLanguage`) and fallback: a missing translation or an unsupported language shows the English source, never a blank (tested at both ends). 006 the direction flips with the language (tested), and lint now rejects physical `left`/`right` CSS so new styles stay right-to-left safe; no page-by-page visual audit in a browser was done.
@@ -138,7 +138,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 375 automated tests** in `src/MajdsApp.Tests` (302) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 379 automated tests** in `src/MajdsApp.Tests` (306) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 115 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -154,8 +154,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (2 requirements are missing and 81 are partial):
+Still open, roughly by value (1 requirement is missing and 81 are partial):
 1. P5: per-plugin database schema, digital signatures, applying changes without a restart, native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: adopting the generic repository (most partial items are here and in P5).
-3. F-Notifications SMS and push channels; F-Files soft delete and a storage interface.
+3. F-Notifications localized templates (FR-NOTIF-003), SMS and push channels; F-Files storage interface.
 4. Verification: browser end-to-end tests, a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

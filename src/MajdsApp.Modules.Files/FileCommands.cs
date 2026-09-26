@@ -74,7 +74,7 @@ public class UploadFileCommandHandler(
 public record DeleteFileCommand(Guid FileId) : IRequest, IAuditableCommand;
 
 public class DeleteFileCommandHandler(
-    ApplicationDbContext db, FileStorage storage, ICurrentUser currentUser, IPermissionChecker permissions)
+    ApplicationDbContext db, ICurrentUser currentUser, IPermissionChecker permissions)
     : IRequestHandler<DeleteFileCommand>
 {
     public async Task Handle(DeleteFileCommand request, CancellationToken ct)
@@ -86,8 +86,9 @@ public class DeleteFileCommandHandler(
         if (!isOwner && !await permissions.HasPermissionAsync(Permissions.Files.Delete, ct))
             throw new ForbiddenException($"Missing permission '{Permissions.Files.Delete}'.");
 
-        db.Set<FileRecord>().Remove(record);
+        // Soft delete (FR-FILE-006): the file disappears at once, its bytes stay until PurgeDeletedFilesJob removes them after the retention period.
+        record.DeletedAt = DateTime.UtcNow;
+        record.DeletedBy = currentUser.UserId;
         await db.SaveChangesAsync(ct);
-        storage.Delete(record.StoredName);
     }
 }

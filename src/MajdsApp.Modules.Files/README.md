@@ -30,12 +30,14 @@ Tables: `Files`. Migrations live in `MajdsApp.Core`.
 ## Notes
 
 - Uploads are limited by the `Files.MaxUploadMb` setting (default 10) and a blocked-extension list (executables and scripts). Content is not sniffed and the client's content type is trusted.
+- Deleting a file is a soft delete (FR-FILE-006): the record gets `DeletedAt`/`DeletedBy` and a global query filter hides it from every list, download, export and profile picture at once. The recurring job *Deleted file cleanup* (daily) removes the bytes and the record once the file has been deleted for `Files.DeletedRetentionDays`; if the bytes cannot be removed the record is kept and the next run tries again. There is no restore screen yet. Code that must see deleted files uses `IgnoreQueryFilters()`; the *Orphaned file cleanup* job does, so it never sweeps a soft-deleted file's bytes early.
 - The whole module is behind the `Files` feature flag.
 - Storage is a concrete disk class today; there is no `IFileStorage` abstraction or cloud provider yet, and deletion is permanent.
 
 ## Configuration keys
 
 - Setting `Files.MaxUploadMb` (default `10`)
+- Setting `Files.DeletedRetentionDays` (default `30`)
 - Feature flag `Files`
 
 ## Tests
