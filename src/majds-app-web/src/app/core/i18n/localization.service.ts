@@ -2,6 +2,8 @@ import { Direction, Directionality } from '@angular/cdk/bidi';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ResponseDto } from '../models/response-dto';
 
 export interface Language {
   code: string;
@@ -54,6 +56,7 @@ export class LocalizationService {
 
     this.dictionary.set(entries);
     this.language.set(code);
+    if (code !== 'en') void this.addPluginTexts(code);
 
     const rtl = LANGUAGES.find((l) => l.code === code)?.rtl ?? false;
     document.documentElement.lang = code;
@@ -66,6 +69,24 @@ export class LocalizationService {
       } catch {
         // storage unavailable — choice just won't persist
       }
+    }
+  }
+
+  /**
+   * A plugin ships its own translations (its menu label, its messages). The server merges them into what it serves for a language, so they are
+   * added here without ever replacing what the application's own file already says. It runs after the language has switched and never blocks it:
+   * if the request fails the plugin's text simply stays in English.
+   */
+  private async addPluginTexts(code: string): Promise<void> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<ResponseDto<{ messages: Record<string, string> }>>(`${environment.apiBaseUrl}/localization/resources`, { params: { culture: code } })
+      );
+      if (this.language() === code && response.data?.messages) {
+        this.dictionary.update((own) => ({ ...response.data!.messages, ...own }));
+      }
+    } catch {
+      // the plugin texts stay in English
     }
   }
 

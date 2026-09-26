@@ -29,6 +29,8 @@ public static class PluginPackages
             if (includeAssembly)
                 foreach (var file in Directory.GetFiles(built, "MajdsApp.Plugins.Tasks.*"))
                     Add(zip, "backend/" + Path.GetFileName(file), File.ReadAllBytes(file));
+            foreach (var file in Directory.Exists(Path.Combine(built, "localization")) ? Directory.GetFiles(Path.Combine(built, "localization")) : [])
+                Add(zip, "localization/" + Path.GetFileName(file), File.ReadAllBytes(file));
             extra?.Invoke(zip);
         }
 
@@ -52,5 +54,11 @@ public static class PluginPackages
         File.WriteAllText(Path.Combine(target, "plugin.json"), json.ToJsonString());
         foreach (var file in Directory.GetFiles(built, "MajdsApp.Plugins.Tasks.*"))
             File.Copy(file, Path.Combine(target, "backend", Path.GetFileName(file)), overwrite: true);
+        if (Directory.Exists(Path.Combine(built, "localization")))
+        {
+            Directory.CreateDirectory(Path.Combine(target, "localization"));
+            foreach (var file in Directory.GetFiles(Path.Combine(built, "localization")))
+                File.Copy(file, Path.Combine(target, "localization", Path.GetFileName(file)), overwrite: true);
+        }
     }
 }

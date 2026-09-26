@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using MajdsApp.SharedKernel.Localization;
+using MajdsApp.SharedKernel.Plugins;
 
 namespace MajdsApp.Modules.Localization;
 
@@ -25,11 +26,17 @@ public sealed partial class MessageCatalog : IMessageCatalog
     private readonly Dictionary<string, Dictionary<string, string>> _exact = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<Template>> _templates = new(StringComparer.OrdinalIgnoreCase);
 
-    public MessageCatalog()
+    public MessageCatalog(IReadOnlyList<LoadedPlugin>? plugins = null)
     {
         foreach (var language in Supported.Where(l => l.Code != "en"))
         {
             var entries = Load(language.Code);
+
+            // A plugin adds its own entries (FR-PLUG-023) but can never replace one the platform already translated.
+            foreach (var plugin in plugins ?? [])
+                foreach (var (key, value) in PluginTranslations.Load(plugin, language.Code))
+                    entries.TryAdd(key, value);
+
             _exact[language.Code] = entries;
             _templates[language.Code] = entries
                 .Where(e => Placeholder().IsMatch(e.Key))

@@ -63,6 +63,31 @@ describe('LocalizationService', () => {
     expect(seen).toEqual(['rtl', 'ltr']);
   });
 
+  it('adds a plugins own translations without replacing the applications, and a failed request leaves English', async () => {
+    const service = create();
+    const switching = service.set('ar');
+    http.expectOne('/i18n/ar.json').flush({ Save: 'حفظ' });
+    await switching;
+
+    http.expectOne((r) => r.url.endsWith('/localization/resources') && r.params.get('culture') === 'ar')
+      .flush({ code: 200, message: '', data: { culture: 'ar', messages: { Tasks: 'المهام', Save: 'مزيف' } } });
+    await vi.waitFor(() => expect(service.translate('Tasks')).toBe('المهام'));
+    expect(service.translate('Save')).toBe('حفظ');
+  });
+
+  it('keeps English for a plugin text when the plugin translations cannot be loaded', async () => {
+    const service = create();
+    const switching = service.set('ar');
+    http.expectOne('/i18n/ar.json').flush({ Save: 'حفظ' });
+    await switching;
+
+    http.expectOne((r) => r.url.endsWith('/localization/resources')).error(new ProgressEvent('error'));
+    await Promise.resolve();
+
+    expect(service.translate('Tasks')).toBe('Tasks');
+    expect(service.translate('Save')).toBe('حفظ');
+  });
+
   it('shows the English text for a key nobody translated, never a blank (AC-I18N-2)', async () => {
     const service = create();
     const switching = service.set('ar');

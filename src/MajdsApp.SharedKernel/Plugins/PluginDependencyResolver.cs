@@ -55,7 +55,7 @@ public static class PluginDependencyResolver
         foreach (var plugin in plugins) Visit(plugin, new Stack<string>());
 
         return ordered.Select(p => p.Succeeded && problems.TryGetValue(p.Manifest.Id, out var reason)
-            ? new LoadedPlugin(p.Manifest, null, null, reason)
+            ? new LoadedPlugin(p.Manifest, null, null, reason, p.Folder)
             : p).ToList();
     }
 

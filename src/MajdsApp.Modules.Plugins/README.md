@@ -45,6 +45,10 @@ A plugin is loaded once, at startup, because its endpoints, handlers and entity 
 
 A plugin declares settings the same way a module does (nested static classes holding `SettingDefinition` fields; see `MajdsApp.Plugins.Tasks/TaskSettings.cs`). They appear on the standard settings page under the plugin's group and are read through `ISettingsProvider`. A definition may carry a `validator` (returns a message, or null when the value is fine) that runs when an administrator saves it. A plugin's setting names must start with its key (the assembly name after `MajdsApp.Plugins.`, so `Tasks.` for `MajdsApp.Plugins.Tasks`); others are ignored, and a platform setting always wins a name clash.
 
+## Plugin translations
+
+A plugin may ship `localization/<language>.json` (for example `localization/ar.json`) next to `plugin.json`: a flat object keyed by the English text, in the platform's format, with `{0}` placeholders allowed. The platform adds these entries to its own for server messages, notifications and emails, and serves them with the rest at `GET /api/localization/resources`, so the shell translates the plugin's menu labels. A plugin can add entries but never replace one the platform already translates; a missing or malformed file leaves English. See `MajdsApp.Plugins.Tasks/localization/ar.json`.
+
 ## Recurring jobs
 
 - *Plugin staging cleanup* (daily) removes `.staging` scratch folders left behind for a day. Staged changes in `.pending` are never touched.
@@ -66,4 +70,4 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 
 ## Tests
 
-`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), and settings (`PluginSettingsTests`).
+`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), and translations (`PluginLocalizationTests`).

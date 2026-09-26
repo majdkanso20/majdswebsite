@@ -40,7 +40,7 @@ public class PluginMenuEntryJson
 /// <summary>One discovered plugin — either loaded successfully (<see cref="Assembly"/>/<see cref="Module"/>
 /// populated) or failed (<see cref="LoadError"/> populated), never both (P5 FR-PLUG-003/008: a bad plugin
 /// is rejected with a diagnostic, never a host crash).</summary>
-public record LoadedPlugin(PluginManifest Manifest, Assembly? Assembly, IFeatureModule? Module, string? LoadError)
+public record LoadedPlugin(PluginManifest Manifest, Assembly? Assembly, IFeatureModule? Module, string? LoadError, string? Folder = null)
 {
     public bool Succeeded => LoadError is null;
 }
@@ -154,6 +154,6 @@ public static class PluginManager
 
         var module = (IFeatureModule)Activator.CreateInstance(moduleType)!;
 
-        return new LoadedPlugin(manifest, assembly, module, null);
+        return new LoadedPlugin(manifest, assembly, module, null, pluginDir);
     }
 }

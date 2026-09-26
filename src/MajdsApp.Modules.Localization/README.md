@@ -51,3 +51,7 @@ Defined in the Settings module and used here and by the web app: `General.Defaul
 ## Tests
 
 `MessageCatalogTests` (matching, placeholders, and the source scan) and `LocalizationTests` (language selection, notifications per recipient, the endpoints, setting validation) in `src/MajdsApp.Tests`; `localization.service.spec.ts`, `formatting.service.spec.ts`, `language.interceptor.spec.ts` and `i18n-coverage.spec.ts` in the web app.
+
+## Plugin translations
+
+The catalog also loads each plugin's `localization/<language>.json` and adds entries the platform does not already have (see the Plugins module README).
