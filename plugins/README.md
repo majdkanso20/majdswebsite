@@ -29,3 +29,5 @@ Settings: declare `SettingDefinition`s (names starting with your plugin key, for
 Translations: put `localization/ar.json` (English text to Arabic text) in the package; it is picked up for menu labels and server messages.
 
 Frontend: put pre-built files in `frontend/`; they are served at `/plugins/<id>/<file>` while the plugin is enabled.
+
+UI screens: declare `frontend` in `plugin.json` and give a menu entry an `element`; the bundle (an ES module that defines that custom element) is loaded when the entry is opened and mounted in a shadow root. Details in `src/MajdsApp.Modules.Plugins/README.md`.

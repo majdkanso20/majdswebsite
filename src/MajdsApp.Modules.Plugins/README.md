@@ -47,7 +47,11 @@ A plugin declares settings the same way a module does (nested static classes hol
 
 ## Frontend files
 
-A package may hold pre-built frontend files in `frontend/` (a compiled bundle, styles, images, fonts; `.js .mjs .css .html .json .map .svg .png .jpg .gif .webp .ico .woff .woff2 .txt` only). They are served at `GET /plugins/{pluginId}/{path}` (for example `/plugins/MajdsApp.Plugins.Tasks/main.js`) without sign-in, because they are code and not data. Only an enabled plugin is served (a disabled one is a 404), nothing outside `frontend/` is reachable, and each response carries an ETag and `Cache-Control: no-cache`, so the browser asks before reusing a file and an upgrade shows up at once. Loading the bundle in the shell is not built yet.
+A package may hold pre-built frontend files in `frontend/` (a compiled bundle, styles, images, fonts; `.js .mjs .css .html .json .map .svg .png .jpg .gif .webp .ico .woff .woff2 .txt` only). They are served at `GET /plugins/{pluginId}/{path}` (for example `/plugins/MajdsApp.Plugins.Tasks/main.js`) without sign-in, because they are code and not data. Only an enabled plugin is served (a disabled one is a 404), nothing outside `frontend/` is reachable, and each response carries an ETag and `Cache-Control: no-cache`, so the browser asks before reusing a file and an upgrade shows up at once. The shell loads it as described below.
+
+### Pre-built UI
+
+`plugin.json` may declare `"frontend": { "entry": "main.js", "styles": "styles.css", "contract": 1, "angular": 22 }` (`styles` and `angular` optional), and a menu entry may add `"element": "my-plugin-view"`. The bundle is an ES module that defines that custom element (Web Components, no framework needed). `GET /api/plugins/manifest` then gives the shell the element, the bundle and stylesheet addresses and the versions. The shell loads the bundle only when the user opens the entry, mounts the element inside a shadow root (so styles cannot leak either way; theme colours are CSS custom properties and pass through), and sets `element.hostContext = { contract, pluginId, apiBaseUrl, language, getAccessToken() }` before it is attached. A plugin built for a different `contract` (this shell speaks 1) or Angular major version is not shown: an inline message replaces it. A bundle that fails to load or does not define its element shows an error with "Try again". A menu entry without `element` still uses the metadata-driven page. At load, a plugin that names an element without a frontend entry, or lists a frontend file that is not in the package, is refused. See `MajdsApp.Plugins.Tasks/frontend/main.js`.
 
 ## Plugin translations
 
@@ -74,4 +78,4 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 
 ## Tests
 
-`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), translations (`PluginLocalizationTests`), and frontend files (`PluginAssetTests`).
+`src/MajdsApp.Tests.Plugins` (its own process, because EF builds its model once per process): the installer on disk (`PluginInstallerTests`), and install, upgrade, uninstall and permission cleanup through the API against a running host (`PluginLifecycleTests`), and dependency ordering, its rejections and the hook runner (`PluginDependencyTests`), settings (`PluginSettingsTests`), translations (`PluginLocalizationTests`), frontend files (`PluginAssetTests`), and the frontend declaration (`PluginFrontendTests`).
