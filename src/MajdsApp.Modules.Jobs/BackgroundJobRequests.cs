@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using System.Linq.Expressions;
 using MajdsApp.Data;
@@ -17,11 +18,11 @@ public record BackgroundJobDto(
 [RequiresPermission(Permissions.Jobs.View)]
 public record ListBackgroundJobsQuery(PagedRequest Request, string? Status) : IRequest<PagedResponse<BackgroundJobDto>>;
 
-public class ListBackgroundJobsQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<ListBackgroundJobsQuery, PagedResponse<BackgroundJobDto>>
+public class ListBackgroundJobsQueryHandler(IReadRepository<BackgroundJob, Guid> jobs, IObjectMapper mapper) : IRequestHandler<ListBackgroundJobsQuery, PagedResponse<BackgroundJobDto>>
 {
     public Task<PagedResponse<BackgroundJobDto>> Handle(ListBackgroundJobsQuery request, CancellationToken ct)
     {
-        var query = db.Set<BackgroundJob>().AsNoTracking();
+        var query = jobs.Query();
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {

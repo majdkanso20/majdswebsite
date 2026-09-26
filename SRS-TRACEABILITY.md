@@ -6,15 +6,15 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 120 |
-| PARTIAL | 81 |
+| DONE | 125 |
+| PARTIAL | 76 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
 | P1 API conventions | 8 | 5 | 3 | 0 |
 | P2 Modules | 8 | 3 | 5 | 0 |
-| P3 Repository/UoW | 7 | 2 | 5 | 0 |
+| P3 Repository/UoW | 7 | 5 | 2 | 0 |
 | P4 Cross-cutting | 7 | 4 | 3 | 0 |
 | P5 Plugins | 42 | 20 | 22 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
@@ -30,7 +30,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | F-Files | 6 | 3 | 3 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 3 | 2 | 0 |
-| F-Data | 6 | 1 | 5 | 0 |
+| F-Data | 6 | 3 | 3 | 0 |
 | F-Export | 5 | 4 | 1 | 0 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 5 | 0 | 0 |
@@ -50,8 +50,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - PARTIAL (004): `ModuleOptions.AddModuleOptions<T>(configuration, section)` binds a section through `IOptions<T>` and validates it with data annotations when the application starts, so a wrong value stops the start naming the setting. Applied to `Email:Smtp`, `RateLimiting`, `Docs` and `Resilience` (tested); `Cache` already fails fast; the jobs, metrics and plugin-trust keys are still read directly.
 
 ## P3 — Repository / Unit of Work
-- DONE: 004 `IUnitOfWork`/`EfUnitOfWork`, 006 scoped registration.
-- PARTIAL: 001–003, 007: `IRepository`, `IReadRepository`, specifications exist but only the Diagnostics module uses them; every other handler injects `ApplicationDbContext`. 005 audit stamping done, soft delete only enforced in the repository, no domain events.
+- DONE: 002 `IReadRepository` is a separate no-tracking implementation (`EfReadRepository`), so a query path cannot modify what it reads (tested). 004 `IUnitOfWork`/`EfUnitOfWork` with explicit transactions; repositories in one scope share one context (tested with a rollback). 005 audit stamping, soft delete enforced centrally in SaveChanges for every `ISoftDelete` entity (a plain `Remove` only marks it, and a filter hides it), and domain events (`IHasDomainEvents`, `IDomainEvent`): published after the save succeeds, once, and not at all when the save fails (tested; `DiagnosticsPing` raises `PingRecorded`). 006 repositories are registered as open generics, scoped, and injectable directly. 007 `IReadRepository.PagedAsync(request, sortableColumns, selector, spec)` gives a list endpoint paging, sorting and criteria in one call.
+- PARTIAL: 001 and 003: `IRepository`, `IReadRepository` and specifications are available for any entity that implements `IEntity<TKey>` (the module entities and the Identity users and roles now do), but only these handlers use them: the Files list, download and delete, the job-run, background-job, audit-log and notification lists, and Diagnostics. The rest still inject `ApplicationDbContext` (users, roles, settings, exports, plugins, search, dashboard) and some need `Include`-style or set-based queries the specification does not express yet.
 
 ## P4 — Cross-cutting
 - DONE: 001, 002 (behavior pipeline: logging, performance, validation, authorization, feature, caching, transaction, audit).
@@ -116,7 +116,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - DONE: 001, 002, 004 (a central interceptor handles 401, 403, 429, unreachable server and 5xx with a translated message, and leaves field errors to each screen). PARTIAL: 003 Serilog is referenced and enriched but never configured as the logger; 005 no sinks configured.
 
 ## F-Data
-- DONE: 002. PARTIAL: 001 column filters ad hoc, 003 DB-side paging but not tied to the repository and unknown sort keys are ignored, 004 cap is a constant (100), 005 grid has no filter UI, 006 permission checks live in consumers.
+- DONE: 002, 003 (DB-side paging, tied to the repository through `PagedAsync`; a sort column outside the list's allow-list is a 400 naming the allowed ones, not a silently unsorted list; tested), 004 (`Paging:MaxPageSize`, default 100, checked at start). PARTIAL: 001 column filters are still written per list, 005 grid has no filter UI, 006 permission checks live in consumers.
 
 ## F-Export / F-Dashboard / F-Background-Jobs
 - Export: DONE 001 (CSV, Excel and PDF from one renderer, `TabularExport`, so all formats hold the same rows; users and audit exports take the list's filters and share its filter code), 002 (server-generated PDF, landscape A4, paginated, capped at 2,000 rows and says so). Formats: `?format=csv|xlsx|pdf`; unknown values are a 400. DONE 003 (import from CSV or Excel: per-row validation through the same `CreateUserCommand` as the create endpoint, valid rows imported, invalid rows reported with row number and reason, whole-file problems such as a missing column rejected up front; users import is wired end to end with a reusable dialog), 005 (downloadable CSV and Excel templates, headers only, plus an Instructions sheet). PARTIAL 004: exports run as background jobs (`ExportJob` queue, hosted worker, atomic claim, restart recovery, retention cleanup), the file is delivered through F-Files and the user gets a notification that links to My exports (AC-EXP-3); imports still run during the request (5,000-row limit), so the requirement is not fully met. Only users have an import so far; other resources reuse `TabularReader`, `ImportRunner` and `ImportTemplate`.
@@ -138,7 +138,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 384 automated tests** in `src/MajdsApp.Tests` (311) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 392 automated tests** in `src/MajdsApp.Tests` (319) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 115 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -154,8 +154,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 81 are partial):
+Still open, roughly by value (no requirement is missing and 76 are partial):
 1. P5: per-plugin database schema, digital signatures, applying changes without a restart, native federation (only Web Components are supported).
-2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: adopting the generic repository (most partial items are here and in P5).
+2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels and a shared channel interface; F-Files storage interface.
 4. Verification: browser end-to-end tests, a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

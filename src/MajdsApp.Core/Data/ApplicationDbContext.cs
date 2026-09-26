@@ -26,5 +26,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         foreach (var assembly in moduleAssemblies)
             builder.ApplyConfigurationsFromAssembly(assembly);
+
+        // Any entity that supports soft delete is hidden once deleted, without each module having to remember the filter (P3 FR-REPO-005).
+        foreach (var entityType in builder.Model.GetEntityTypes()
+                     .Where(t => t.BaseType is null && typeof(MajdsApp.SharedKernel.Data.ISoftDelete).IsAssignableFrom(t.ClrType) && !t.GetDeclaredQueryFilters().Any()).ToList())
+        {
+            var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+            var notDeleted = System.Linq.Expressions.Expression.Not(System.Linq.Expressions.Expression.Property(parameter, nameof(MajdsApp.SharedKernel.Data.ISoftDelete.IsDeleted)));
+            builder.Entity(entityType.ClrType).HasQueryFilter(System.Linq.Expressions.Expression.Lambda(notDeleted, parameter));
+        }
     }
 }

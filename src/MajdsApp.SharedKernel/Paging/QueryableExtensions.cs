@@ -36,10 +36,14 @@ public static class QueryableExtensions
             var column = parts[0];
             var descending = parts.Length > 1 && parts[1].Equals("desc", StringComparison.OrdinalIgnoreCase);
 
-            if (sortableColumns.TryGetValue(column, out var sortSelector))
+            // An unknown column is the caller's mistake, so say so rather than silently returning an unsorted list (F-Data FR-GRID-003, NFR-SEC-3).
+            if (!sortableColumns.TryGetValue(column, out var sortSelector))
             {
-                query = descending ? query.OrderByDescending(sortSelector) : query.OrderBy(sortSelector);
+                var allowed = string.Join(", ", sortableColumns.Keys.Order());
+                throw new FluentValidation.ValidationException($"'{column}' is not a column this list can be sorted by. Use one of: {allowed}.");
             }
+
+            query = descending ? query.OrderByDescending(sortSelector) : query.OrderBy(sortSelector);
         }
 
         var totalCount = await query.CountAsync(ct);

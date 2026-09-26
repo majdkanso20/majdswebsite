@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Configuration;
 using MajdsApp.SharedKernel.Mapping;
 using System.Reflection;
 using FluentValidation;
@@ -36,6 +37,8 @@ public static class PlatformServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddPlatformCaching(configuration);
         services.AddPlatformMapping(moduleAssemblies);
+        services.AddModuleOptions<MajdsApp.SharedKernel.Paging.PagingOptions>(configuration, "Paging");
+        MajdsApp.SharedKernel.Paging.PagedRequest.MaxPageSize = configuration.GetSection("Paging").Get<MajdsApp.SharedKernel.Paging.PagingOptions>()?.MaxPageSize is { } max and >= 1 ? max : 100;
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.TryAddScoped<IPermissionChecker, AllowAllPermissionChecker>();
         services.TryAddScoped<ISettingsProvider, DefaultSettingsProvider>();

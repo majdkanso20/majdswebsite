@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace MajdsApp.Modules.Jobs;
 
 /// <summary>One execution of a recurring job (F-Background-Jobs data model).</summary>
-public class JobRun
+public class JobRun : MajdsApp.SharedKernel.Data.IEntity<int>
 {
     public int Id { get; set; }
     public string JobName { get; set; } = string.Empty;

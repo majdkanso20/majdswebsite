@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using FluentValidation;
 using MajdsApp.Data;
@@ -74,12 +75,12 @@ public class UploadFileCommandHandler(
 public record DeleteFileCommand(Guid FileId) : IRequest, IAuditableCommand;
 
 public class DeleteFileCommandHandler(
-    ApplicationDbContext db, ICurrentUser currentUser, IPermissionChecker permissions)
+    IRepository<FileRecord, Guid> files, IUnitOfWork unitOfWork, ICurrentUser currentUser, IPermissionChecker permissions)
     : IRequestHandler<DeleteFileCommand>
 {
     public async Task Handle(DeleteFileCommand request, CancellationToken ct)
     {
-        var record = await db.Set<FileRecord>().FirstOrDefaultAsync(f => f.Id == request.FileId, ct)
+        var record = await files.GetByIdAsync(request.FileId, ct)
             ?? throw new NotFoundException("File not found.");
 
         var isOwner = record.OwnerId is not null && record.OwnerId == currentUser.UserId;
@@ -89,6 +90,7 @@ public class DeleteFileCommandHandler(
         // Soft delete (FR-FILE-006): the file disappears at once, its bytes stay until PurgeDeletedFilesJob removes them after the retention period.
         record.DeletedAt = DateTime.UtcNow;
         record.DeletedBy = currentUser.UserId;
-        await db.SaveChangesAsync(ct);
+        files.Update(record);
+        await unitOfWork.SaveChangesAsync(ct);
     }
 }

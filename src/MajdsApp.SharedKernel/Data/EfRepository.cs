@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MajdsApp.SharedKernel.Data;
 
 /// <summary>Generic EF Core repository (P3) shared by every feature module — no bespoke repositories.</summary>
-public class EfRepository<TEntity, TKey>(DbContext context) : IRepository<TEntity, TKey>, IReadRepository<TEntity, TKey>
+public class EfRepository<TEntity, TKey>(DbContext context) : IRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
     protected DbSet<TEntity> Set { get; } = context.Set<TEntity>();
@@ -47,6 +47,8 @@ public class EfRepository<TEntity, TKey>(DbContext context) : IRepository<TEntit
         spec is null
             ? Set.CountAsync(ct)
             : SpecificationEvaluator.Apply(Set.AsQueryable(), spec).CountAsync(ct);
+
+    internal static Expression<Func<TEntity, bool>> IdIs(TKey id) => BuildIdPredicate(id);
 
     private static Expression<Func<TEntity, bool>> BuildIdPredicate(TKey id)
     {

@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
@@ -16,13 +17,13 @@ public record NotificationDto(int Id, string Type, string Title, string Message,
 [RequiresFeature("Notifications")]
 public record ListMyNotificationsQuery(PagedRequest Request) : IRequest<PagedResponse<NotificationDto>>;
 
-public class ListMyNotificationsQueryHandler(ApplicationDbContext db, ICurrentUser currentUser, IObjectMapper mapper)
+public class ListMyNotificationsQueryHandler(IReadRepository<Notification, int> notifications, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<ListMyNotificationsQuery, PagedResponse<NotificationDto>>
 {
     public async Task<PagedResponse<NotificationDto>> Handle(ListMyNotificationsQuery request, CancellationToken ct)
     {
         var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Authentication is required.");
-        var query = db.Set<Notification>().AsNoTracking().Where(n => n.UserId == userId).OrderByDescending(n => n.CreatedAt);
+        var query = notifications.Query().Where(n => n.UserId == userId).OrderByDescending(n => n.CreatedAt);
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip((request.Request.Page - 1) * request.Request.PageSize).Take(request.Request.PageSize)

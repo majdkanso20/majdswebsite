@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Search;
 using System.Linq.Expressions;
 using MajdsApp.Data;
@@ -44,11 +45,11 @@ public static class AuditLogFilters
 [RequiresPermission(Permissions.Audit.View)]
 public record GetAuditLogQuery(PagedRequest Request, AuditLogFilter Filter) : IRequest<PagedResponse<AuditLogEntryDto>>;
 
-public class GetAuditLogQueryHandler(ApplicationDbContext db) : IRequestHandler<GetAuditLogQuery, PagedResponse<AuditLogEntryDto>>
+public class GetAuditLogQueryHandler(IReadRepository<AuditLogEntry, int> entries) : IRequestHandler<GetAuditLogQuery, PagedResponse<AuditLogEntryDto>>
 {
     public Task<PagedResponse<AuditLogEntryDto>> Handle(GetAuditLogQuery request, CancellationToken ct)
     {
-        var query = AuditLogFilters.Apply(db.Set<AuditLogEntry>().AsNoTracking(), request.Filter with { Text = request.Request.Filter });
+        var query = AuditLogFilters.Apply(entries.Query(), request.Filter with { Text = request.Request.Filter });
 
         var sortableColumns = new Dictionary<string, Expression<Func<AuditLogEntry, object>>>
         {

@@ -8,7 +8,7 @@ namespace MajdsApp.SharedKernel.Data;
 /// itself as scoped, then register <c>IUnitOfWork</c> as this class closed over that DbContext type
 /// so every repository resolved through it shares one context/transaction per request.
 /// </summary>
-public class EfUnitOfWork<TDbContext>(TDbContext context) : IUnitOfWork where TDbContext : DbContext
+public class EfUnitOfWork<TDbContext>(TDbContext context) : IUnitOfWork, IDisposable where TDbContext : DbContext
 {
     private IDbContextTransaction? _transaction;
 
@@ -16,7 +16,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext context) : IUnitOfWork where TD
         new EfRepository<TEntity, TKey>(context);
 
     public IReadRepository<TEntity, TKey> ReadRepository<TEntity, TKey>() where TEntity : class, IEntity<TKey> =>
-        new EfRepository<TEntity, TKey>(context);
+        new EfReadRepository<TEntity, TKey>(context);
 
     public Task<int> SaveChangesAsync(CancellationToken ct = default) => context.SaveChangesAsync(ct);
 
@@ -49,6 +49,13 @@ public class EfUnitOfWork<TDbContext>(TDbContext context) : IUnitOfWork where TD
             await _transaction.DisposeAsync();
             _transaction = null;
         }
+    }
+
+    // A scope that is disposed synchronously (a hosted service with `using var scope`) must not throw because this only implemented IAsyncDisposable.
+    public void Dispose()
+    {
+        _transaction?.Dispose();
+        _transaction = null;
     }
 
     public async ValueTask DisposeAsync()

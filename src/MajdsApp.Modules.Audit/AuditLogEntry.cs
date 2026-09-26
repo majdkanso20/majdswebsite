@@ -6,7 +6,7 @@ namespace MajdsApp.Modules.Audit;
 /// <summary>One audited action (F-Audit data model): who did what, from where, how long it took, whether
 /// it worked, the redacted parameters, and the entity changes it caused. Append-only (FR-AUDIT-005) —
 /// enforced by the save interceptor as well as by the absence of any modify/delete API.</summary>
-public class AuditLogEntry
+public class AuditLogEntry : MajdsApp.SharedKernel.Data.IEntity<int>
 {
     public int Id { get; set; }
     public string Action { get; set; } = string.Empty;

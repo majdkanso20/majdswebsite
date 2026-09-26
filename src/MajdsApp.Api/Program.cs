@@ -66,6 +66,9 @@ builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork<ApplicationDbContext>>();
+// Repositories can be injected directly; every one in a request shares the request's DbContext (P3 FR-REPO-004/006).
+builder.Services.AddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
+builder.Services.AddScoped(typeof(IReadRepository<,>), typeof(EfReadRepository<,>));
 
 // Bridges the existing Identity system (AS-4) to bearer tokens for the Angular SPA — same user
 // store, same passwords/2FA/external logins already built; this just adds a token-issuing surface

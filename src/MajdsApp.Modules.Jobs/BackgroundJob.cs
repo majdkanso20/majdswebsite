@@ -7,7 +7,7 @@ public enum BackgroundJobStatus { Pending = 0, Running = 1, Succeeded = 2, Faile
 
 /// <summary>A queued one-off job (F-Background-Jobs FR-JOB-001/002/004). Persisted, so it survives a restart; the user who
 /// queued it travels with it.</summary>
-public class BackgroundJob
+public class BackgroundJob : MajdsApp.SharedKernel.Data.IEntity<Guid>
 {
     public Guid Id { get; set; }
     public string Type { get; set; } = string.Empty;

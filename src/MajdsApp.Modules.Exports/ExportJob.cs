@@ -7,7 +7,7 @@ public enum ExportJobStatus { Pending = 0, Running = 1, Completed = 2, Failed = 
 
 /// <summary>A queued or finished background export (F-Export FR-EXP-004). The finished file lives in F-Files and
 /// belongs to the user who asked for it.</summary>
-public class ExportJob
+public class ExportJob : MajdsApp.SharedKernel.Data.IEntity<Guid>
 {
     public Guid Id { get; set; }
     public string UserId { get; set; } = string.Empty;

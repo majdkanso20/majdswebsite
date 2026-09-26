@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Search;
 using System.Linq.Expressions;
@@ -16,13 +17,13 @@ namespace MajdsApp.Modules.Files;
 [RequiresFeature("Files")]
 public record ListFilesQuery(PagedRequest Request) : IRequest<PagedResponse<FileDto>>;
 
-public class ListFilesQueryHandler(ApplicationDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IObjectMapper mapper)
+public class ListFilesQueryHandler(IReadRepository<FileRecord, Guid> files, ICurrentUser currentUser, IPermissionChecker permissions, IObjectMapper mapper)
     : IRequestHandler<ListFilesQuery, PagedResponse<FileDto>>
 {
     public async Task<PagedResponse<FileDto>> Handle(ListFilesQuery request, CancellationToken ct)
     {
         var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Authentication is required.");
-        var query = db.Set<FileRecord>().AsNoTracking();
+        var query = files.Query();
 
         if (!await permissions.HasPermissionAsync(Permissions.Files.View, ct))
             query = query.Where(f => f.OwnerId == userId);
@@ -51,12 +52,12 @@ public record DownloadedFile(string FileName, string ContentType, Stream Content
 public record DownloadFileQuery(Guid FileId) : IRequest<DownloadedFile>;
 
 public class DownloadFileQueryHandler(
-    ApplicationDbContext db, FileStorage storage, ICurrentUser currentUser, IPermissionChecker permissions)
+    IReadRepository<FileRecord, Guid> files, FileStorage storage, ICurrentUser currentUser, IPermissionChecker permissions)
     : IRequestHandler<DownloadFileQuery, DownloadedFile>
 {
     public async Task<DownloadedFile> Handle(DownloadFileQuery request, CancellationToken ct)
     {
-        var record = await db.Set<FileRecord>().AsNoTracking().FirstOrDefaultAsync(f => f.Id == request.FileId, ct)
+        var record = await files.GetByIdAsync(request.FileId, ct)
             ?? throw new NotFoundException("File not found.");
 
         var isOwner = record.OwnerId is not null && record.OwnerId == currentUser.UserId;

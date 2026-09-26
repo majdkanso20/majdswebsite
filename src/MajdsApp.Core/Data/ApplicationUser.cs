@@ -9,7 +9,7 @@ namespace MajdsApp.Data;
 /// confirmation) keeps working unchanged, since those only ever depended on <see cref="IdentityUser"/>'s
 /// own members.
 /// </summary>
-public class ApplicationUser : IdentityUser, IAuditable, ISoftDelete
+public class ApplicationUser : IdentityUser, IAuditable, ISoftDelete, IEntity<string>
 {
     public string? FullName { get; set; }
     public bool IsActive { get; set; } = true;

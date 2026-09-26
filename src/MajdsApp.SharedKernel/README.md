@@ -96,3 +96,9 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Mapping (P4 FR-XC-007)
 
 `Mapping/ObjectMapper.cs`: handlers ask for `IObjectMapper` to turn an entity into a DTO (`Map<TDto>(entity)`) or to project a query (`Select(mapper.Projection<TEntity, TDto>())`). Members and constructor parameters are matched by name; a mapping that needs more is written once in a class implementing Mapster's `IRegister` inside the module, and is found by the scan of the module assemblies.
+
+## Repositories, soft delete and domain events (P3)
+
+Any entity that implements `IEntity<TKey>` can be reached through `IRepository<TEntity, TKey>` (tracked; add, update, remove) or `IReadRepository<TEntity, TKey>` (never tracked), both injectable and scoped, sharing the request's `DbContext` with `IUnitOfWork`. A list endpoint calls `repository.PagedAsync(request, sortableColumns, selector, spec)`: an unknown sort column is a 400. `Paging:MaxPageSize` (default 100, 1 to 1000) caps a page.
+
+`SaveChanges` stamps audit fields and turns the removal of any `ISoftDelete` entity into a soft delete; a query filter for such entities is added automatically. An entity that implements `IHasDomainEvents` (or derives from `DomainEventSource`) collects `IDomainEvent`s; they are published through MediatR after the save that stored the change succeeds, once each, and not at all if it fails. Handle one with an ordinary `INotificationHandler<T>`.

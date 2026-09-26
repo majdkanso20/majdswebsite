@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using System.Linq.Expressions;
 using MajdsApp.Data;
@@ -40,11 +41,11 @@ public class ListJobsQueryHandler(ApplicationDbContext db, IEnumerable<IRecurrin
 [RequiresPermission(Permissions.Jobs.View)]
 public record ListJobRunsQuery(PagedRequest Request, string? JobName) : IRequest<PagedResponse<JobRunDto>>;
 
-public class ListJobRunsQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<ListJobRunsQuery, PagedResponse<JobRunDto>>
+public class ListJobRunsQueryHandler(IReadRepository<JobRun, int> runs, IObjectMapper mapper) : IRequestHandler<ListJobRunsQuery, PagedResponse<JobRunDto>>
 {
     public Task<PagedResponse<JobRunDto>> Handle(ListJobRunsQuery request, CancellationToken ct)
     {
-        var query = db.Set<JobRun>().AsNoTracking();
+        var query = runs.Query();
         if (!string.IsNullOrWhiteSpace(request.JobName))
             query = query.Where(r => r.JobName == request.JobName);
 

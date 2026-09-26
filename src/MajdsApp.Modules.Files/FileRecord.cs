@@ -5,7 +5,7 @@ namespace MajdsApp.Modules.Files;
 
 /// <summary>Metadata for one stored file (F-Files data model). The bytes live on disk under a
 /// server-generated name; the client-supplied name is kept only here, never used as a path.</summary>
-public class FileRecord
+public class FileRecord : MajdsApp.SharedKernel.Data.IEntity<Guid>
 {
     public Guid Id { get; set; }
     public string FileName { get; set; } = string.Empty;

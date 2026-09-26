@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 namespace MajdsApp.Data;
 
 /// <summary>Extends the existing Identity role with the fields F-Roles needs (F1/F-ROLE-003).</summary>
-public class ApplicationRole : IdentityRole
+public class ApplicationRole : IdentityRole, MajdsApp.SharedKernel.Data.IEntity<string>
 {
     public string? DisplayName { get; set; }
 

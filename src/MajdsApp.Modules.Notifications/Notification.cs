@@ -6,7 +6,7 @@ namespace MajdsApp.Modules.Notifications;
 
 
 /// <summary>An in-app notification addressed to one user (F-Notifications data model).</summary>
-public class Notification
+public class Notification : MajdsApp.SharedKernel.Data.IEntity<int>
 {
     public int Id { get; set; }
     public string UserId { get; set; } = string.Empty;
@@ -34,7 +34,7 @@ public enum DeliveryStatus { Pending = 0, Sent = 1, Failed = 2 }
 
 /// <summary>Per-recipient, per-channel delivery for channels that go through the background queue
 /// (email), with attempt tracking for retry/backoff (FR-NOTIF-004/007).</summary>
-public class NotificationDelivery
+public class NotificationDelivery : MajdsApp.SharedKernel.Data.IEntity<int>
 {
     public int Id { get; set; }
     public string UserId { get; set; } = string.Empty;

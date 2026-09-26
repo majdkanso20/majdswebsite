@@ -16,11 +16,12 @@ public class RecordPingCommandValidator : AbstractValidator<RecordPingCommand>
     }
 }
 
-public class RecordPingCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<RecordPingCommand, Guid>
+public class RecordPingCommandHandler(IUnitOfWork unitOfWork, MajdsApp.SharedKernel.Security.ICurrentUser currentUser) : IRequestHandler<RecordPingCommand, Guid>
 {
     public async Task<Guid> Handle(RecordPingCommand request, CancellationToken ct)
     {
         var ping = new DiagnosticsPing { Id = Guid.NewGuid(), Message = request.Message };
+        ping.RecordedAs(currentUser.UserId ?? "anonymous");
         var repository = unitOfWork.Repository<DiagnosticsPing, Guid>();
         await repository.AddAsync(ping, ct);
         // No explicit SaveChangesAsync here: the TransactionBehavior (P4) commits via the UoW
