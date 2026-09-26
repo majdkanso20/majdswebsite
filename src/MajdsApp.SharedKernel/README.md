@@ -84,3 +84,15 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 ## Caching
 
 `Caching/ICacheService.cs` is the platform's cache: get, set with a time to live, remove, and get-or-add. `Cache:Provider` chooses the backend by configuration: `Memory` (one server), `Redis` (`Cache:Redis:ConnectionString`; shared by every server) or `Distributed` (a distributed cache held in this process). Values must be serializable to JSON, since a distributed backend stores them outside the process. A cache that cannot be reached is a miss and is logged, never an error. Permissions, settings, feature flags and cacheable MediatR queries use it, so with Redis a write on one server invalidates the cache on all of them.
+
+## Module options (P2 FR-MOD-004)
+
+`Configuration/ModuleOptions.cs`: `services.AddModuleOptions<MyOptions>(configuration, "MySection")` binds the section through the options pattern and validates it (data annotations, or `IValidatableObject` for rules across several values) when the application starts. A bad value stops the start with a message naming the setting. Used for `Email:Smtp`, `RateLimiting`, `Docs` and `Resilience`.
+
+## Resilience (P4 FR-XC-006)
+
+`Resilience/OutboundResilience.cs` defines, once, how an outbound call retries (exponential backoff with jitter, only for the failures the caller says are transient), times out per attempt and trips a circuit breaker. Apply it by decorating the service that makes the call (Scrutor `Decorate`, see `MajdsApp.Core/Services/ResilientEmailMessageSender.cs`) instead of writing try/catch in callers. The `Resilience` section tunes it: `MaxRetries`, `RetryDelayMilliseconds`, `TimeoutSeconds`, `BreakMinimumCalls`, `BreakSamplingSeconds`, `BreakSeconds`. The service being called must pass the cancellation token on to its network calls, or the timeout cannot stop it.
+
+## Mapping (P4 FR-XC-007)
+
+`Mapping/ObjectMapper.cs`: handlers ask for `IObjectMapper` to turn an entity into a DTO (`Map<TDto>(entity)`) or to project a query (`Select(mapper.Projection<TEntity, TDto>())`). Members and constructor parameters are matched by name; a mapping that needs more is written once in a class implementing Mapster's `IRegister` inside the module, and is found by the scan of the module assemblies.

@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using System.Reflection;
 using FluentValidation;
 using MajdsApp.SharedKernel.Api;
@@ -34,6 +35,7 @@ public static class PlatformServiceCollectionExtensions
     {
         services.AddHttpContextAccessor();
         services.AddPlatformCaching(configuration);
+        services.AddPlatformMapping(moduleAssemblies);
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.TryAddScoped<IPermissionChecker, AllowAllPermissionChecker>();
         services.TryAddScoped<ISettingsProvider, DefaultSettingsProvider>();

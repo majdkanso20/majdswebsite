@@ -2,6 +2,7 @@ using MajdsApp.SharedKernel.Search;
 using MajdsApp.Data;
 using MajdsApp.Modules.Authorization;
 using MajdsApp.SharedKernel.Behaviors;
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Paging;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +12,9 @@ namespace MajdsApp.Modules.Roles;
 [RequiresPermission(Permissions.Roles.View)]
 public record ListRolesQuery(PagedRequest Request) : IRequest<PagedResponse<RoleDto>>;
 
-public class ListRolesQueryHandler(ApplicationDbContext db) : IRequestHandler<ListRolesQuery, PagedResponse<RoleDto>>
+public class ListRolesQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<ListRolesQuery, PagedResponse<RoleDto>>
 {
-    public Task<PagedResponse<RoleDto>> Handle(ListRolesQuery request, CancellationToken ct)
+    public async Task<PagedResponse<RoleDto>> Handle(ListRolesQuery request, CancellationToken ct)
     {
         var query = db.Roles.AsNoTracking();
 
@@ -29,8 +30,17 @@ public class ListRolesQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
             ["displayName"] = r => r.DisplayName!
         };
 
-        return query.ApplyPagingAsync(request.Request, sortableColumns, r => new RoleDto(
-            r.Id, r.Name!, r.DisplayName, r.IsStatic, r.IsDefault,
-            db.UserRoles.Count(ur => ur.RoleId == r.Id)), ct);
+        var page = await query.ApplyPagingAsync(request.Request, sortableColumns, mapper.Projection<ApplicationRole, RoleDto>(), ct);
+
+        // How many users hold each role on this page, in one query.
+        var ids = page.Items.Select(r => r.Id).ToList();
+        var counts = await db.UserRoles.Where(ur => ids.Contains(ur.RoleId)).GroupBy(ur => ur.RoleId)
+            .Select(g => new { RoleId = g.Key, Count = g.Count() }).ToDictionaryAsync(g => g.RoleId, g => g.Count, ct);
+
+        return new PagedResponse<RoleDto>
+        {
+            Items = page.Items.Select(r => r with { UserCount = counts.GetValueOrDefault(r.Id) }).ToList(),
+            TotalCount = page.TotalCount, Page = page.Page, PageSize = page.PageSize
+        };
     }
 }

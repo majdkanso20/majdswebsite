@@ -6,16 +6,16 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 116 |
-| PARTIAL | 79 |
-| MISSING | 6 |
+| DONE | 118 |
+| PARTIAL | 81 |
+| MISSING | 2 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
 | P1 API conventions | 8 | 5 | 3 | 0 |
-| P2 Modules | 8 | 3 | 4 | 1 |
+| P2 Modules | 8 | 3 | 5 | 0 |
 | P3 Repository/UoW | 7 | 2 | 5 | 0 |
-| P4 Cross-cutting | 7 | 2 | 2 | 3 |
+| P4 Cross-cutting | 7 | 4 | 3 | 0 |
 | P5 Plugins | 42 | 20 | 22 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 4 | 5 | 0 |
@@ -47,7 +47,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 ## P2 — Modules
 - DONE: 001 `IFeatureModule`, 005 application parts, 006 EF configs discovered.
 - PARTIAL: 002 host still lists module assemblies by hand. 003 Scrutor scan covers service markers, jobs, search; EF configs applied separately. 007 no Contracts projects; Users/Roles reference Authorization directly, Account references Files. 008 removing a module still needs edits in `Program.cs` and the csproj.
-- MISSING: 004 no per-module options with validate-on-start.
+- PARTIAL (004): `ModuleOptions.AddModuleOptions<T>(configuration, section)` binds a section through `IOptions<T>` and validates it with data annotations when the application starts, so a wrong value stops the start naming the setting. Applied to `Email:Smtp`, `RateLimiting`, `Docs` and `Resilience` (tested); `Cache` already fails fast; the jobs, metrics and plugin-trust keys are still read directly.
 
 ## P3 — Repository / Unit of Work
 - DONE: 004 `IUnitOfWork`/`EfUnitOfWork`, 006 scoped registration.
@@ -56,7 +56,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 ## P4 — Cross-cutting
 - DONE: 001, 002 (behavior pipeline: logging, performance, validation, authorization, feature, caching, transaction, audit).
 - PARTIAL: 003 markers used, but `ICacheableQuery` is implemented by no request. 005 correlation, exception and security-headers middleware; no response-wrapping middleware.
-- MISSING: 004 decorators (Scrutor `Decorate`), 006 Polly, 007 Mapster/AutoMapper (DTOs hand-mapped).
+- DONE: 004 decorators (Scrutor `Decorate`: the notification email sender is wrapped by `ResilientEmailMessageSender`, `SmtpEmailSender` is unchanged), 006 Polly (`OutboundResilience`: retry with backoff and jitter only for transient failures, a timeout per attempt that really cancels the SMTP calls, and a circuit breaker; a wrong password is never retried; tuned by the validated `Resilience` section; tested).
+- PARTIAL: 007 Mapster: one configuration for the application (`IObjectMapper`, mappings found per module through Mapster `IRegister` scans), used by the Files, Notifications, Jobs and Roles handlers, with a projection form so the mapping still runs in SQL. Users, Audit, Settings, Plugins and Dashboard DTOs are still hand-built.
 
 ## P5 — Plugins (42)
 - DONE (20): 014 and 015 pre-built frontend and runtime loading (a manifest `frontend` entry names an ES-module bundle, an optional stylesheet and a contract version; a menu entry with an `element` is drawn by that custom element, loaded only when the user navigates to it; the other entries keep the metadata-driven page; the loader is Web Components, not Native Federation), 018 CSS isolation (the element is mounted in a shadow root, so neither side's styles leak; the theme's CSS custom properties pass through, verified live with the Tasks overview), 019 compatibility check and graceful failure (the shell refuses a bundle built for another contract or Angular major version and shows an inline message; a bundle that fails to load or does not define its element shows an error with Try again, not a broken shell), 016 static assets (`GET /plugins/{id}/{path}` serves the `frontend/` folder of a plugin package, for an enabled plugin only; content types, ETag revalidation so an upgrade is picked up at once, only the allowed kinds of file, path traversal refused, the host's strict Content-Security-Policy on every response; a package may carry those file kinds under `frontend/` and nothing else there), 023 plugin localization (a plugin ships `localization/<language>.json`; the entries join the platform's for server messages, notifications and emails, and are served with them so the shell shows the plugin's menu label in the active language; they can add text but never replace a platform translation; a missing or broken file leaves the English text; text inside a plugin's own frontend screens waits for frontend bundles, FR-PLUG-014), 013 per-plugin settings (a plugin declares `SettingDefinition`s like any module; they are found by the same scan, appear on the standard settings page under the plugin's group, are stored and cached like any setting, are checked by the plugin's own `validator` when saved, and may only use names starting with the plugin's key so they cannot replace a platform or another plugin's setting), 010 dependencies and load order (a manifest `dependencies` list with optional min/max versions; plugins load after what they need; a plugin with a missing, out-of-range, failed or circular dependency is left disabled with the reason and its assembly is not used; a plugin cannot be enabled while a dependency is off, or disabled or uninstalled while an enabled plugin needs it), 031 lifecycle hooks (a module may implement `IPluginLifecycle`: `OnInstall` and `OnUpgrade(fromVersion)` run at the first start that sees the plugin or a different version, `OnEnable` runs before enabling and a failure keeps the plugin off with the error shown, `OnDisable` and `OnUninstall` run after the change and are logged if they fail), 007 module + controllers registered, 008 per-plugin failure isolation with persisted `LastError`, 009 host-version check (`minHostVersion`/`maxHostVersion` in the manifest, checked when a package is uploaded and again at load; an incompatible plugin is refused with the reason), 021 menu ingested only for enabled plugins, 025 permissions appear in role editor, 026 grantable to roles and users, 027 enforced by the same authorization pipeline, 028 uninstall cleanup (the plugin's permissions are removed from every role and user that held them and permission caches are refreshed; tested), 038 upgrade and rollback (a newer package upgrades, the previous version is kept and can be restored; compatibility is checked), 039 every install, upgrade, rollback, uninstall, enable and disable is an audited command gated by `Plugins.Manage`, 042 the plugin list shows declared permissions with a link to the roles screen (it does not pre-select the plugin's permissions).
@@ -137,7 +138,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 357 automated tests** in `src/MajdsApp.Tests` (284) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 375 automated tests** in `src/MajdsApp.Tests` (302) and `src/MajdsApp.Tests.Plugins` (73, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 115 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -153,8 +154,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (6 requirements are missing and 79 are partial):
+Still open, roughly by value (2 requirements are missing and 81 are partial):
 1. P5: per-plugin database schema, digital signatures, applying changes without a restart, native federation (only Web Components are supported).
-2. P4: decorators, Polly resilience and Mapster mapping; P2: per-module options validated on start; P3: adopting the generic repository (most partial items are here and in P5).
+2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: adopting the generic repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels; F-Files soft delete and a storage interface.
 4. Verification: browser end-to-end tests, a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

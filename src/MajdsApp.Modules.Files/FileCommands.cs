@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using FluentValidation;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
@@ -16,7 +17,7 @@ public record FileDto(Guid Id, string FileName, string ContentType, long Size, s
 public record UploadFileCommand(string FileName, string ContentType, long Size, Stream Content) : IRequest<FileDto>, IAuditableCommand;
 
 public class UploadFileCommandHandler(
-    ApplicationDbContext db, FileStorage storage, ISettingsProvider settings, ICurrentUser currentUser)
+    ApplicationDbContext db, FileStorage storage, ISettingsProvider settings, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<UploadFileCommand, FileDto>
 {
     // Executable/script types that have no business being uploaded to a shared store.
@@ -65,7 +66,7 @@ public class UploadFileCommandHandler(
             throw;
         }
 
-        return new FileDto(record.Id, record.FileName, record.ContentType, record.Size, record.OwnerName, record.CreatedAt);
+        return mapper.Map<FileDto>(record);
     }
 }
 

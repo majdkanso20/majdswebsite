@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Localization;
 using MajdsApp.SharedKernel.Notifications;
@@ -13,7 +14,7 @@ namespace MajdsApp.Modules.Notifications;
 /// background worker. Callers depend only on <see cref="IUserNotificationPublisher"/>.
 /// </summary>
 public class NotificationPublisher(
-    ApplicationDbContext db, IHubContext<NotificationHub> hub, IMessageCatalog catalog, ISettingsProvider settings) : IUserNotificationPublisher
+    ApplicationDbContext db, IHubContext<NotificationHub> hub, IMessageCatalog catalog, ISettingsProvider settings, IObjectMapper mapper) : IUserNotificationPublisher
 {
     public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) =>
         DispatchAsync([userId], title, message, type, ct, link);
@@ -71,6 +72,6 @@ public class NotificationPublisher(
 
         foreach (var n in inApp)
             await hub.Clients.User(n.UserId).SendAsync("notification",
-                new NotificationDto(n.Id, n.Type, n.Title, n.Message, false, n.CreatedAt, n.Link), ct);
+                mapper.Map<NotificationDto>(n), ct);
     }
 }

@@ -2,6 +2,7 @@ using MajdsApp.Data;
 using MajdsApp.Modules.Authorization;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;
+using MajdsApp.SharedKernel.Mapping;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,7 @@ namespace MajdsApp.Modules.Roles;
 [RequiresPermission(Permissions.Roles.View)]
 public record GetRoleQuery(string RoleId) : IRequest<RoleDto>;
 
-public class GetRoleQueryHandler(ApplicationDbContext db) : IRequestHandler<GetRoleQuery, RoleDto>
+public class GetRoleQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<GetRoleQuery, RoleDto>
 {
     public async Task<RoleDto> Handle(GetRoleQuery request, CancellationToken ct)
     {
@@ -19,6 +20,6 @@ public class GetRoleQueryHandler(ApplicationDbContext db) : IRequestHandler<GetR
 
         var userCount = await db.UserRoles.CountAsync(ur => ur.RoleId == role.Id, ct);
 
-        return new RoleDto(role.Id, role.Name!, role.DisplayName, role.IsStatic, role.IsDefault, userCount);
+        return mapper.Map<RoleDto>(role) with { UserCount = userCount };
     }
 }

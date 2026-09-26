@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using System.Linq.Expressions;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
@@ -16,7 +17,7 @@ public record BackgroundJobDto(
 [RequiresPermission(Permissions.Jobs.View)]
 public record ListBackgroundJobsQuery(PagedRequest Request, string? Status) : IRequest<PagedResponse<BackgroundJobDto>>;
 
-public class ListBackgroundJobsQueryHandler(ApplicationDbContext db) : IRequestHandler<ListBackgroundJobsQuery, PagedResponse<BackgroundJobDto>>
+public class ListBackgroundJobsQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<ListBackgroundJobsQuery, PagedResponse<BackgroundJobDto>>
 {
     public Task<PagedResponse<BackgroundJobDto>> Handle(ListBackgroundJobsQuery request, CancellationToken ct)
     {
@@ -45,8 +46,7 @@ public class ListBackgroundJobsQueryHandler(ApplicationDbContext db) : IRequestH
         if (string.IsNullOrWhiteSpace(request.Request.Sort)) request.Request.Sort = "createdAt:desc";
 
         return query.ApplyPagingAsync(request.Request, sortable,
-            j => new BackgroundJobDto(j.Id, j.Type, j.Status.ToString(), j.Attempts, j.MaxAttempts, j.UserName, j.LastError,
-                j.CreatedAt, j.NextAttemptAt, j.StartedAt, j.CompletedAt), ct);
+            mapper.Projection<BackgroundJob, BackgroundJobDto>(), ct);
     }
 }
 

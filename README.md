@@ -74,6 +74,7 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `Metrics:Token` / `Metrics:AllowAnonymous` / `Metrics:Enabled` | `/metrics` needs this bearer token; with none it is open only in Development (or when anonymous access is allowed); `false` turns it off | unset |
 | `Docs:Enabled` / `Docs:Access` | Outside Development the API docs (`/swagger`) are off unless `Docs:Enabled` is `true`; `Docs:Access` is `Permission` (needs `Docs.View`), `Authenticated` or `Open` | off, `Permission` |
 | `Jobs:Scheduler:Enabled` / `Jobs:Worker:Enabled` | Turn the recurring-job scheduler or the queue worker off on a server | on |
+| `Resilience:MaxRetries` / `RetryDelayMilliseconds` / `TimeoutSeconds` / `BreakMinimumCalls` / `BreakSamplingSeconds` / `BreakSeconds` | How outbound mail retries, times out and pauses when the mail server keeps failing | 2 / 500 / 30 / 5 / 30 / 30 |
 | `MediatR:LicenseKey` | Required for production use of MediatR | unset |
 
 Runtime behavior that administrators change without a redeploy (application name, session timeout, self-registration, upload size, mail server, retention, feature flags) is under **Settings** and **Features** in the app.

@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Search;
 using System.Linq.Expressions;
 using MajdsApp.Data;
@@ -15,7 +16,7 @@ namespace MajdsApp.Modules.Files;
 [RequiresFeature("Files")]
 public record ListFilesQuery(PagedRequest Request) : IRequest<PagedResponse<FileDto>>;
 
-public class ListFilesQueryHandler(ApplicationDbContext db, ICurrentUser currentUser, IPermissionChecker permissions)
+public class ListFilesQueryHandler(ApplicationDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IObjectMapper mapper)
     : IRequestHandler<ListFilesQuery, PagedResponse<FileDto>>
 {
     public async Task<PagedResponse<FileDto>> Handle(ListFilesQuery request, CancellationToken ct)
@@ -40,7 +41,7 @@ public class ListFilesQueryHandler(ApplicationDbContext db, ICurrentUser current
         };
 
         return await query.ApplyPagingAsync(request.Request, sortable,
-            f => new FileDto(f.Id, f.FileName, f.ContentType, f.Size, f.OwnerName, f.CreatedAt), ct);
+            mapper.Projection<FileRecord, FileDto>(), ct);
     }
 }
 

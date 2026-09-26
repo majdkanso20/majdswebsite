@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using System.Linq.Expressions;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
@@ -39,7 +40,7 @@ public class ListJobsQueryHandler(ApplicationDbContext db, IEnumerable<IRecurrin
 [RequiresPermission(Permissions.Jobs.View)]
 public record ListJobRunsQuery(PagedRequest Request, string? JobName) : IRequest<PagedResponse<JobRunDto>>;
 
-public class ListJobRunsQueryHandler(ApplicationDbContext db) : IRequestHandler<ListJobRunsQuery, PagedResponse<JobRunDto>>
+public class ListJobRunsQueryHandler(ApplicationDbContext db, IObjectMapper mapper) : IRequestHandler<ListJobRunsQuery, PagedResponse<JobRunDto>>
 {
     public Task<PagedResponse<JobRunDto>> Handle(ListJobRunsQuery request, CancellationToken ct)
     {
@@ -55,7 +56,7 @@ public class ListJobRunsQueryHandler(ApplicationDbContext db) : IRequestHandler<
         };
 
         return query.ApplyPagingAsync(request.Request, sortable,
-            r => new JobRunDto(r.Id, r.JobName, r.StartedAt, r.DurationMs, r.Success, r.Error, r.Trigger), ct);
+            mapper.Projection<JobRun, JobRunDto>(), ct);
     }
 }
 

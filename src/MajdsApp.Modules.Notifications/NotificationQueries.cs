@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;
@@ -15,7 +16,7 @@ public record NotificationDto(int Id, string Type, string Title, string Message,
 [RequiresFeature("Notifications")]
 public record ListMyNotificationsQuery(PagedRequest Request) : IRequest<PagedResponse<NotificationDto>>;
 
-public class ListMyNotificationsQueryHandler(ApplicationDbContext db, ICurrentUser currentUser)
+public class ListMyNotificationsQueryHandler(ApplicationDbContext db, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<ListMyNotificationsQuery, PagedResponse<NotificationDto>>
 {
     public async Task<PagedResponse<NotificationDto>> Handle(ListMyNotificationsQuery request, CancellationToken ct)
@@ -25,7 +26,7 @@ public class ListMyNotificationsQueryHandler(ApplicationDbContext db, ICurrentUs
 
         var total = await query.CountAsync(ct);
         var items = await query.Skip((request.Request.Page - 1) * request.Request.PageSize).Take(request.Request.PageSize)
-            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Message, n.IsRead, n.CreatedAt, n.Link)).ToListAsync(ct);
+            .Select(mapper.Projection<Notification, NotificationDto>()).ToListAsync(ct);
 
         return new PagedResponse<NotificationDto>
             { Items = items, TotalCount = total, Page = request.Request.Page, PageSize = request.Request.PageSize };
