@@ -6,8 +6,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 139 |
-| PARTIAL | 62 |
+| DONE | 141 |
+| PARTIAL | 60 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -18,8 +18,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | P4 Cross-cutting | 7 | 4 | 3 | 0 |
 | P5 Plugins | 42 | 25 | 17 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
-| U2 Mobile-first | 9 | 4 | 5 | 0 |
-| U3 App shell | 8 | 6 | 2 | 0 |
+| U2 Mobile-first | 9 | 5 | 4 | 0 |
+| U3 App shell | 8 | 7 | 1 | 0 |
 | F-Authorization | 8 | 7 | 1 | 0 |
 | F-Users | 8 | 6 | 2 | 0 |
 | F-Roles | 5 | 5 | 0 | 0 |
@@ -70,12 +70,14 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 ## U2 — Mobile-first (updated 2026-09-24)
 - DONE: 001 `@container` queries on the data grid and dashboard (verified: at 320px each row becomes a labelled card, no sideways scrolling). 004 44px minimum for icon buttons and buttons (verified: smallest of 30 buttons is 44px). 006 dark mode, reduced motion, and safe-area insets now effective (`viewport-fit=cover` added). 008 responsive drawer.
-- PARTIAL: 002 320px verified on the Users page only. 003 fluid heading sizes and logical properties in new code; older code still fixed. 005 no native `<dialog>`, lazy images or View Transitions. 007 PWA: web manifest, icons, and an Angular service worker with an offline app shell are built into the production output (`ngsw.json` verified), but service worker registration could not be tested because this embedded browser refuses all service workers, including a trivial test one. 009 lazy routes and budgets (initial 705 kB); no Lighthouse run.
+- DONE: 002 every page (dashboard, users, roles, settings, plugins, audit log, jobs, features, files, exports, account) is tested at 320px wide, in English and in Arabic, and none scrolls sideways (22 browser tests).
+- PARTIAL: 003 fluid heading sizes and logical properties in new code; older code still fixed. 005 no native `<dialog>`, lazy images or View Transitions. 007 PWA: web manifest, icons, and an Angular service worker with an offline app shell are built into the production output (`ngsw.json` verified), but service worker registration could not be tested because this embedded browser refuses all service workers, including a trivial test one. 009 lazy routes and budgets (initial 705 kB); no Lighthouse run.
 
 ## U3 — App shell (updated 2026-09-24)
 - DONE: 001, 002 nested menu groups (Administration), 004, 006, 008 plugin menu entries follow enable/disable live without a reload (verified).
 - DONE: 003 the user menu has a Settings entry for anyone who may open the settings page.
-- PARTIAL: 005 a shared error-state component now exists, but loading/empty/error do not all support template overrides. 007 skip link, labelled navigation and visible focus are in place (skip link focus verified; its appear-on-focus styling could not be, the browser pane never reports focus); no contrast audit.
+- DONE: 007 accessibility: skip link, labelled navigation and visible focus, and an automated WCAG 2.1 A/AA scan (axe, including colour contrast) of nine pages and the login page in both the light and the dark theme, all clean (19 browser tests). Automated scans find only part of the problems, so a manual review with a screen reader is still worth doing.
+- PARTIAL: 005 a shared error-state component now exists, but loading/empty/error do not all support template overrides.
 
 ## F-Authorization
 - DONE: 001, 002, 005, 006 (role-permission and user-role edits both refresh the cache; tested), 007 (last administrator protected on delete, deactivate and role removal; tested).
@@ -145,7 +147,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 121 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
-- **Browser end-to-end tests: 7** (Playwright driving the installed Chrome against the real API and a throwaway database, `npm run e2e`, also a CI job): wrong and right sign-in, a protected page sending a visitor to the login page, the Arabic right-to-left layout with the menu on the right and its persistence after a reload, the phone-width header, a plugin's own screen in a shadow root, and deleting a role that has users through the reassignment dialog. They found one accessibility warning (a notification count on an icon hidden from assistive technology), now fixed.
+- **Browser end-to-end tests: 48** (7 journeys, 19 accessibility scans, 22 narrow-screen checks) (Playwright driving the installed Chrome against the real API and a throwaway database, `npm run e2e`, also a CI job). The journeys: wrong and right sign-in, a protected page sending a visitor to the login page, the Arabic right-to-left layout with the menu on the right and its persistence after a reload, the phone-width header, a plugin's own screen in a shadow root, and deleting a role that has users through the reassignment dialog. The scans found one real problem (the notification count was on an icon without a text alternative, on every page), now fixed by moving the badge to the button with a spoken description.
 - **Not covered:** the two-factor and Google sign-in flows, the file upload and download endpoints over HTTP, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a live Redis server.
 - **Documentation:** every project has a README, including one for each module; each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys.
 
@@ -158,8 +160,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 62 are partial):
+Still open, roughly by value (no requirement is missing and 60 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels and a shared channel interface; F-Files storage interface.
-4. Verification: more browser end-to-end tests (only seven exist), a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.
+4. Verification: more browser end-to-end journeys (seven exist), a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

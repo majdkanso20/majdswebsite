@@ -358,5 +358,6 @@
   "A permission comes from the roles the user holds. Grant adds one the roles do not give; Deny removes one they do.": "تأتي الصلاحية من الأدوار التي يملكها المستخدم. «منح» يضيف صلاحية لا تعطيها الأدوار، و«رفض» يزيل صلاحية تعطيها.",
   "{0} users have this role. Choose the role that takes them over.": "يملك {0} مستخدمين هذا الدور. اختر الدور الذي سيتولى أمرهم.",
   "Move users to": "نقل المستخدمين إلى",
-  "Move users and delete": "نقل المستخدمين وحذف"
+  "Move users and delete": "نقل المستخدمين وحذف",
+  "unread": "غير مقروءة"
 }
