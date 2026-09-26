@@ -38,6 +38,8 @@ export default defineConfig({
     {
       command: 'dotnet run --project ../MajdsApp.Api --no-launch-profile --urls http://localhost:5299',
       cwd: appFolder,
+      stdout: 'pipe',
+      stderr: 'pipe',
       url: `${API}/health/live`,
       // Locally, servers left running by an earlier run are reused (they are on ports of their own); a CI run always starts fresh.
       reuseExistingServer: !process.env['CI'],

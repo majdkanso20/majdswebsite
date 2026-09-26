@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExportsService, activeFilters } from '../../../../core/services/exports.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -24,7 +25,7 @@ import { UserFormDialog, UserFormDialogData, UserFormResult } from '../user-form
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-users-list',
-  imports: [ActiveFilter, ExportMenu, TranslatePipe, DataGrid, HasPermissionDirective, MatButtonModule, MatIconModule, MatChipsModule],
+  imports: [ActiveFilter, ExportMenu, TranslatePipe, DataGrid, HasPermissionDirective, MatButtonModule, MatIconModule, MatChipsModule, MatButtonToggleModule],
   styleUrl: './users-list.scss',
   templateUrl: './users-list.html'
 })
@@ -47,9 +48,13 @@ export class UsersList {
   readonly rows = signal<UserDto[]>([]);
   readonly totalCount = signal(0);
   readonly loading = signal(true);
+  /** The last load failed, so the grid offers a retry instead of looking empty. */
+  readonly failed = signal(false);
   readonly roleOptions = signal<string[]>([]);
 
   readonly filter = signal('');
+  /** Which accounts the list shows: everyone, only active ones, or only deactivated ones (FR-USER-001). */
+  readonly status = signal<'all' | 'active' | 'inactive'>('all');
   private page = 0;
   private pageSize = 20;
   private sort = '';
@@ -63,6 +68,18 @@ export class UsersList {
       this.page = 0;
       this.load();
     });
+  }
+
+  setStatus(status: 'all' | 'active' | 'inactive'): void {
+    this.status.set(status);
+    this.page = 0;
+    this.load();
+  }
+
+  /** The API takes true or false for a status filter, and nothing for "everyone". */
+  private isActiveFilter(): boolean | undefined {
+    const status = this.status();
+    return status === 'all' ? undefined : status === 'active';
   }
 
   onPage(event: GridPage): void {
@@ -147,7 +164,7 @@ export class UsersList {
 
   /** Queues the users export (with the list's filter) as a background job and points the user to the Exports page. */
   exportInBackground(format: 'csv' | 'xlsx'): void {
-    this.exportsApi.start('users', format, activeFilters({ filter: this.filter() })).subscribe({
+    this.exportsApi.start('users', format, activeFilters({ filter: this.filter(), isActive: this.isActiveFilter() })).subscribe({
       next: () => {
         this.snackBar
           .open('Export started. You will be notified when it is ready.', 'View', { duration: 6000 })
@@ -159,7 +176,7 @@ export class UsersList {
   }
 
   export(format: ExportFormat): void {
-    this.usersApi.export(format, { filter: this.filter() || undefined }).subscribe({ error: (err) => this.showError(err) });
+    this.usersApi.export(format, { filter: this.filter() || undefined, isActive: this.isActiveFilter() }).subscribe({ error: (err) => this.showError(err) });
   }
 
   resetTwoFactor(user: UserDto): void {
@@ -201,17 +218,25 @@ export class UsersList {
     });
   }
 
+  reload(): void {
+    this.load();
+  }
+
   private load(): void {
     this.loading.set(true);
+    this.failed.set(false);
     this.usersApi
-      .list({ page: this.page + 1, pageSize: this.pageSize, sort: this.sort || undefined, filter: this.filter() || undefined })
+      .list({ page: this.page + 1, pageSize: this.pageSize, sort: this.sort || undefined, filter: this.filter() || undefined, isActive: this.isActiveFilter() })
       .subscribe({
         next: (result) => {
           this.rows.set(result.items);
           this.totalCount.set(result.totalCount);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false)
+        error: () => {
+          this.loading.set(false);
+          this.failed.set(true);
+        }
       });
   }
 

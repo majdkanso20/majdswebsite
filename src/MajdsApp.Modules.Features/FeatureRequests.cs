@@ -24,7 +24,14 @@ public class ListFeaturesQueryHandler(IFeatureChecker features) : IRequestHandle
 
 /// <summary>Names of enabled features, for the SPA to hide disabled modules. No permission: it only
 /// reveals which modules exist and are on, never any data.</summary>
-public record GetEnabledFeaturesQuery : IRequest<IReadOnlyCollection<string>>;
+public record GetEnabledFeaturesQuery : IRequest<IReadOnlyCollection<string>>, ICacheableQuery
+{
+    /// <summary>The same answer for everyone, and asked by every page load, so it is cached (P4 FR-XC-003) and dropped the moment a feature is switched.</summary>
+    public const string Key = "features.enabled";
+
+    public string CacheKey => Key;
+    public int AbsoluteExpirationSeconds => 60;
+}
 
 public class GetEnabledFeaturesQueryHandler(IFeatureChecker features) : IRequestHandler<GetEnabledFeaturesQuery, IReadOnlyCollection<string>>
 {
@@ -44,7 +51,7 @@ public class SetFeatureCommandValidator : AbstractValidator<SetFeatureCommand>
     }
 }
 
-public class SetFeatureCommandHandler(ApplicationDbContext db, IFeatureChecker features) : IRequestHandler<SetFeatureCommand>
+public class SetFeatureCommandHandler(ApplicationDbContext db, IFeatureChecker features, MajdsApp.SharedKernel.Caching.ICacheService cache) : IRequestHandler<SetFeatureCommand>
 {
     public async Task Handle(SetFeatureCommand request, CancellationToken ct)
     {
@@ -62,5 +69,6 @@ public class SetFeatureCommandHandler(ApplicationDbContext db, IFeatureChecker f
 
         await db.SaveChangesAsync(ct);
         features.Invalidate();
+        cache.Remove($"query:{GetEnabledFeaturesQuery.Key}"); // the cached answer to GetEnabledFeaturesQuery
     }
 }

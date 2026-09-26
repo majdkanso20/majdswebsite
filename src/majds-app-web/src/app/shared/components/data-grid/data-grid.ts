@@ -6,6 +6,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { EmptyState } from '../empty-state/empty-state';
+import { ErrorState } from '../error-state/error-state';
 import { GridColumn, GridPage, GridSort } from './data-grid.model';
 
 /**
@@ -17,7 +18,7 @@ import { GridColumn, GridPage, GridSort } from './data-grid.model';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-data-grid',
-  imports: [TranslatePipe, NgTemplateOutlet, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule, EmptyState],
+  imports: [TranslatePipe, NgTemplateOutlet, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule, EmptyState, ErrorState],
   styleUrl: './data-grid.scss',
   templateUrl: './data-grid.html'
 })
@@ -29,15 +30,29 @@ export class DataGrid<T extends object> {
   readonly pageSize = input(20);
   readonly pageSizeOptions = input<number[]>([10, 20, 50]);
   readonly emptyMessage = input('No records found.');
+  /** Set when the rows could not be loaded, so the grid shows the error state instead of an empty table. */
+  readonly failed = input(false);
+  readonly errorMessage = input('The list could not be loaded.');
 
   readonly page = output<GridPage>();
   readonly sortChange = output<GridSort>();
+  /** The error state's "Try again" was pressed. */
+  readonly retry = output<void>();
 
   /** Consumer-supplied cell renderer: <ng-template #cellTemplate let-row let-column="column">...</ng-template> */
   @ContentChild('cellTemplate') cellTemplate?: TemplateRef<{ $implicit: T; column: GridColumn<T> }>;
 
   /** Consumer-supplied row actions: <ng-template #actionsTemplate let-row>...</ng-template> */
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<{ $implicit: T }>;
+
+  /** Replaces the progress bar shown while loading: <ng-template #loadingTemplate>...</ng-template> (FR-SHELL-005) */
+  @ContentChild('loadingTemplate') loadingTemplate?: TemplateRef<unknown>;
+
+  /** Replaces the empty state: <ng-template #emptyTemplate>...</ng-template> */
+  @ContentChild('emptyTemplate') emptyTemplate?: TemplateRef<unknown>;
+
+  /** Replaces the error state: <ng-template #errorTemplate>...</ng-template> */
+  @ContentChild('errorTemplate') errorTemplate?: TemplateRef<unknown>;
 
   readonly displayedColumns = computed(() => {
     const keys = this.columns().map((c) => c.key);

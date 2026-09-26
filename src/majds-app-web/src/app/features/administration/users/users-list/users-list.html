@@ -12,6 +12,18 @@
     </button>
   </div>
 
+  <mat-button-toggle-group
+    class="users-list__status"
+    [value]="status()"
+    (change)="setStatus($event.value)"
+    hideSingleSelectionIndicator
+    [attr.aria-label]="'Show' | translate"
+  >
+    <mat-button-toggle value="all">{{ 'All' | translate }}</mat-button-toggle>
+    <mat-button-toggle value="active">{{ 'Active' | translate }}</mat-button-toggle>
+    <mat-button-toggle value="inactive">{{ 'Inactive' | translate }}</mat-button-toggle>
+  </mat-button-toggle-group>
+
   @if (filter()) {
     <app-active-filter [value]="filter()" />
   }
@@ -21,6 +33,8 @@
     [rows]="rows()"
     [totalCount]="totalCount()"
     [loading]="loading()"
+    [failed]="failed()"
+    (retry)="reload()"
     emptyMessage="No users found."
     (page)="onPage($event)"
     (sortChange)="onSort($event)"

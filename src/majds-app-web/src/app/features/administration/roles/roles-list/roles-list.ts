@@ -40,6 +40,8 @@ export class RolesList {
   readonly rows = signal<RoleDto[]>([]);
   readonly totalCount = signal(0);
   readonly loading = signal(true);
+  /** The last load failed, so the grid offers a retry instead of looking empty. */
+  readonly failed = signal(false);
 
   readonly filter = signal('');
   private page = 0;
@@ -135,15 +137,23 @@ export class RolesList {
     return raw === null || raw === undefined ? '' : String(raw);
   }
 
+  reload(): void {
+    this.load();
+  }
+
   private load(): void {
     this.loading.set(true);
+    this.failed.set(false);
     this.rolesApi.list({ page: this.page + 1, pageSize: this.pageSize, sort: this.sort || undefined, filter: this.filter() || undefined }).subscribe({
       next: (result) => {
         this.rows.set(result.items);
         this.totalCount.set(result.totalCount);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.loading.set(false);
+        this.failed.set(true);
+      }
     });
   }
 

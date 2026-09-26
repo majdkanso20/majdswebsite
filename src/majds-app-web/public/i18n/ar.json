@@ -359,5 +359,7 @@
   "{0} users have this role. Choose the role that takes them over.": "يملك {0} مستخدمين هذا الدور. اختر الدور الذي سيتولى أمرهم.",
   "Move users to": "نقل المستخدمين إلى",
   "Move users and delete": "نقل المستخدمين وحذف",
-  "unread": "غير مقروءة"
+  "unread": "غير مقروءة",
+  "Show": "عرض",
+  "The list could not be loaded.": "تعذّر تحميل القائمة."
 }

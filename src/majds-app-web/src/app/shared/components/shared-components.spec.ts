@@ -92,6 +92,78 @@ describe('DataGrid', () => {
   });
 });
 
+@Component({
+  imports: [DataGrid],
+  template: `
+    <app-data-grid [columns]="columns" [rows]="rows" [loading]="loading" [failed]="failed" (retry)="retried = retried + 1">
+      <ng-template #loadingTemplate><p class="my-loading">Fetching people…</p></ng-template>
+      <ng-template #emptyTemplate><p class="my-empty">Nobody here yet</p></ng-template>
+      <ng-template #errorTemplate><p class="my-error">Custom failure</p></ng-template>
+    </app-data-grid>
+  `
+})
+class OverrideHost {
+  columns: GridColumn<Person>[] = [{ key: 'name', header: 'Name' }];
+  rows: Person[] = [];
+  loading = false;
+  failed = false;
+  retried = 0;
+}
+
+@Component({
+  imports: [DataGrid],
+  template: `<app-data-grid [columns]="columns" [rows]="[]" [failed]="true" errorMessage="Nobody could be loaded" (retry)="retried = retried + 1" />`
+})
+class DefaultErrorHost {
+  columns: GridColumn<Person>[] = [{ key: 'name', header: 'Name' }];
+  retried = 0;
+}
+
+describe('DataGrid loading, empty and error states (FR-SHELL-005)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+  });
+
+  async function render<T extends object>(type: new () => T, setup: (host: T) => void = () => undefined) {
+    const fixture = TestBed.createComponent(type);
+    setup(fixture.componentInstance);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, element: fixture.nativeElement as HTMLElement };
+  }
+
+  it('lets the consumer replace the empty state', async () => {
+    const { element } = await render(OverrideHost);
+
+    expect(element.querySelector('.my-empty')?.textContent).toBe('Nobody here yet');
+    expect(element.querySelector('app-empty-state')).toBeNull();
+  });
+
+  it('lets the consumer replace the loading indicator', async () => {
+    const { element } = await render(OverrideHost, (host) => (host.loading = true));
+
+    expect(element.querySelector('.my-loading')).not.toBeNull();
+    expect(element.querySelector('mat-progress-bar')).toBeNull();
+  });
+
+  it('lets the consumer replace the error state, and shows it instead of the empty state', async () => {
+    const { element } = await render(OverrideHost, (host) => (host.failed = true));
+
+    expect(element.querySelector('.my-error')?.textContent).toBe('Custom failure');
+    expect(element.querySelector('.my-empty')).toBeNull();
+    expect(element.querySelector('app-error-state')).toBeNull();
+  });
+
+  it('shows the standard error state with a retry when the consumer gives none', async () => {
+    const { fixture, element } = await render(DefaultErrorHost);
+
+    expect(element.querySelector('app-error-state')?.textContent).toContain('Nobody could be loaded');
+    (element.querySelector('app-error-state button') as HTMLButtonElement).click();
+
+    expect(fixture.componentInstance.retried).toBe(1);
+  });
+});
+
 describe('ErrorState', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });

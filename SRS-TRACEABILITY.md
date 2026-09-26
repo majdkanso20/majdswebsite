@@ -6,8 +6,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 | Status | Count |
 |---|---|
-| DONE | 141 |
-| PARTIAL | 60 |
+| DONE | 146 |
+| PARTIAL | 55 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -15,17 +15,17 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 | P1 API conventions | 8 | 5 | 3 | 0 |
 | P2 Modules | 8 | 3 | 5 | 0 |
 | P3 Repository/UoW | 7 | 5 | 2 | 0 |
-| P4 Cross-cutting | 7 | 4 | 3 | 0 |
+| P4 Cross-cutting | 7 | 5 | 2 | 0 |
 | P5 Plugins | 42 | 25 | 17 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 5 | 4 | 0 |
-| U3 App shell | 8 | 7 | 1 | 0 |
+| U3 App shell | 8 | 8 | 0 | 0 |
 | F-Authorization | 8 | 7 | 1 | 0 |
-| F-Users | 8 | 6 | 2 | 0 |
+| F-Users | 8 | 7 | 1 | 0 |
 | F-Roles | 5 | 5 | 0 | 0 |
-| F-Account | 6 | 5 | 1 | 0 |
+| F-Account | 6 | 6 | 0 | 0 |
 | F-Settings | 6 | 5 | 1 | 0 |
-| F-Audit | 6 | 5 | 1 | 0 |
+| F-Audit | 6 | 6 | 0 | 0 |
 | F-Notifications | 9 | 4 | 5 | 0 |
 | F-Files | 6 | 3 | 3 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
@@ -55,7 +55,8 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 ## P4 — Cross-cutting
 - DONE: 001, 002 (behavior pipeline: logging, performance, validation, authorization, feature, caching, transaction, audit).
-- PARTIAL: 003 markers used, but `ICacheableQuery` is implemented by no request. 005 correlation, exception and security-headers middleware; no response-wrapping middleware.
+- DONE: 003 markers, and a query opts into caching with `ICacheableQuery` (the enabled-features query does: cached for a minute and dropped the moment a feature is switched; tested).
+- PARTIAL: 005 correlation, exception and security-headers middleware; no response-wrapping middleware.
 - DONE: 004 decorators (Scrutor `Decorate`: the notification email sender is wrapped by `ResilientEmailMessageSender`, `SmtpEmailSender` is unchanged), 006 Polly (`OutboundResilience`: retry with backoff and jitter only for transient failures, a timeout per attempt that really cancels the SMTP calls, and a circuit breaker; a wrong password is never retried; tuned by the validated `Resilience` section; tested).
 - PARTIAL: 007 Mapster: one configuration for the application (`IObjectMapper`, mappings found per module through Mapster `IRegister` scans), used by the Files, Notifications, Jobs and Roles handlers, with a projection form so the mapping still runs in SQL. Users, Audit, Settings, Plugins and Dashboard DTOs are still hand-built.
 
@@ -77,7 +78,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - DONE: 001, 002 nested menu groups (Administration), 004, 006, 008 plugin menu entries follow enable/disable live without a reload (verified).
 - DONE: 003 the user menu has a Settings entry for anyone who may open the settings page.
 - DONE: 007 accessibility: skip link, labelled navigation and visible focus, and an automated WCAG 2.1 A/AA scan (axe, including colour contrast) of nine pages and the login page in both the light and the dark theme, all clean (19 browser tests). Automated scans find only part of the problems, so a manual review with a screen reader is still worth doing.
-- PARTIAL: 005 a shared error-state component now exists, but loading/empty/error do not all support template overrides.
+- DONE: 005 the data grid accepts `#loadingTemplate`, `#emptyTemplate` and `#errorTemplate` to replace its loading bar, empty state and error state, and shows a standard error state with Try again when the list failed to load (the users and roles lists use it); tested.
 
 ## F-Authorization
 - DONE: 001, 002, 005, 006 (role-permission and user-role edits both refresh the cache; tested), 007 (last administrator protected on delete, deactivate and role removal; tested).
@@ -86,11 +87,11 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - PARTIAL: 004 done in the behavior, no action filter.
 
 ## F-Users / F-Roles
-- Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). PARTIAL: 001 (the list API filters by status and role; the screen has no status selector), 002 (password only, no emailed set-password link).
+- Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). DONE: 001 (the list has an All / Active / Inactive selector, and the export follows it; a browser test covers it). PARTIAL: 002 (password only, no emailed set-password link).
 - Roles DONE: 001, 002, 005. DONE: 003 (a new account gets the default role and creating a new default role clears the old one; tested through self-registration), 004 (deleting a role that has users needs the role that takes them over; the delete dialog asks; the users keep access, permission caches are refreshed, and moving to itself or to an unknown role is refused; tested).
 
 ## F-Account
-- DONE: 001, 002, 005 (notification preferences matrix), 006. DONE: 003 (an unknown notification type is a 400, and choosing every channel again removes the stored choice; tested). PARTIAL: (none here), 004 (2FA, language and time zone are stored per user; time zone is not yet applied to date display).
+- DONE: 001, 002, 005 (notification preferences matrix), 006. DONE: 003 (an unknown notification type is a 400, and choosing every channel again removes the stored choice; tested). PARTIAL: (none here), 004 (2FA, language and time zone are stored per user, and every date on screen is shown in the user's time zone through one formatting service).
 
 ## F-Settings (updated 2026-09-24)
 - DONE: 001 definitions declare whether a user may override them (`AllowUserOverride`); 002 precedence User > Application > code default (verified through the API: an application change reached one user but not the user who had overridden it); 003 typed getters plus a permission-guarded Application update and a self-scoped `settings/my` and `settings/update-mine` for the User scope (validates that the setting allows user override and, for time zone, that it exists); 004 caching with invalidation for both scopes.
@@ -100,7 +101,7 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 
 ## F-Audit (updated 2026-09-24)
 - DONE: 001 every audited action records user, action, UTC time, HTTP method and path, duration, client IP, browser, outcome and error (verified). 002 property-level before/after values for each entity an audited action created, changed or deleted, stored in `AuditEntityChanges` / `AuditPropertyChanges` (verified for a role rename and a user delete). 003 paged viewer with text, date-range and outcome filters, a detail endpoint and dialog, and an export that honours the same filters. 004 redaction: credential-like fields (password, hash, token, stamp, secret, and similar) and encrypted setting values are replaced with `[redacted]` in both parameters and change values (verified: a created user's password appears nowhere). 005 append-only: there is no modify or delete endpoint (404s verified) and the save interceptor refuses to update or delete audit rows; retention is the only deletion path.
-- PARTIAL: 006 refused and failed actions are now recorded (verified: a permission denial and a duplicate-role failure appear with their outcomes, and the failure row survives the rolled-back transaction). Denials issued by ASP.NET before the request reaches a handler, such as a missing or invalid token, are not recorded.
+- DONE: 006 refused and failed actions are recorded, including what ASP.NET refuses before a handler runs (no token or an invalid one, a token without the right, a rate-limit refusal), once per caller, address and reason per minute so a scanner cannot flood the trail, and not twice when the pipeline already recorded it; tested. Earlier verification: (verified: a permission denial and a duplicate-role failure appear with their outcomes, and the failure row survives the rolled-back transaction). Denials issued by ASP.NET before the request reaches a handler, such as a missing or invalid token, are not recorded.
 - Limits: only `IAuditableCommand`s carry data changes; bulk `ExecuteUpdate`/`ExecuteDelete` statements bypass change tracking; notification, job-run and audit tables are excluded on purpose; client IP is the direct connection address (no forwarded-header handling); entries written before this change have no new fields.
 
 ## F-Notifications (updated 2026-09-24)
@@ -143,11 +144,11 @@ Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 422 automated tests** in `src/MajdsApp.Tests` (337) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 426 automated tests** in `src/MajdsApp.Tests` (341) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
-- **Frontend: 121 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
+- **Frontend: 125 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
-- **Browser end-to-end tests: 48** (7 journeys, 19 accessibility scans, 22 narrow-screen checks) (Playwright driving the installed Chrome against the real API and a throwaway database, `npm run e2e`, also a CI job). The journeys: wrong and right sign-in, a protected page sending a visitor to the login page, the Arabic right-to-left layout with the menu on the right and its persistence after a reload, the phone-width header, a plugin's own screen in a shadow root, and deleting a role that has users through the reassignment dialog. The scans found one real problem (the notification count was on an icon without a text alternative, on every page), now fixed by moving the badge to the button with a spoken description.
+- **Browser end-to-end tests: 49** (8 journeys, 19 accessibility scans, 22 narrow-screen checks) (Playwright driving the installed Chrome against the real API and a throwaway database, `npm run e2e`, also a CI job). The journeys: wrong and right sign-in, a protected page sending a visitor to the login page, the Arabic right-to-left layout with the menu on the right and its persistence after a reload, the phone-width header, a plugin's own screen in a shadow root, and deleting a role that has users through the reassignment dialog. The scans found one real problem (the notification count was on an icon without a text alternative, on every page), now fixed by moving the badge to the button with a spoken description.
 - **Not covered:** the two-factor and Google sign-in flows, the file upload and download endpoints over HTTP, SignalR delivery, accessibility and Lighthouse checks, Testcontainers/SQL Server (tests use SQLite, the same provider the app uses today), and a live Redis server.
 - **Documentation:** every project has a README, including one for each module; each module README lists its endpoints, permissions, settings, tables, jobs and configuration keys.
 
@@ -160,7 +161,7 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 60 are partial):
+Still open, roughly by value (no requirement is missing and 55 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels and a shared channel interface; F-Files storage interface.

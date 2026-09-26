@@ -10,3 +10,7 @@
 .users-list__chip--inactive {
   --mat-chip-label-text-color: var(--mat-sys-error);
 }
+
+.users-list__status {
+  margin-bottom: 12px;
+}

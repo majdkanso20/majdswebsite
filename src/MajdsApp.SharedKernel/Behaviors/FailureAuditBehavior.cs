@@ -35,6 +35,7 @@ public class FailureAuditBehavior<TRequest, TResponse>(
                     typeof(TRequest).Name, request, currentUser, httpContextAccessor.HttpContext,
                     timer.ElapsedMilliseconds, [], ex);
                 await auditLogWriter.WriteFailureAsync(record, CancellationToken.None);
+                if (httpContextAccessor.HttpContext is { } http) http.Items[Middleware.RefusedRequestAuditMiddleware.AlreadyRecordedKey] = true; // so the middleware does not record it twice
             }
             catch (Exception auditError)
             {

@@ -203,6 +203,7 @@ app.UseHttpsRedirection();
 app.UseCors(SpaCorsPolicy);
 
 app.UseAuthentication();
+app.UseMiddleware<MajdsApp.SharedKernel.Middleware.RefusedRequestAuditMiddleware>(); // records what ASP.NET refuses before a handler runs (FR-AUDIT-006)
 app.UsePlatformApiDocs(); // after authentication: outside Development the docs need a signed-in user with Docs.View (F-ApiDocs)
 app.UsePlatformLocalization(); // after authentication: a signed-in user's saved language decides the response language when the client does not ask for one
 

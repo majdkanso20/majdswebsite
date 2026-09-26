@@ -42,11 +42,15 @@ test.describe('language and layout', () => {
     const nav = page.getByRole('navigation').first();
     await expect(nav).toContainText('لوحة التحكم');
 
-    // The sidebar sits on the right in a right-to-left page, and the content does not run underneath it.
-    const sidebar = await page.locator('mat-sidenav').boundingBox();
-    const content = await page.locator('main').boundingBox();
-    expect(sidebar!.x).toBeGreaterThan(640);
-    expect(content!.x + content!.width).toBeLessThanOrEqual(sidebar!.x + 2); // allow for sub-pixel rounding
+    // The sidebar sits on the right in a right-to-left page, and the content does not run underneath it. The layout settles a moment after the
+    // language switches (Material re-reads the direction), so measure until it has rather than the instant the attribute changes.
+    await expect
+      .poll(async () => {
+        const sidebar = await page.locator('mat-sidenav').boundingBox();
+        const content = await page.locator('main').boundingBox();
+        return sidebar!.x > 640 && content!.x + content!.width <= sidebar!.x + 2;
+      })
+      .toBe(true);
 
     await page.reload();   // used to leave a blank page when a language other than English was remembered
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -106,11 +110,37 @@ test.describe('roles', () => {
     await expect(dialog).toContainText('1 users have this role');
     await dialog.getByRole('combobox').click({ force: true }); // the floating label sits over the field; a person clicking there opens it too
     await page.getByRole('option', { name: heir }).click();
+    // The page behind an open dialog is hidden from the accessibility tree, so "no such row" is true at once: wait for the deletion itself.
+    const deleted = page.waitForResponse((r) => r.url().includes('/roles/delete'));
     await dialog.getByRole('button', { name: 'Move users and delete' }).click();
+    expect((await deleted).ok()).toBe(true);
 
+    await expect(dialog).toHaveCount(0);
     await expect(page.getByRole('row', { name: new RegExp(doomed) })).toHaveCount(0);
     const users = await api<{ items: { email: string; roles: string[] }[] }>(request, await accessToken(request), 'GET', `users/list?page=1&pageSize=5&filter=${member}`);
     expect(users.items[0].roles).toContain(heir);
     expect(users.items[0].roles).not.toContain(doomed);
+  });
+});
+
+test.describe('users', () => {
+  test('the status selector shows only active or only deactivated accounts', async ({ page, request }) => {
+    const token = await signInQuickly(page, request);
+    const suffix = Date.now().toString(36);
+    const sleeper = `e2e.inactive.${suffix}@example.com`;
+    const id = await api<string>(request, token, 'POST', 'users/create', { email: sleeper, password: 'E2e-Sleeper1!', roles: ['User'] });
+    await api(request, token, 'POST', 'users/set-activation', { userId: id, isActive: false });
+
+    await page.goto('/administration/users');
+    await page.getByRole('radio', { name: 'Inactive' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(sleeper) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(ADMIN.email) })).toHaveCount(0);
+
+    await page.getByRole('radio', { name: 'Active', exact: true }).click();
+    await expect(page.getByRole('row', { name: new RegExp(ADMIN.email) })).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(sleeper) })).toHaveCount(0);
+
+    await page.getByRole('radio', { name: 'All' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(sleeper) })).toBeVisible();
   });
 });

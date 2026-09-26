@@ -16,6 +16,8 @@
     [rows]="rows()"
     [totalCount]="totalCount()"
     [loading]="loading()"
+    [failed]="failed()"
+    (retry)="reload()"
     emptyMessage="No roles found."
     (page)="onPage($event)"
     (sortChange)="onSort($event)"

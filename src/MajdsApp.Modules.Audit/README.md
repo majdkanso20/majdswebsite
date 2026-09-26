@@ -45,3 +45,7 @@ Tables: `AuditEntityChanges`, `AuditLogEntries`, `AuditPropertyChanges`. Migrati
 ## Tests
 
 Covered by the integration tests in `src/MajdsApp.Tests` (run `dotnet test src/MajdsApp.Tests`).
+
+## Requests refused before a handler (FR-AUDIT-006)
+
+`RefusedRequestAuditMiddleware` (in the Shared Kernel, placed after authentication) records `/api` requests that ASP.NET itself refused: no valid sign-in (outcome `Unauthorized`), a signed-in user without the right (`Forbidden`) and a rate-limit refusal (`RateLimited`). Refusals made inside a handler are already recorded by the pipeline and are not recorded again. The same address refused on the same path for the same reason is recorded once a minute, so an unauthenticated scanner cannot fill the trail.

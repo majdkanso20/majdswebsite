@@ -1,5 +1,9 @@
 @if (loading()) {
-  <mat-progress-bar mode="indeterminate" />
+  @if (loadingTemplate) {
+    <ng-container *ngTemplateOutlet="loadingTemplate" />
+  } @else {
+    <mat-progress-bar mode="indeterminate" />
+  }
 }
 
 <div class="data-grid__scroll">
@@ -35,8 +39,18 @@
   </table>
 </div>
 
-@if (!loading() && rows().length === 0) {
-  <app-empty-state icon="inbox" [message]="emptyMessage()" />
+@if (failed() && !loading()) {
+  @if (errorTemplate) {
+    <ng-container *ngTemplateOutlet="errorTemplate" />
+  } @else {
+    <app-error-state [message]="errorMessage()" (retry)="retry.emit()" />
+  }
+} @else if (!loading() && rows().length === 0) {
+  @if (emptyTemplate) {
+    <ng-container *ngTemplateOutlet="emptyTemplate" />
+  } @else {
+    <app-empty-state icon="inbox" [message]="emptyMessage()" />
+  }
 }
 
 <mat-paginator
