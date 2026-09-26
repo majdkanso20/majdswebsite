@@ -66,6 +66,13 @@ public class PermissionChecker(ApplicationDbContext db, ICurrentUser currentUser
         return effective.IsSuperAdmin ? PermissionRegistry.GetAllPermissionNames() : effective.Permissions.ToList();
     }
 
+    /// <summary>Any user's effective permissions (not only the caller's), for an administrator looking at what someone can do. Not cached.</summary>
+    public async Task<IReadOnlyList<string>> GetEffectivePermissionsForAsync(string userId, CancellationToken ct = default)
+    {
+        var effective = await ComputeEffectivePermissionsAsync(userId, ct);
+        return effective.IsSuperAdmin ? PermissionRegistry.GetAllPermissionNames() : effective.Permissions.ToList();
+    }
+
     /// <summary>Called by F-Roles/F-Users after any change to roles/permissions (AC-AUTHZ-2).</summary>
     public void InvalidateUser(string userId) => cache.Remove(CacheKey(userId));
 

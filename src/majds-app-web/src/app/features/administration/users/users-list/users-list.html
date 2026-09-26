@@ -56,6 +56,9 @@
     </ng-template>
 
     <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Users.Edit'" (click)="openPermissionsDialog(row)" aria-label="Permissions">
+        <mat-icon>admin_panel_settings</mat-icon>
+      </button>
       <button mat-icon-button *hasPermission="'Users.Edit'" (click)="openEditDialog(row)" aria-label="Edit">
         <mat-icon>edit</mat-icon>
       </button>

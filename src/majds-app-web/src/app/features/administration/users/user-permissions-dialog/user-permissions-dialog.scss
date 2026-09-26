@@ -1,0 +1,44 @@
+.user-permissions {
+  min-width: min(560px, 86vw);
+}
+
+.user-permissions__loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.user-permissions__hint {
+  margin-block: 0 12px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.user-permissions__group {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0;
+    font-weight: 500;
+  }
+}
+
+.user-permissions__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 6px;
+}
+
+.user-permissions__name {
+  display: flex;
+  flex-direction: column;
+
+  small {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

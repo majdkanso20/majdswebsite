@@ -68,5 +68,9 @@ public static class SettingDefinitions
         public static readonly SettingDefinition DefaultUserSessionTimeoutMinutes = new(
             "Security.DefaultUserSessionTimeoutMinutes", "Security", "Session timeout (minutes)", SettingDataType.Integer, "60",
             description: "How long a sign-in stays valid before the user must sign in again (1 to 1440).");
+
+        public static readonly SettingDefinition MinPasswordLength = new(
+            "Security.MinPasswordLength", "Security", "Minimum password length", SettingDataType.Integer, "6",
+            description: "The fewest characters a new password may have, when a user is created or a password is set or changed (6 to 128).");
     }
 }

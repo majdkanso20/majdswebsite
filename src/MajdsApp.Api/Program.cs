@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+MajdsApp.LoggingSetup.AddPlatformLogging(builder);
+builder.Services.AddModuleOptions<MajdsApp.LogSinkOptions>(builder.Configuration, "Logging"); // bound and checked at start
 
 // Every feature module project referenced by this host — the single place a new module is "wired in"
 // by adding one line here, per P2 (no other host code changes per feature).
@@ -77,6 +79,7 @@ builder.Services.AddScoped(typeof(IReadRepository<,>), typeof(EfReadRepository<,
 builder.Services
     .AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<ApplicationRole>()
+    .AddPasswordValidator<MinimumLengthPasswordValidator>() // the administrator's minimum length, added to Identity's own rules (FR-USER-008)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints()
     .AddSignInManager<ApplicationSignInManager>(); // Must come after AddApiEndpoints() — it registers its own

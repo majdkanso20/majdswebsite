@@ -348,5 +348,12 @@
   "Platform version": "إصدار المنصة",
   "Dependency": "الاعتمادية",
   "UI contract": "عقد الواجهة",
-  "Load": "التحميل"
+  "Load": "التحميل",
+  "This user is an administrator and holds every permission whatever is set here.": "هذا المستخدم مسؤول ويملك كل الصلاحيات مهما ضُبط هنا.",
+  "Given by roles": "ممنوحة من الأدوار",
+  "Not given by roles": "غير ممنوحة من الأدوار",
+  "By role": "حسب الدور",
+  "Grant": "منح",
+  "Deny": "رفض",
+  "A permission comes from the roles the user holds. Grant adds one the roles do not give; Deny removes one they do.": "تأتي الصلاحية من الأدوار التي يملكها المستخدم. «منح» يضيف صلاحية لا تعطيها الأدوار، و«رفض» يزيل صلاحية تعطيها."
 }

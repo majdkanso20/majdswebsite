@@ -18,6 +18,7 @@ import { HasPermissionDirective } from '../../../../core/directives/has-permissi
 import { UsersApiService } from '../users-api.service';
 import { RolesApiService } from '../../roles/roles-api.service';
 import { UserDto } from '../user.models';
+import { UserPermissionsDialog, UserPermissionsDialogData } from '../user-permissions-dialog/user-permissions-dialog';
 import { UserFormDialog, UserFormDialogData, UserFormResult } from '../user-form-dialog/user-form-dialog';
 
 @Component({
@@ -92,6 +93,10 @@ export class UsersList {
           error: (err) => this.showError(err)
         });
     });
+  }
+
+  openPermissionsDialog(user: UserDto): void {
+    this.dialog.open<UserPermissionsDialog, UserPermissionsDialogData>(UserPermissionsDialog, { data: { user } });
   }
 
   openEditDialog(user: UserDto): void {

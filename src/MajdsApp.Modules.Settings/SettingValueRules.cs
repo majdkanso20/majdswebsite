@@ -18,6 +18,9 @@ public static partial class SettingValueRules
             case "Appearance.Timezone" when !TimeZoneInfo.TryFindSystemTimeZoneById(value, out _):
                 throw new ValidationException($"'{value}' is not a known time zone.");
 
+            case "Security.MinPasswordLength" when !int.TryParse(value, out var length) || length is < 6 or > 128:
+                throw new ValidationException("The minimum password length must be between 6 and 128.");
+
             case "Appearance.Currency" when !CurrencyCode().IsMatch(value):
                 throw new ValidationException($"'{value}' is not a valid currency code (for example USD).");
         }

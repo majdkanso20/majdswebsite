@@ -52,3 +52,5 @@ Tables: `SettingUserValues`, `SettingValues`. Migrations live in `MajdsApp.Core`
 ## Tests
 
 Covered by the integration tests in `src/MajdsApp.Tests` (run `dotnet test src/MajdsApp.Tests`).
+
+`Security.MinPasswordLength` (default 6, allowed 6 to 128) is the fewest characters a password may have. It is enforced by an Identity password validator (`MinimumLengthPasswordValidator`), so it applies wherever a password is set, in addition to Identity's own rules.

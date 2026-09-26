@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>{{ 'Permissions' | translate }} — {{ data.user.fullName ?? data.user.email }}</h2>
+
+<mat-dialog-content class="user-permissions">
+  @if (loading()) {
+    <div class="user-permissions__loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <p class="user-permissions__hint">
+      {{ 'A permission comes from the roles the user holds. Grant adds one the roles do not give; Deny removes one they do.' | translate }}
+    </p>
+    @if (explained()?.isSuperAdmin) {
+      <p class="user-permissions__hint">{{ 'This user is an administrator and holds every permission whatever is set here.' | translate }}</p>
+    }
+
+    @for (group of groups(); track group.name) {
+      <fieldset class="user-permissions__group">
+        <legend>{{ group.name }}</legend>
+        @for (permission of group.permissions; track permission) {
+          <div class="user-permissions__row">
+            <span class="user-permissions__name">
+              {{ permission }}
+              <small>{{ (givenByRoles(permission) ? 'Given by roles' : 'Not given by roles') | translate }}</small>
+            </span>
+            <mat-button-toggle-group
+              [value]="choiceOf(permission)"
+              (change)="choose(permission, $event.value)"
+              [attr.aria-label]="permission"
+              hideSingleSelectionIndicator
+            >
+              <mat-button-toggle value="inherit">{{ 'By role' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="grant">{{ 'Grant' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="deny">{{ 'Deny' | translate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        }
+      </fieldset>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | translate }}</button>
+  <button mat-flat-button color="primary" [disabled]="loading()" (click)="save()">{{ 'Save' | translate }}</button>
+</mat-dialog-actions>

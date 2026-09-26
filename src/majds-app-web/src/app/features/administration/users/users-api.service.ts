@@ -16,6 +16,16 @@ export interface ListUsersParams {
   role?: string;
 }
 
+/** One user's permissions explained (FR-AUTHZ-003): what their roles give, what was granted or denied to them directly, and the result. */
+export interface UserPermissionsDto {
+  userId: string;
+  isSuperAdmin: boolean;
+  fromRoles: string[];
+  granted: string[];
+  denied: string[];
+  effective: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsersApiService {
   private readonly http = inject(HttpClient);
@@ -53,6 +63,18 @@ export class UsersApiService {
 
   resetPassword(userId: string): Observable<void> {
     return this.http.post<ResponseDto<null>>(`${this.baseUrl}/reset-password`, { userId }).pipe(map(() => undefined));
+  }
+
+  getPermissions(userId: string): Observable<UserPermissionsDto> {
+    return this.http
+      .get<ResponseDto<UserPermissionsDto>>(`${this.baseUrl}/permissions/get`, { params: { userId } })
+      .pipe(map((r) => r.data!));
+  }
+
+  updatePermissions(userId: string, granted: string[], denied: string[]): Observable<void> {
+    return this.http
+      .post<ResponseDto<null>>(`${this.baseUrl}/permissions/update`, { userId, granted, denied })
+      .pipe(map(() => undefined));
   }
 
   resetTwoFactor(userId: string): Observable<void> {

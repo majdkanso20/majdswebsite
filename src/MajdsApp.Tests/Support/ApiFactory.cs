@@ -47,7 +47,9 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["RateLimiting:GlobalPermitLimit"] = "100000",
             // The recurring-job scheduler would run every job against this host after ten seconds, including the ones that sweep
             // the API project's real App_Data folder. Tests run jobs themselves, so keep it off.
-            ["Jobs:Scheduler:Enabled"] = "false"
+            ["Jobs:Scheduler:Enabled"] = "false",
+            // Log files go with the rest of the throwaway data, never into the API project's own App_Data.
+            ["Logging:File:Path"] = Path.Combine(_root, "logs")
         };
         if (extraSettings is not null)
             foreach (var (key, value) in extraSettings) _settings[key] = value;

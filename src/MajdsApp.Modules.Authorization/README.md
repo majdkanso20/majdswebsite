@@ -33,3 +33,7 @@ Tables: `RolePermissions`, `UserPermissions`. Migrations live in `MajdsApp.Core`
 ## Tests
 
 Covered by the integration tests in `src/MajdsApp.Tests` (run `dotnet test src/MajdsApp.Tests`).
+
+## Direct user permissions (FR-AUTHZ-003)
+
+Besides what a user's roles give, an administrator can grant or deny single permissions to one user. `GET /api/users/permissions/get?userId=` (needs `Users.View`) returns `fromRoles`, `granted`, `denied` and the resulting `effective` set; `POST /api/users/permissions/update` (needs `Users.Edit`) replaces the grants and denies (`{ userId, granted: [], denied: [] }`). A deny removes a permission the roles give and wins over a grant; a grant adds one they do not. The user's cached permissions are dropped, so it applies to their next request. The Admin role holds every permission whatever is set. The Users page has a Permissions dialog for it.
