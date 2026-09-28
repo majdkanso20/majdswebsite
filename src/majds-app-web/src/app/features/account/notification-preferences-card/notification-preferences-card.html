@@ -4,13 +4,16 @@
   </mat-card-header>
   <mat-card-content>
     <div class="prefs__grid" role="table">
-      <div class="prefs__row prefs__row--head" role="row">
+      <div class="prefs__row prefs__row--head" role="row" [style.grid-template-columns]="gridColumns()">
         <span role="columnheader">{{ 'Type' | translate }}</span>
         <span role="columnheader">{{ 'In-app' | translate }}</span>
         <span role="columnheader">{{ 'Email' | translate }}</span>
+        @for (channel of extraChannels(); track channel.name) {
+          <span role="columnheader">{{ channel.displayName | translate }}</span>
+        }
       </div>
       @for (row of rows(); track row.type) {
-        <div class="prefs__row" role="row">
+        <div class="prefs__row" role="row" [style.grid-template-columns]="gridColumns()">
           <span role="cell">{{ row.type | translate }}</span>
           <mat-checkbox
             role="cell"
@@ -24,6 +27,14 @@
             (change)="toggle(row.type, 'email', $event.checked)"
             [attr.aria-label]="row.type + ' email'"
           />
+          @for (channel of extraChannels(); track channel.name) {
+            <mat-checkbox
+              role="cell"
+              [checked]="isOn(row, channel.name)"
+              (change)="toggleExtra(row.type, channel.name, $event.checked)"
+              [attr.aria-label]="row.type + ' ' + channel.displayName"
+            />
+          }
         </div>
       }
     </div>

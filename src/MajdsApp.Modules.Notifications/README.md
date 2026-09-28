@@ -30,6 +30,25 @@ Tables: `NotificationDeliveries`, `NotificationSubscriptions`, `Notifications`. 
 
 The dispatcher never builds channel text itself. For each recipient it asks `INotificationTemplateRenderer` (in `MajdsApp.SharedKernel.Notifications`) for the content of each channel it will use, giving the type, the source-language title and message, and the recipient's language. The default renderer translates the text; for email it also produces an HTML body whose direction follows the language (right to left for Arabic) and encodes every piece of text. To change the wording or layout of one type on one channel, register an `INotificationTemplate` (any module) with that `Type` and `Channel`; it replaces the default for exactly that pair. `SecurityEmailTemplate` adds a translated "If this was not you, contact your administrator" line to Security emails. The rendered email body is stored on the queued delivery (`NotificationDeliveries.Body`), so a retry sends the same message.
 
+## Adding a channel (SMS, push, chat...)
+
+A channel is one class in any module or plugin that implements `IOutboundChannel` (in `MajdsApp.SharedKernel.Notifications`) and is registered with `services.AddScoped<IOutboundChannel, MyChannel>()`:
+
+```csharp
+public class SmsChannel(ISmsGateway gateway, ApplicationDbContext db) : IOutboundChannel
+{
+    public string Name => "Sms";                 // stored in deliveries and preferences; names the settings below
+    public string DisplayName => "SMS";          // the column heading in a user's notification preferences
+    public bool EnabledByDefault => false;       // it costs money and needs a number, so people opt in
+    public Task<string?> ResolveAddressAsync(string userId, CancellationToken ct) => /* the user's phone number, or null */;
+    public Task<DeliveryOutcome> SendAsync(string address, OutboundMessage message, CancellationToken ct) => /* call the provider; throw to retry later */;
+}
+```
+
+That is all. The dispatcher queues a message for every user who has the channel on for that notification type, the worker delivers it with retry and backoff (three attempts, then Failed), the delivery mode is applied before `SendAsync` is called (so Dev logs and Test redirects with no code in the channel), and the channel appears as a column in each user's notification preferences. The channel defines its own `Notifications.Sms.DeliveryMode` and `Notifications.Sms.TestRecipient` settings, as `Notifications.Email.*` are defined in `NotificationSettings.cs`. A channel that must apply the mode itself (email does, so password-reset mail follows it too) sets `AppliesDeliveryModeItself`. Message text for a module channel is the plain, translated title and message.
+
+Storage: `NotificationDeliveries.ChannelName` names the channel of each queued message (older rows, with none, are email); a user's choice on a module channel is one row in `NotificationChannelChoices`, kept only when it differs from the channel's default.
+
 ## Delivery mode: Dev, Test, Prod
 
 Every channel obeys a delivery mode, set under **Settings, Notifications** (administrators only, and recorded in the audit log):

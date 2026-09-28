@@ -7,8 +7,11 @@ using Microsoft.Extensions.Logging;
 
 namespace MajdsApp.Modules.Notifications;
 
-/// <summary>Drains queued deliveries (email) with retry and exponential backoff (FR-NOTIF-007):
-/// a failure is retried up to <see cref="MaxAttempts"/> times, then recorded as permanently failed.</summary>
+/// <summary>
+/// Delivers queued notifications through whichever <see cref="IOutboundChannel"/> each one names (F-Notifications FR-NOTIF-004/007/009), with retry and exponential
+/// backoff. It knows nothing about email or SMS: a channel is anything that implements the interface. The delivery mode (Dev, Test or Prod) is applied here for every channel that
+/// does not apply it itself, so a new channel obeys it without writing any code for it.
+/// </summary>
 public class NotificationDeliveryWorker(IServiceScopeFactory scopes, ILogger<NotificationDeliveryWorker> logger) : BackgroundService
 {
     private const int MaxAttempts = 3;
@@ -29,7 +32,8 @@ public class NotificationDeliveryWorker(IServiceScopeFactory scopes, ILogger<Not
     {
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var sender = scope.ServiceProvider.GetService<IEmailMessageSender>();
+        var channels = scope.ServiceProvider.GetServices<IOutboundChannel>().ToList();
+        var policy = scope.ServiceProvider.GetService<IDeliveryModePolicy>();
 
         var now = DateTime.UtcNow;
         var due = await db.Set<NotificationDelivery>()
@@ -41,17 +45,35 @@ public class NotificationDeliveryWorker(IServiceScopeFactory scopes, ILogger<Not
             delivery.Attempts++;
             try
             {
-                if (sender is null) throw new InvalidOperationException("Email is not configured on this server.");
+                // Deliveries made before channels were pluggable have no name; they are email.
+                var name = delivery.ChannelName ?? EmailOutboundChannel.ChannelName;
+                var channel = channels.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new InvalidOperationException($"The {name} channel is not available on this server.");
 
-                var email = await db.Users.IgnoreQueryFilters().Where(u => u.Id == delivery.UserId).Select(u => u.Email).FirstOrDefaultAsync(ct);
-                if (string.IsNullOrEmpty(email)) throw new InvalidOperationException("Recipient has no email address.");
+                var address = await channel.ResolveAddressAsync(delivery.UserId, ct);
+                if (string.IsNullOrEmpty(address)) throw new InvalidOperationException($"Recipient has no {channel.DisplayName} address.");
 
-                var outcome = await sender.SendAsync(email, delivery.Title, delivery.Body ?? $"<p>{System.Net.WebUtility.HtmlEncode(delivery.Message)}</p>", ct);
+                var title = delivery.Title;
+                var realAddress = address;
+                if (!channel.AppliesDeliveryModeItself && policy is not null)
+                {
+                    var decision = await policy.DecideAsync(channel.Name, address, ct);
+                    if (decision.Recipient is null)
+                    {
+                        logger.LogInformation("[{Mode}] {Channel} message NOT sent ({Reason}). It was for {To}: '{Title}'", decision.Mode, channel.Name, decision.Reason, address, title);
+                        MarkSuppressed(delivery);
+                        continue;
+                    }
+
+                    address = decision.Recipient;
+                    title = (decision.SubjectPrefix ?? "") + title;
+                    if (decision.Mode == DeliveryMode.Test) logger.LogInformation("[Test] {Channel} message for {Real} goes to the test recipient {Test} instead", channel.Name, realAddress, address);
+                }
+
+                var outcome = await channel.SendAsync(address, new OutboundMessage(delivery.UserId, delivery.Type, title, delivery.Message, delivery.Body), ct);
                 if (outcome == DeliveryOutcome.Suppressed)
                 {
-                    // Dev mode (or Test with no test recipient): the mail channel logged it instead of sending it.
-                    delivery.Status = DeliveryStatus.Suppressed;
-                    delivery.LastError = "Not sent: the delivery mode is Dev, or Test with no test recipient.";
+                    MarkSuppressed(delivery);
                 }
                 else
                 {
@@ -71,5 +93,12 @@ public class NotificationDeliveryWorker(IServiceScopeFactory scopes, ILogger<Not
         }
 
         if (due.Count > 0) await db.SaveChangesAsync(ct);
+    }
+
+    // Dev mode (or Test with no test recipient): the channel logged the message instead of sending it.
+    private static void MarkSuppressed(NotificationDelivery delivery)
+    {
+        delivery.Status = DeliveryStatus.Suppressed;
+        delivery.LastError = "Not sent: the delivery mode is Dev, or Test with no test recipient.";
     }
 }

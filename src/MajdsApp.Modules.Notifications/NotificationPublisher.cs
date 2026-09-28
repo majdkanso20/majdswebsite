@@ -15,7 +15,7 @@ namespace MajdsApp.Modules.Notifications;
 /// </summary>
 public class NotificationPublisher(
     ApplicationDbContext db, IHubContext<NotificationHub> hub, ISettingsProvider settings, IObjectMapper mapper,
-    INotificationTemplateRenderer templates) : IUserNotificationPublisher
+    INotificationTemplateRenderer templates, IEnumerable<IOutboundChannel> outbound) : IUserNotificationPublisher
 {
     public Task PublishAsync(string userId, string title, string message, string type = NotificationTypes.General, CancellationToken ct = default, string? link = null) =>
         DispatchAsync([userId], title, message, type, ct, link);
@@ -44,6 +44,13 @@ public class NotificationPublisher(
             .Where(s => s.Type == type && userIds.Contains(s.UserId))
             .ToDictionaryAsync(s => s.UserId, s => s.Channels, ct);
 
+        // Choices for the channels modules have added (SMS, push...): one row where a user's choice differs from the channel's default.
+        var moduleChannels = outbound.Where(c => c.Name != EmailOutboundChannel.ChannelName).ToList();
+        var extraChoices = moduleChannels.Count == 0
+            ? new Dictionary<(string User, string Channel), bool>()
+            : (await db.Set<NotificationChannelChoice>().AsNoTracking().Where(c => c.Type == type && userIds.Contains(c.UserId)).ToListAsync(ct))
+                .ToDictionary(c => (c.UserId, c.ChannelName), c => c.Enabled);
+
         var now = DateTime.UtcNow;
         var inApp = new List<Notification>();
 
@@ -68,7 +75,21 @@ public class NotificationPublisher(
                 var rendered = templates.Render(NotificationChannel.Email, type, content, culture);
                 db.Set<NotificationDelivery>().Add(new NotificationDelivery
                 {
-                    UserId = userId, Channel = NotificationChannel.Email, Type = type, Title = rendered.Title, Message = rendered.Message, Body = rendered.HtmlBody,
+                    UserId = userId, Channel = NotificationChannel.Email, ChannelName = EmailOutboundChannel.ChannelName, Type = type, Title = rendered.Title, Message = rendered.Message, Body = rendered.HtmlBody,
+                    Status = DeliveryStatus.Pending, CreatedAt = now, NextAttemptAt = now
+                });
+            }
+
+            // Every other channel a module registered gets the plain text (translated for this recipient) if the user wants it on that channel.
+            foreach (var channel in moduleChannels)
+            {
+                var wanted = extraChoices.TryGetValue((userId, channel.Name), out var enabled) ? enabled : channel.EnabledByDefault;
+                if (!wanted) continue;
+
+                var rendered = templates.Render(NotificationChannel.InApp, type, content, culture);
+                db.Set<NotificationDelivery>().Add(new NotificationDelivery
+                {
+                    UserId = userId, Channel = NotificationChannel.None, ChannelName = channel.Name, Type = type, Title = rendered.Title, Message = rendered.Message,
                     Status = DeliveryStatus.Pending, CreatedAt = now, NextAttemptAt = now
                 });
             }

@@ -18,10 +18,19 @@ export interface NotificationDto {
   link?: string | null;
 }
 
+/** A channel a module added (SMS, push...), and whether this user receives this notification type on it. */
+export interface ChannelChoice {
+  name: string;
+  displayName: string;
+  enabled: boolean;
+}
+
 export interface NotificationSubscription {
   type: string;
   inApp: boolean;
   email: boolean;
+  /** Every other channel the server has registered; the preferences screen shows a column for each. */
+  channels?: ChannelChoice[];
 }
 
 /**
