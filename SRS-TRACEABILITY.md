@@ -1,6 +1,6 @@
 # SRS v2.1 traceability audit — Majd's Platform
 
-Audited against `Application-Template-SRS_2.md` on 2026-09-24. Method: read-only code inspection; nothing was built, run or load-tested for this audit. "DONE" means the code was seen. Where an item was inferred rather than read, the evidence says so.
+First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading the code, then kept up to date as each gap was closed (latest update 2026-09-28). "DONE" means the behaviour exists and, for most items, is covered by an automated test; the sections say which. "PARTIAL" says what is still missing. Counts are of the 201 functional requirements in the SRS.
 
 ## Scorecard (201 functional requirements)
 
