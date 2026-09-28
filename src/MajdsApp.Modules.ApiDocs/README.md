@@ -6,7 +6,7 @@ An OpenAPI document generated from the controllers (so a new endpoint appears wi
 
 ## Using it
 
-- **Documents:** `/swagger/v1/swagger.json` (and one per further version). Responses are described as the `ResponseDto<T>` envelope (schemas named `…ResponseDto`).
+- **Documents:** `/swagger/v1/swagger.json` (and one per further version). Responses are described as the `ResponseDto<T>` envelope (schemas named `…ResponseDto`). Every operation also lists the error answers a client can get (400, 401, 403, 404, 429) with the same envelope, added by `ErrorResponsesOperationFilter` unless the action declares its own.
 - **Trying secured endpoints:** sign in with `POST /api/identity/login`, click **Authorize** in the UI and paste the access token. The bearer scheme is applied to every operation, and the token is kept across a page reload.
 - **Versions:** a request names its version with `?api-version=2.0` or the `X-Api-Version` header; with none it gets the default, **1.0**, so every existing route is unchanged. Responses list the versions the endpoint supports in `api-supported-versions`; an unknown version is a 400.
 - **Adding a version:** mark a controller `[ApiVersion("2.0")]`. It appears in its own document, `/swagger/v2/swagger.json`, and the UI lists both. Today only 1.0 exists.

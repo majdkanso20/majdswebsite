@@ -116,6 +116,25 @@ public class ApiDocsTests
         }
 
         [Fact]
+        public async Task Every_operation_documents_its_error_answers_as_the_response_envelope()
+        {
+            var admin = await factory.SignInAsync("docs.admin9@example.com", "Admin");
+
+            using var doc = await DocAsync(admin.Http);
+
+            var responses = doc.RootElement.GetProperty("paths").EnumerateObject()
+                .First(p => p.Name.Equals("/api/users/list", StringComparison.OrdinalIgnoreCase)).Value.EnumerateObject().First().Value.GetProperty("responses");
+            foreach (var code in new[] { "200", "400", "401", "403", "404", "429" })
+                responses.TryGetProperty(code, out _).Should().BeTrue($"{code} should be documented");
+            responses.GetProperty("403").GetProperty("content").GetProperty("application/json").GetProperty("schema").GetProperty("$ref").GetString()
+                .Should().Contain("ResponseDto");
+            // No operation in the whole document is left with only its success answer.
+            doc.RootElement.GetProperty("paths").EnumerateObject().SelectMany(p => p.Value.EnumerateObject())
+                .Where(o => o.Value.ValueKind == System.Text.Json.JsonValueKind.Object && o.Value.TryGetProperty("responses", out _))
+                .All(o => o.Value.GetProperty("responses").TryGetProperty("401", out _)).Should().BeTrue();
+        }
+
+        [Fact]
         public async Task The_interactive_page_offers_every_version_and_keeps_the_entered_token()
         {
             var admin = await factory.SignInAsync("docs.admin4@example.com", "Admin");

@@ -103,6 +103,8 @@ public static class ApiDocsExtensions
                 });
             }
 
+            options.OperationFilter<ErrorResponsesOperationFilter>(); // 400/401/403/404/429 as the ResponseDto envelope on every operation
+
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",

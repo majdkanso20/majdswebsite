@@ -17,30 +17,9 @@ MajdsApp.LoggingSetup.AddPlatformLogging(builder);
 MajdsApp.TelemetrySetup.AddPlatformTelemetry(builder); // traces, exported when Telemetry:OtlpEndpoint is set
 builder.Services.AddModuleOptions<MajdsApp.LogSinkOptions>(builder.Configuration, "Logging"); // bound and checked at start
 
-// Every feature module project referenced by this host — the single place a new module is "wired in"
-// by adding one line here, per P2 (no other host code changes per feature).
-var moduleAssemblies = new[]
-{
-    typeof(MajdsApp.Modules.Diagnostics.DiagnosticsModule).Assembly,
-    typeof(MajdsApp.Modules.Authorization.AuthorizationModule).Assembly,
-    typeof(MajdsApp.Modules.Roles.RolesModule).Assembly,
-    typeof(MajdsApp.Modules.Users.UsersModule).Assembly,
-    typeof(MajdsApp.Modules.Settings.SettingsModule).Assembly,
-    typeof(MajdsApp.Modules.Audit.AuditModule).Assembly,
-    typeof(MajdsApp.Modules.Notifications.NotificationsModule).Assembly,
-    typeof(MajdsApp.Modules.Files.FilesModule).Assembly,
-    typeof(MajdsApp.Modules.Account.AccountModule).Assembly,
-    typeof(MajdsApp.Modules.Health.HealthModule).Assembly,
-    typeof(MajdsApp.Modules.Jobs.JobsModule).Assembly,
-    typeof(MajdsApp.Modules.Features.FeaturesModule).Assembly,
-    typeof(MajdsApp.Modules.Search.SearchModule).Assembly,
-    typeof(MajdsApp.Modules.ExternalLogin.ExternalLoginModule).Assembly,
-    typeof(MajdsApp.Modules.Plugins.PluginsModule).Assembly,
-    typeof(MajdsApp.Modules.Dashboard.DashboardModule).Assembly,
-    typeof(MajdsApp.Modules.Exports.ExportsModule).Assembly,
-    typeof(MajdsApp.Modules.Localization.LocalizationModule).Assembly,
-    typeof(MajdsApp.Modules.ApiDocs.ApiDocsModule).Assembly
-};
+// Every feature module the host was built with, found by name (MajdsApp.Modules.*) next to the application: to add a module, reference its
+// project from this host's csproj; to remove one, remove the reference. There is no list to keep in step (P2 FR-MOD-002/008).
+var moduleAssemblies = MajdsApp.SharedKernel.Modules.ModuleDiscovery.LoadModuleAssemblies();
 
 // P5: runtime-deployable plugins. Each subfolder of the plugins directory with a plugin.json +
 // backend/<assembly> is loaded into its own isolated AssemblyLoadContext (FR-PLUG-005/006) — this

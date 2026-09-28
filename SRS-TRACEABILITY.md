@@ -6,14 +6,14 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 152 |
-| PARTIAL | 49 |
+| DONE | 154 |
+| PARTIAL | 47 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
 |---|---|---|---|---|
-| P1 API conventions | 8 | 5 | 3 | 0 |
-| P2 Modules | 8 | 3 | 5 | 0 |
+| P1 API conventions | 8 | 6 | 2 | 0 |
+| P2 Modules | 8 | 4 | 4 | 0 |
 | P3 Repository/UoW | 7 | 5 | 2 | 0 |
 | P4 Cross-cutting | 7 | 5 | 2 | 0 |
 | P5 Plugins | 42 | 25 | 17 | 0 |
@@ -41,13 +41,13 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | F-Search | 4 | 4 | 0 | 0 |
 
 ## P1 — API conventions
-- DONE: 001 (GET/POST only), 002, 005 (`ApiControllerBase`), 006 (status-code filter), 007 (model-state + exception middleware).
-- PARTIAL: 003 routes mostly follow `/api/{module}/{action}` but `search`, `roles/permissions/*`, `session/permissions`, `permissions/tree` differ. 004 CSV export, file download, profile picture, external login and the Identity API return raw bodies. 008 schema is inferred by Swashbuckle, no `ProducesResponseType`.
+- DONE: 001 (GET/POST only), 002, 005 (`ApiControllerBase`), 006 (status-code filter), 007 (model-state + exception middleware), 008 the success schema is generated from each action's return type and `ErrorResponsesOperationFilter` adds the 400, 401, 403, 404 and 429 answers (as the `ResponseDto` envelope) to every operation that does not declare them; tested against the served OpenAPI document.
+- PARTIAL: 003 routes mostly follow `/api/{module}/{action}` but `search`, `roles/permissions/*`, `session/permissions`, `permissions/tree` differ. 004 CSV export, file download, profile picture, external login and the Identity API return raw bodies.
 
 ## P2 — Modules
-- DONE: 001 `IFeatureModule`, 005 application parts, 006 EF configs discovered.
-- PARTIAL: 002 host still lists module assemblies by hand. 003 Scrutor scan covers service markers, jobs, search; EF configs applied separately. 007 no Contracts projects; Users/Roles reference Authorization directly, Account references Files. 008 removing a module still needs edits in `Program.cs` and the csproj.
-- PARTIAL (004): `ModuleOptions.AddModuleOptions<T>(configuration, section)` binds a section through `IOptions<T>` and validates it with data annotations when the application starts, so a wrong value stops the start naming the setting. Applied to `Email:Smtp`, `RateLimiting`, `Docs` and `Resilience` (tested); `Cache` already fails fast; the jobs, metrics and plugin-trust keys are still read directly.
+- DONE: 001 `IFeatureModule`, 002 the host no longer lists module assemblies: `ModuleDiscovery` loads every `MajdsApp.Modules.*` assembly next to the application in name order (tested), 005 application parts, 006 EF configs discovered.
+- PARTIAL: 003 Scrutor scan covers service markers, jobs, search; EF configs applied separately. 007 no Contracts projects; Users/Roles reference Authorization directly, Account references Files. 008 removing a module is now a csproj reference removal plus the few places `Program.cs` still names a module (health, API docs, localization, plugin registry sync, role seeding, admin bootstrap).
+- PARTIAL (004): `ModuleOptions.AddModuleOptions<T>(configuration, section)` binds a section through `IOptions<T>` and validates it with data annotations when the application starts, so a wrong value stops the start naming the setting. Applied to `Email:Smtp`, `RateLimiting`, `Docs`, `Resilience`, `Jobs`, `Metrics`, `Plugins:Trust` and `Telemetry` (tested); `Cache` already fails fast; a few module-specific keys are still read directly.
 
 ## P3 — Repository / Unit of Work
 - DONE: 002 `IReadRepository` is a separate no-tracking implementation (`EfReadRepository`), so a query path cannot modify what it reads (tested). 004 `IUnitOfWork`/`EfUnitOfWork` with explicit transactions; repositories in one scope share one context (tested with a rollback). 005 audit stamping, soft delete enforced centrally in SaveChanges for every `ISoftDelete` entity (a plain `Remove` only marks it, and a filter hides it), and domain events (`IHasDomainEvents`, `IDomainEvent`): published after the save succeeds, once, and not at all when the save fails (tested; `DiagnosticsPing` raises `PingRecorded`). 006 repositories are registered as open generics, scoped, and injectable directly. 007 `IReadRepository.PagedAsync(request, sortableColumns, selector, spec)` gives a list endpoint paging, sorting and criteria in one call.
@@ -146,7 +146,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 470 automated tests** in `src/MajdsApp.Tests` (385) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 478 automated tests** in `src/MajdsApp.Tests` (393) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 134 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -164,8 +164,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 49 are partial):
+Still open, roughly by value (no requirement is missing and 47 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
-2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
+2. P4: Mapster for the remaining DTOs; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels (the channel interface is ready; they need a provider); a cloud file-store provider and resumable uploads.
 4. Verification: more browser end-to-end journeys (seven exist), a run against a live Redis, a Redis backplane for SignalR, generating the Angular client from the OpenAPI document, background imports.
