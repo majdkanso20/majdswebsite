@@ -8,13 +8,20 @@
     </mat-form-field>
 
     @if (!isEdit) {
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Password' | translate }}</mat-label>
-        <input matInput type="password" formControlName="password" />
-        @if (form.controls.password.touched && form.controls.password.invalid) {
-          <mat-error>{{ 'At least 6 characters.' | translate }}</mat-error>
-        }
-      </mat-form-field>
+      <mat-radio-group formControlName="passwordMode" class="user-form__password-mode" aria-label="{{ 'How the user gets a password' | translate }}">
+        <mat-radio-button value="set">{{ 'Set a password now' | translate }}</mat-radio-button>
+        <mat-radio-button value="email">{{ 'Email the user a link to set their own' | translate }}</mat-radio-button>
+      </mat-radio-group>
+
+      @if (form.controls.passwordMode.value === 'set') {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Password' | translate }}</mat-label>
+          <input matInput type="password" formControlName="password" />
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <mat-error>{{ 'At least 6 characters.' | translate }}</mat-error>
+          }
+        </mat-form-field>
+      }
     }
 
     <mat-form-field appearance="outline">

@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using MajdsApp.Data;
 using MajdsApp.Modules.Authorization;
 using MajdsApp.SharedKernel.Behaviors;
@@ -44,7 +43,7 @@ public class ImportUsersCommandHandler(IMediator mediator, ApplicationDbContext 
 
             await mediator.Send(new CreateUserCommand(
                 row.Get(UserImportColumns.Email),
-                password.Length > 0 ? password : GeneratePassword(),
+                password.Length > 0 ? password : PasswordGenerator.Generate(), false,
                 NullIfEmpty(row.Get(UserImportColumns.FullName)),
                 roles), ct);
         }, ct);
@@ -65,20 +64,6 @@ public class ImportUsersCommandHandler(IMediator mediator, ApplicationDbContext 
     }
 
     private static string? NullIfEmpty(string value) => value.Length == 0 ? null : value;
-
-    /// <summary>Random and long enough for any password policy; nobody ever sees it, so the user has to use Forgot password.</summary>
-    private static string GeneratePassword()
-    {
-        const string lower = "abcdefghijkmnopqrstuvwxyz", upper = "ABCDEFGHJKLMNPQRSTUVWXYZ", digits = "23456789", symbols = "!@#$%^&*";
-        var all = lower + upper + digits + symbols;
-        var chars = new List<char>
-        {
-            lower[RandomNumberGenerator.GetInt32(lower.Length)], upper[RandomNumberGenerator.GetInt32(upper.Length)],
-            digits[RandomNumberGenerator.GetInt32(digits.Length)], symbols[RandomNumberGenerator.GetInt32(symbols.Length)]
-        };
-        while (chars.Count < 24) chars.Add(all[RandomNumberGenerator.GetInt32(all.Length)]);
-        return new string(chars.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).ToArray());
-    }
 }
 
 /// <summary>The blank template for a users import (FR-EXP-005).</summary>

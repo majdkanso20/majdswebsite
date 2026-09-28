@@ -4,3 +4,10 @@
   gap: 4px;
   min-width: min(360px, 80vw);
 }
+
+.user-form__password-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-block-end: 8px;
+}

@@ -101,10 +101,20 @@ export class UsersList {
     ref.afterClosed().subscribe((result) => {
       if (!result) return;
       this.usersApi
-        .create({ email: result.email, password: result.password!, fullName: result.fullName, roles: result.roles })
+        .create({
+          email: result.email,
+          password: result.password,
+          sendSetPasswordEmail: result.sendSetPasswordEmail,
+          fullName: result.fullName,
+          roles: result.roles
+        })
         .subscribe({
           next: () => {
-            this.snackBar.open('User created.', 'Dismiss', { duration: 3000 });
+            this.snackBar.open(
+              result.sendSetPasswordEmail ? 'User created. A set-password email was sent.' : 'User created.',
+              'Dismiss',
+              { duration: 3000 }
+            );
             this.load();
           },
           error: (err) => this.showError(err)

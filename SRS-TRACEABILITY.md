@@ -6,8 +6,8 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 160 |
-| PARTIAL | 41 |
+| DONE | 161 |
+| PARTIAL | 40 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -21,7 +21,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | U2 Mobile-first | 9 | 5 | 4 | 0 |
 | U3 App shell | 8 | 8 | 0 | 0 |
 | F-Authorization | 8 | 8 | 0 | 0 |
-| F-Users | 8 | 7 | 1 | 0 |
+| F-Users | 8 | 8 | 0 | 0 |
 | F-Roles | 5 | 5 | 0 | 0 |
 | F-Account | 6 | 6 | 0 | 0 |
 | F-Settings | 6 | 6 | 0 | 0 |
@@ -86,7 +86,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - DONE: 004 `[RequiresPermission]` works on a MediatR request (the pipeline checks it) and on a controller or an action (`PermissionActionFilter`); both answer 401 when nobody is signed in and 403 naming the missing permission, as `ResponseDto`; tested with a controller-level and an action-level guard.
 
 ## F-Users / F-Roles
-- Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). DONE: 001 (the list has an All / Active / Inactive selector, and the export follows it; a browser test covers it). PARTIAL: 002 (password only, no emailed set-password link).
+- Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). DONE: 001 (the list has an All / Active / Inactive selector, and the export follows it; a browser test covers it). DONE: 002 either the admin sets a password directly, or (a radio choice in the create dialog) the account gets a password nobody knows and an emailed set-password link, reusing the same token/link mechanism as Forgot password; tested with a fake email sender (the link is sent, carries the right address, and a password set directly still works and needs no email).
 - Roles DONE: 001, 002, 005. DONE: 003 (a new account gets the default role and creating a new default role clears the old one; tested through self-registration), 004 (deleting a role that has users needs the role that takes them over; the delete dialog asks; the users keep access, permission caches are refreshed, and moving to itself or to an unknown role is refused; tested).
 
 ## F-Account
@@ -146,7 +146,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - DONE: NFR-SCALE-2 Redis backplane for SignalR: `SignalR:Redis:ConnectionString` (unset by default: each node keeps its own connected clients, fine for one node) makes `AddSignalR().AddStackExchangeRedis(...)` share them across every node, so a push reaches a user connected to a different one behind a load balancer; the channel is prefixed with `Cache:KeyPrefix` so several deployments can share one Redis. Wiring proven without a live server (same approach as the cache's Redis test); not run against one.
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 489 automated tests** in `src/MajdsApp.Tests` (403) and `src/MajdsApp.Tests.Plugins` (86, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 492 automated tests** in `src/MajdsApp.Tests` (406) and `src/MajdsApp.Tests.Plugins` (86, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 141 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the permission directive and route guard that gate a grid's actions and a plugin's dynamic route the same way, the plugin route/menu wiring itself, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
