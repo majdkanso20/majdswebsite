@@ -40,14 +40,14 @@ public class ActivityChartWidget(ApplicationDbContext db) : IDashboardWidget
 
         var points = Enumerable.Range(0, 7)
             .Select(offset => start.AddDays(offset))
-            .Select(day => new ChartPoint(day.ToString("ddd"), perDay.GetValueOrDefault(day)))
+            .Select(day => new ChartPoint(day.ToString("ddd", System.Globalization.CultureInfo.CurrentUICulture), perDay.GetValueOrDefault(day)))
             .ToList();
         return new ChartWidgetData(points);
     }
 }
 
 /// <summary>The latest audited actions (recent-activity feed).</summary>
-public class RecentActivityWidget(ApplicationDbContext db) : IDashboardWidget
+public class RecentActivityWidget(ApplicationDbContext db, MajdsApp.SharedKernel.Localization.IMessageCatalog catalog) : IDashboardWidget
 {
     public string Key => "audit.recent";
     public string Title => "Recent activity";
@@ -63,8 +63,9 @@ public class RecentActivityWidget(ApplicationDbContext db) : IDashboardWidget
             .Select(a => new { a.Action, a.UserName, a.Outcome, a.CreatedAt })
             .ToListAsync(ct);
 
+        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
         return new FeedWidgetData(latest
-            .Select(a => new FeedItem(a.Action, $"{a.UserName ?? "anonymous"} · {a.Outcome}", DateTime.SpecifyKind(a.CreatedAt, DateTimeKind.Utc)))
+            .Select(a => new FeedItem(a.Action, $"{a.UserName ?? catalog.Translate("anonymous", culture)} · {catalog.Translate(a.Outcome, culture)}", DateTime.SpecifyKind(a.CreatedAt, DateTimeKind.Utc)))
             .ToList());
     }
 }

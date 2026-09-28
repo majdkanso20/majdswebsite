@@ -57,6 +57,14 @@ public sealed partial class MessageCatalog : IMessageCatalog
 
         if (entries.TryGetValue(text, out var exact)) return exact;
 
+        // Several problems (tried before the templates, whose wildcards would otherwise swallow the "; " between them) joined into one message ("A; B", as password and account errors are) are translated one by one.
+        if (text.Contains("; ", StringComparison.Ordinal))
+        {
+            var parts = text.Split("; ");
+            var translated = parts.Select(p => Translate(p, culture)).ToArray();
+            if (!translated.SequenceEqual(parts)) return string.Join("; ", translated);
+        }
+
         foreach (var template in _templates[language])
         {
             var match = template.Pattern.Match(text);
