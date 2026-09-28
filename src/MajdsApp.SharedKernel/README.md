@@ -8,7 +8,7 @@ The platform backbone (SRS P1–P5). Every module references this project and no
 |---|---|
 | `Api` | `ApiControllerBase`, the `ResponseDto<T>` envelope and `ResponseStatusCode`, and the filter that maps the envelope code to the HTTP status. |
 | `Behaviors` | The MediatR pipeline: `LoggingBehavior`, `PerformanceBehavior`, `FailureAuditBehavior`, `ValidationBehavior`, `AuthorizationBehavior`, `FeatureBehavior`, `CachingBehavior`, `TransactionBehavior`, `AuditBehavior`, plus the marker attributes and interfaces. |
-| `Middleware` | Correlation id, exception-to-envelope mapping, security headers. |
+| `Middleware` | Correlation id, exception-to-envelope mapping, security headers, response wrapping. |
 | `Modules` | `IFeatureModule` and the discovery/registration helpers (`ModuleRegistrar`). |
 | `Plugins` | Runtime plugin loading: manifest, isolated `PluginLoadContext`, `PluginManager`, the enabled-state gate. |
 | `Data` | `IEntity`, `AuditableEntity`, `ISoftDelete`, `IUnitOfWork`, the generic repository and specifications, and the save interceptor. |
@@ -49,6 +49,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 
 - Routes are `/api/{controller}/{action}`; reads are `GET`, everything else `POST`.
 - Handlers throw `NotFoundException`, `ConflictException`, `ForbiddenException`, `UnauthorizedAppException` or FluentValidation's `ValidationException`; the middleware maps each to the right envelope code. `ValidationException(string)` messages reach the client in `errors`.
+- Every `/api/*` response carries the `ResponseDto` envelope, not just the ones a controller wrote (P4 FR-XC-005): `ResponseWrappingMiddleware` wraps whatever a request the deny-by-default fallback policy refused before any endpoint ran, or that no endpoint matched at all, left as a bare status code with no body.
 - Name assemblies `MajdsApp.Modules.*` (compiled in) or `MajdsApp.Plugins.*` (runtime): the permission, setting and entity-configuration scans key off those prefixes.
 - Use `LikePattern.Contains` with `EF.Functions.Like` for text search, not `string.Contains` (case-sensitive on SQLite).
 

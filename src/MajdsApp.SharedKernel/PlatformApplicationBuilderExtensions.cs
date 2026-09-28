@@ -11,6 +11,9 @@ public static class PlatformApplicationBuilderExtensions
     /// </summary>
     public static IApplicationBuilder UsePlatformCore(this IApplicationBuilder app)
     {
+        // Outermost: sees the final status code of everything downstream, including a short-circuit
+        // (deny-by-default, an unmatched route) that never reaches the exception handler or a controller (FR-XC-005).
+        app.UseMiddleware<ResponseWrappingMiddleware>();
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseMiddleware<ExceptionHandlingMiddleware>();

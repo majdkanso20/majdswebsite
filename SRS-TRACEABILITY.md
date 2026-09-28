@@ -6,8 +6,8 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 156 |
-| PARTIAL | 45 |
+| DONE | 158 |
+| PARTIAL | 43 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -15,7 +15,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | P1 API conventions | 8 | 6 | 2 | 0 |
 | P2 Modules | 8 | 4 | 4 | 0 |
 | P3 Repository/UoW | 7 | 5 | 2 | 0 |
-| P4 Cross-cutting | 7 | 5 | 2 | 0 |
+| P4 Cross-cutting | 7 | 6 | 1 | 0 |
 | P5 Plugins | 42 | 25 | 17 | 0 |
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 5 | 4 | 0 |
@@ -30,7 +30,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | F-Files | 6 | 4 | 2 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 5 | 0 | 0 |
-| F-Data | 6 | 3 | 3 | 0 |
+| F-Data | 6 | 4 | 2 | 0 |
 | F-Export | 5 | 4 | 1 | 0 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 5 | 0 | 0 |
@@ -56,7 +56,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 ## P4 — Cross-cutting
 - DONE: 001, 002 (behavior pipeline: logging, performance, validation, authorization, feature, caching, transaction, audit).
 - DONE: 003 markers, and a query opts into caching with `ICacheableQuery` (the enabled-features query does: cached for a minute and dropped the moment a feature is switched; tested).
-- PARTIAL: 005 correlation, exception and security-headers middleware; no response-wrapping middleware.
+- DONE: 005 correlation, exception, security-headers and response-wrapping middleware, all four request-level concerns FR-XC-005 names. `ResponseWrappingMiddleware` is the last one: an exception (`ExceptionHandlingMiddleware`), a rate-limit rejection and every handled request already write the `ResponseDto` envelope themselves, but a request the deny-by-default fallback policy refuses before any endpoint runs, or a path nothing maps to, used to come back as a bare status code with no body; now it gets the same envelope, translated the same way, scoped to `/api` so a missing static asset or an unknown SignalR/Swagger path is untouched (tested: anonymous-and-unmatched, signed-in-and-unmatched, translated, left alone outside `/api`, and a handler's own 404 left undisturbed).
 - DONE: 004 decorators (Scrutor `Decorate`: the notification email sender is wrapped by `ResilientEmailMessageSender`, `SmtpEmailSender` is unchanged), 006 Polly (`OutboundResilience`: retry with backoff and jitter only for transient failures, a timeout per attempt that really cancels the SMTP calls, and a circuit breaker; a wrong password is never retried; tuned by the validated `Resilience` section; tested).
 - PARTIAL: 007 Mapster: one configuration for the application (`IObjectMapper`, mappings found per module through Mapster `IRegister` scans), used by the Files, Notifications, Jobs, Roles, Users, Audit-list and Exports handlers, with a projection form so the mapping still runs in SQL (an account's computed "locked out" flag is described once, in `UsersMapping`). The audit detail, Settings, Plugins, Dashboard, Features and profile DTOs, which combine several sources, are still hand-built.
 
@@ -121,10 +121,10 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - PARTIAL: 001 all of the interface's own text and every message the server writes is keyed and translated, and tests fail when one is missing (a scan of the templates for the frontend, a scan of the source for the backend). Identity's own texts (password rules, taken names) and model-binding errors (a bad query value, a missing body) go through the same catalog as everything else the server says, field by field, not just the "Validation failed." summary (tested). Not covered: text inside plugin frontend screens (plugins can translate their menu labels and server messages, P5 FR-PLUG-023), and Swagger.
 
 ## F-Errors
-- DONE: 001, 002, 004 (a central interceptor handles 401, 403, 429, unreachable server and 5xx with a translated message, and leaves field errors to each screen). DONE: 003, 005 Serilog is the application's logger (`Logging:Level`, `Logging:Console`, and a daily rolling file under `Logging:File:Path` keeping `Logging:File:RetainedFiles` files, all checked at start; every line carries the request's correlation id; tested).
+- DONE: 001, 002, 004 (a central interceptor handles 401, 403, 429, unreachable server and 5xx with a translated message, and leaves field errors to each screen; every one of those now carries the standard envelope even when nothing but ASP.NET's own pipeline produced it, P4 FR-XC-005). DONE: 003, 005 Serilog is the application's logger (`Logging:Level`, `Logging:Console`, and a daily rolling file under `Logging:File:Path` keeping `Logging:File:RetainedFiles` files, all checked at start; every line carries the request's correlation id; tested).
 
 ## F-Data
-- DONE: 002, 003 (DB-side paging, tied to the repository through `PagedAsync`; a sort column outside the list's allow-list is a 400 naming the allowed ones, not a silently unsorted list; tested), 004 (`Paging:MaxPageSize`, default 100, checked at start). PARTIAL: 001 column filters are still written per list, 005 grid has no filter UI, 006 permission checks live in consumers.
+- DONE: 002, 003 (DB-side paging, tied to the repository through `PagedAsync`; a sort column outside the list's allow-list is a 400 naming the allowed ones, not a silently unsorted list; tested), 004 (`Paging:MaxPageSize`, default 100, checked at start), 006 (`*hasPermission` is a structural directive that removes an element from the DOM, not just hides it, when the signed-in user lacks the given permission; every list screen's toolbar and row-action templates it content-projects into `<app-data-grid>` use it — Users, Roles, Jobs, Files, Plugins — rather than the grid knowing about permission strings itself, which keeps it usable by a plugin's own screens too; tested). PARTIAL: 001 column filters are still written per list (only the single free-text `filter` term is generic), 005 grid has no built-in per-column filter UI (paging, sorting, actions, empty/error/loading states and permission-gated actions are; a column filter row is still each screen's own, where it exists at all).
 
 ## F-Export / F-Dashboard / F-Background-Jobs
 - Export: DONE 001 (CSV, Excel and PDF from one renderer, `TabularExport`, so all formats hold the same rows; users and audit exports take the list's filters and share its filter code), 002 (server-generated PDF, landscape A4, paginated, capped at 2,000 rows and says so). Formats: `?format=csv|xlsx|pdf`; unknown values are a 400. DONE 003 (import from CSV or Excel: per-row validation through the same `CreateUserCommand` as the create endpoint, valid rows imported, invalid rows reported with row number and reason, whole-file problems such as a missing column rejected up front; users import is wired end to end with a reusable dialog), 005 (downloadable CSV and Excel templates, headers only, plus an Instructions sheet). PARTIAL 004: exports run as background jobs (`ExportJob` queue, hosted worker, atomic claim, restart recovery, retention cleanup), the file is delivered through F-Files and the user gets a notification that links to My exports (AC-EXP-3); imports still run during the request (5,000-row limit), so the requirement is not fully met. Only users have an import so far; other resources reuse `TabularReader`, `ImportRunner` and `ImportTemplate`.
@@ -147,9 +147,9 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - DONE: NFR-SCALE-2 Redis backplane for SignalR: `SignalR:Redis:ConnectionString` (unset by default: each node keeps its own connected clients, fine for one node) makes `AddSignalR().AddStackExchangeRedis(...)` share them across every node, so a push reaches a user connected to a different one behind a load balancer; the channel is prefixed with `Cache:KeyPrefix` so several deployments can share one Redis. Wiring proven without a live server (same approach as the cache's Redis test); not run against one.
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 483 automated tests** in `src/MajdsApp.Tests` (398) and `src/MajdsApp.Tests.Plugins` (85, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 488 automated tests** in `src/MajdsApp.Tests` (403) and `src/MajdsApp.Tests.Plugins` (85, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
-- **Frontend: 134 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
+- **Frontend: 136 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the permission directive that gates a grid's row and toolbar actions, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
 - **Browser end-to-end tests: 50** (9 journeys, 19 accessibility scans, 22 narrow-screen checks) (Playwright driving the installed Chrome against the real API and a throwaway database, `npm run e2e`, also a CI job). The journeys: wrong and right sign-in, a protected page sending a visitor to the login page, the Arabic right-to-left layout with the menu on the right and its persistence after a reload, the phone-width header, a plugin's own screen in a shadow root, and deleting a role that has users through the reassignment dialog. The scans found one real problem (the notification count was on an icon without a text alternative, on every page), now fixed by moving the badge to the button with a spoken description.
 - **Also fixed after looking at the running site:** the fonts and icons came from Google's servers, so the whole interface lost its icons without internet; Roboto and the Material icons are now served with the app (which also makes the offline shell complete). Dashboard tiles now reload when the language changes, because their captions and day names are worded by the server.
