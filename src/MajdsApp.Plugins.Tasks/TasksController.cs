@@ -35,4 +35,7 @@ public class TasksController(IMediator mediator) : ApiControllerBase
 
     [HttpGet("ui-schema")]
     public async Task<ResponseDto<UiSchemaDto>> UiSchema() => Ok(await mediator.Send(new GetTasksUiSchemaQuery()));
+
+    [HttpGet("boom")]
+    public async Task<ResponseDto<string>> Boom() => Ok(await mediator.Send(new BoomQuery()));
 }

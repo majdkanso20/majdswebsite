@@ -111,5 +111,22 @@ public class PluginTests
         (await admin.PostAsync("/api/plugins/set-enabled", new { pluginId = "Does.Not.Exist", enabled = true }))
             .Status.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task An_unhandled_exception_in_the_plugin_s_own_handler_is_contained_not_fatal()
+    {
+        var admin = await AdminAsync();
+
+        var boom = await admin.GetAsync<string>("/api/tasks/boom");
+
+        // Same shape a core module's own unhandled exception gets (F-Errors): a 500 ResponseDto, no stack trace.
+        boom.Status.Should().Be(HttpStatusCode.InternalServerError);
+        boom.Errors.Should().BeEmpty();
+        boom.Body!.Message.Should().NotContain("InvalidOperationException").And.NotContain("   at ");
+
+        // The host, and the same plugin's other endpoints, are still up right after.
+        (await admin.GetAsync<PagedData<TaskRow>>("/api/tasks/list?page=1&pageSize=5")).Status.Should().Be(HttpStatusCode.OK);
+        (await admin.GetAsync<List<PluginRow>>("/api/plugins/list")).Status.Should().Be(HttpStatusCode.OK);
+    }
 }
 

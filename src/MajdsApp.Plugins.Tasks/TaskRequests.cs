@@ -12,6 +12,18 @@ namespace MajdsApp.Plugins.Tasks;
 
 public record TaskDto(Guid Id, string Title, string? Description, string Status, DateTime? DueDate, DateTime CreatedAt);
 
+/// <summary>Deliberately throws (P5 FR-PLUG-037): proves that an unhandled exception in a plugin's own handler is
+/// contained by the host's exception-handling middleware (F-Errors) as a safe <c>ResponseDto</c>, same as a core module,
+/// and neither crashes the host nor takes any other plugin down with it.</summary>
+[RequiresPermission(Permissions.Tasks.View)]
+public record BoomQuery : IRequest<string>;
+
+public class BoomQueryHandler : IRequestHandler<BoomQuery, string>
+{
+    public Task<string> Handle(BoomQuery request, CancellationToken ct) =>
+        throw new InvalidOperationException("Deliberate diagnostic failure (Tasks plugin).");
+}
+
 [RequiresPermission(Permissions.Tasks.View)]
 public record ListTasksQuery(PagedRequest Request) : IRequest<PagedResponse<TaskDto>>;
 
