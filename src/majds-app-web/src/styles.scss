@@ -33,6 +33,14 @@ body {
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
     }
+
+    // The router's view transition (app.config.ts) renders in its own pseudo-element tree, which the
+    // universal selector above does not reach.
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
   }
 }
 

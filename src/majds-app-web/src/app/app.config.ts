@@ -1,6 +1,6 @@
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatPaginatorIntl } from '@angular/material/paginator';
@@ -16,7 +16,9 @@ import { PluginsService } from './core/services/plugins.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // A soft crossfade between routes on browsers that support the View Transitions API (U2 FR-MOB-005); a
+    // no-op fallback everywhere else. prefers-reduced-motion turns it off globally, in styles.scss.
+    provideRouter(routes, withViewTransitions()),
     provideHttpClient(withInterceptors([languageInterceptor, authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     // Installable PWA with an offline app shell (FR-MOB-007). Production builds only: a service worker
