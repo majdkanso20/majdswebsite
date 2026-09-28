@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { LocalDatePipe, LocalNumberPipe } from '../../../core/i18n/format.pipes';
 import { FormattingService } from '../../../core/i18n/formatting.service';
+import { LocalizationService } from '../../../core/i18n/localization.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { ChartData, DashboardService, DashboardWidget, FeedData, KpiData, WidgetData } from '../../../core/services/dashboard.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -20,10 +21,12 @@ import { LoadingState } from '../../../shared/components/loading-state/loading-s
   styleUrl: './widget-tile.scss',
   templateUrl: './widget-tile.html'
 })
-export class WidgetTile implements OnInit {
+export class WidgetTile {
   private readonly api = inject(DashboardService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fmt = inject(FormattingService);
+  private readonly l10n = inject(LocalizationService);
+  private request?: Subscription;
 
   readonly widget = input.required<DashboardWidget>();
 
@@ -46,13 +49,23 @@ export class WidgetTile implements OnInit {
 
   readonly chartSummary = computed(() => (this.chart()?.points ?? []).map((p) => `${p.label}: ${p.value}`).join(', '));
 
-  ngOnInit(): void {
-    this.api
-      .data(this.widget().key)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.data.set(data),
-        error: () => this.failed.set(true)
-      });
+  constructor() {
+    this.destroyRef.onDestroy(() => this.request?.unsubscribe());
+
+    // Some of what a widget shows is worded by the server (a caption, the day names), in the language of the request. So the data is fetched
+    // again when the language changes, instead of staying in the language it was first loaded in. The old figures stay up until the new ones arrive.
+    effect(() => {
+      this.l10n.language();
+      untracked(() => this.load());
+    });
+  }
+
+  private load(): void {
+    this.request?.unsubscribe();
+    this.failed.set(false);
+    this.request = this.api.data(this.widget().key).subscribe({
+      next: (data) => this.data.set(data),
+      error: () => this.failed.set(true)
+    });
   }
 }
