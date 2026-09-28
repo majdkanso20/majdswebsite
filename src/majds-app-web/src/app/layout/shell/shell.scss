@@ -80,9 +80,21 @@
   padding: 8px 16px;
   font-size: 0.85rem;
   color: var(--mat-sys-on-surface-variant);
+  border-inline-start: 3px solid transparent; // logical property: stays on the reading-start edge for both LTR and RTL
 
   &--unread strong {
     color: var(--mat-sys-primary);
+  }
+
+  // Severity (F-Notifications FR-NOTIF-004) is a hint, not the message: a colored edge, nothing louder.
+  // Info and Success stay neutral; the system has no dedicated "success" token, and everyday
+  // notifications shouldn't compete with the two severities worth a second look.
+  &--warning {
+    border-inline-start-color: var(--mat-sys-tertiary);
+  }
+
+  &--error {
+    border-inline-start-color: var(--mat-sys-error);
   }
 }
 

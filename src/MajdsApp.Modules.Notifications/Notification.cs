@@ -11,11 +11,15 @@ public class Notification : MajdsApp.SharedKernel.Data.IEntity<int>
     public int Id { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string Type { get; set; } = "General";
+    public NotificationSeverity Severity { get; set; } = NotificationSeverity.Info;
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
 
     /// <summary>An in-app route the notification opens when clicked (for example /exports); null for a plain message.</summary>
     public string? Link { get; set; }
+
+    /// <summary>Small, arbitrary JSON a client can read back (FR-NOTIF-004); null for none.</summary>
+    public string? Payload { get; set; }
 
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -56,8 +60,12 @@ public class NotificationDelivery : MajdsApp.SharedKernel.Data.IEntity<int>
     /// were pluggable have none and are email.</summary>
     public string? ChannelName { get; set; }
     public string Type { get; set; } = "General";
+    public NotificationSeverity Severity { get; set; } = NotificationSeverity.Info;
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>Small, arbitrary JSON a client can read back (FR-NOTIF-004); null for none.</summary>
+    public string? Payload { get; set; }
 
     /// <summary>The whole email body, produced by the template renderer at dispatch time in the recipient's language; null for a delivery made before templates existed.</summary>
     public string? Body { get; set; }
@@ -78,6 +86,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         builder.Property(n => n.Title).HasMaxLength(200);
         builder.Property(n => n.Message).HasMaxLength(2000);
         builder.Property(n => n.Link).HasMaxLength(300);
+        builder.Property(n => n.Payload).HasMaxLength(4000);
         builder.HasIndex(n => new { n.UserId, n.IsRead });
     }
 }
@@ -113,6 +122,7 @@ public class NotificationDeliveryConfiguration : IEntityTypeConfiguration<Notifi
         builder.Property(d => d.Title).HasMaxLength(200);
         builder.Property(d => d.Message).HasMaxLength(2000);
         builder.Property(d => d.Body).HasMaxLength(8000);
+        builder.Property(d => d.Payload).HasMaxLength(4000);
         builder.Property(d => d.LastError).HasMaxLength(1000);
         builder.HasIndex(d => new { d.Status, d.NextAttemptAt });
     }

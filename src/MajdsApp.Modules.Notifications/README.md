@@ -2,7 +2,7 @@
 
 **Notifications (F-Notifications)** — SRS FR-NOTIF-001..009
 
-In-app notifications pushed in real time over SignalR, plus queued email, filtered by each user's per-type, per-channel preferences. Any module notifies users through `IUserNotificationPublisher` (to a user, to everyone, or to a role) without depending on this module.
+In-app notifications pushed in real time over SignalR, plus queued email, filtered by each user's per-type, per-channel preferences. Any module notifies users through `IUserNotificationPublisher` (to a user, to everyone, or to a role) without depending on this module — or, for the single call the SRS names (FR-NOTIF-001), `INotificationDispatcher.SendAsync(new NotificationMessage(title, message, ...), recipientUserIds)`. Both interfaces are the same `NotificationPublisher` instance per scope, so either can be injected.
 
 ## API
 
@@ -74,8 +74,9 @@ When a channel is not in Prod, the website shows a banner under the header to ev
 - Real-time: hub at `/hubs/notifications`. Browsers cannot set headers on a WebSocket, so the token is accepted from the `access_token` query string on `/hubs` paths only.
 - Types are `General`, `Security`, `Account`, `Administration` (see `NotificationTypes`); channels are in-app and email. With no saved preference every channel is on.
 - A notification may carry an in-app `link` (for example `/exports`); the bell opens it when clicked. Publishers pass it through the optional `link` argument of `IUserNotificationPublisher.PublishAsync`. Email copies carry the text only.
+- Every notification also carries a `severity` (`Info`, `Success`, `Warning`, `Error`; FR-NOTIF-004) and an optional `payload` — small, arbitrary JSON a client can read back, for example the id of the export it is about. Both default to nothing extra (`Info`, no payload) when a caller does not pass them. The bell menu gives `Warning` and `Error` a colored edge; `Info` and `Success` stay plain.
 - Email goes through a queue with retry and exponential backoff (three attempts, then marked failed). `POST /api/notifications/test-channel` sends one email to the caller immediately and returns the real error.
-- Not implemented: SMS and push channels (they would be modules that follow the delivery-mode rule above), a shared channel interface, a Redis backplane.
+- Not implemented: SMS and push channels (they would be modules that follow the delivery-mode rule above, `IOutboundChannel`), a Redis backplane.
 - The module is behind the `Notifications` feature flag.
 
 ## Configuration keys

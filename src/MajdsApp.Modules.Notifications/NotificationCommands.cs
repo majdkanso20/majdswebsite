@@ -30,7 +30,7 @@ public class MarkNotificationsReadCommandHandler(ApplicationDbContext db, ICurre
 /// <summary>Sends a notification to one user, or to every active user when UserId is null.</summary>
 [RequiresFeature("Notifications")]
 [RequiresPermission(Permissions.Notifications.Send)]
-public record SendNotificationCommand(string? UserId, string Title, string Message) : IRequest, IAuditableCommand;
+public record SendNotificationCommand(string? UserId, string Title, string Message, NotificationSeverity Severity = NotificationSeverity.Info) : IRequest, IAuditableCommand;
 
 public class SendNotificationCommandValidator : AbstractValidator<SendNotificationCommand>
 {
@@ -45,6 +45,6 @@ public class SendNotificationCommandHandler(IUserNotificationPublisher publisher
 {
     public Task Handle(SendNotificationCommand request, CancellationToken ct) =>
         request.UserId is null
-            ? publisher.PublishToAllAsync(request.Title, request.Message, ct: ct)
-            : publisher.PublishAsync(request.UserId, request.Title, request.Message, ct: ct);
+            ? publisher.PublishToAllAsync(request.Title, request.Message, ct: ct, severity: request.Severity)
+            : publisher.PublishAsync(request.UserId, request.Title, request.Message, ct: ct, severity: request.Severity);
 }

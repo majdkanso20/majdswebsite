@@ -6,8 +6,8 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 154 |
-| PARTIAL | 47 |
+| DONE | 156 |
+| PARTIAL | 45 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -26,7 +26,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | F-Account | 6 | 6 | 0 | 0 |
 | F-Settings | 6 | 6 | 0 | 0 |
 | F-Audit | 6 | 6 | 0 | 0 |
-| F-Notifications | 9 | 6 | 3 | 0 |
+| F-Notifications | 9 | 8 | 1 | 0 |
 | F-Files | 6 | 4 | 2 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 5 | 0 | 0 |
@@ -106,7 +106,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 ## F-Notifications (updated 2026-09-24)
 - DONE: 005 SignalR hub `/hubs/notifications` pushes to the user in real time (verified live: toast and badge without reload). 006 per-type x channel preferences with an Account matrix, honored by the dispatcher (verified: opted-out type not delivered). 007 email goes through a queue with retry and exponential backoff, then Failed after 3 attempts (verified: rows retried against the rejecting Gmail server).
-- PARTIAL: 001 dispatcher is `NotificationPublisher` (same `IUserNotificationPublisher` interface, now typed) rather than a separate `INotificationDispatcher`. 004 type stored on the notification; delivery status tracked for queued channels only, no severity or payload.
+- DONE: 001 `INotificationDispatcher.SendAsync(notification, recipients)` is the single dispatch entry point the SRS names; `IUserNotificationPublisher` (same `NotificationPublisher` instance, per scope) is the convenience wrapper most callers use instead of building a `NotificationMessage` by hand (tested, both reach the same recipient). 004 type, severity (Info/Success/Warning/Error) and an optional payload (small JSON a client reads back) are stored with the notification and with each queued delivery; the bell menu shows warning and error severities with a colored edge (tested at both ends).
 - DONE: 002 and 009 channels are pluggable: a channel is one class implementing `IOutboundChannel` (name, address lookup, send) registered by any module or plugin. The dispatcher queues a message for every registered channel a user wants, the background worker delivers and retries it, the delivery mode (Dev / Test / Prod) applies to it, and each user's notification preferences get a column for it, none of which needs a change to the notification module. Email is the first implementation (`EmailOutboundChannel`); a test-only SMS channel proves the path end to end. Only in-app and email exist as real channels: SMS and push need a provider.
 - Delivery environments (requested by the supervisor): every channel obeys a Dev / Test / Prod delivery mode, set on the settings page under Notifications. Dev only logs, Test sends to a test recipient, Prod sends to the real recipient; a missing test recipient or unknown mode sends nothing. It is applied inside the mail sender so all email follows it. When the mode is not Prod, a banner in the header says so to every signed-in user (and follows the setting live, without a reload). The SMS channel will use the same rule (`IDeliveryModePolicy`); it needs a provider.
 - PARTIAL (008): email provider settings (host, port, user, encrypted password, from) are editable in Settings with a "Send test email" action; SMS/push providers do not exist.
@@ -164,7 +164,7 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 47 are partial):
+Still open, roughly by value (no requirement is missing and 45 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels (the channel interface is ready; they need a provider); a cloud file-store provider and resumable uploads.

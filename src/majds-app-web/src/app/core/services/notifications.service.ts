@@ -7,6 +7,8 @@ import { environment } from '../../../environments/environment';
 import { PagedResponse, ResponseDto } from '../models/response-dto';
 import { AuthService } from './auth.service';
 
+export type NotificationSeverity = 'Info' | 'Success' | 'Warning' | 'Error';
+
 export interface NotificationDto {
   id: number;
   type: string;
@@ -16,6 +18,9 @@ export interface NotificationDto {
   createdAt: string;
   /** An in-app route the notification opens when clicked, or null. */
   link?: string | null;
+  severity: NotificationSeverity;
+  /** Small, arbitrary JSON the sender attached (for example an export's id), or null. */
+  payload?: string | null;
 }
 
 /** A channel a module added (SMS, push...), and whether this user receives this notification type on it. */

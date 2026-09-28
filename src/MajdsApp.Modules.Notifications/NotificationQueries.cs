@@ -10,7 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MajdsApp.Modules.Notifications;
 
-public record NotificationDto(int Id, string Type, string Title, string Message, bool IsRead, DateTime CreatedAt, string? Link = null);
+/// <summary>Severity is sent as its name ("Info", "Success", "Warning", "Error"), the same convention as a job's or an export's status.</summary>
+public record NotificationDto(int Id, string Type, string Title, string Message, bool IsRead, DateTime CreatedAt,
+    string? Link = null, string Severity = "Info", string? Payload = null);
 
 // Notifications are always the caller's own, so these carry no [RequiresPermission]; scoping by
 // ICurrentUser is the access control.
