@@ -55,11 +55,11 @@ public class ListBackgroundJobsQueryHandler(IReadRepository<BackgroundJob, Guid>
 [RequiresPermission(Permissions.Jobs.Manage)]
 public record RetryBackgroundJobCommand(Guid JobId) : IRequest, IAuditableCommand;
 
-public class RetryBackgroundJobCommandHandler(ApplicationDbContext db) : IRequestHandler<RetryBackgroundJobCommand>
+public class RetryBackgroundJobCommandHandler(IRepository<BackgroundJob, Guid> jobs, IUnitOfWork unitOfWork) : IRequestHandler<RetryBackgroundJobCommand>
 {
     public async Task Handle(RetryBackgroundJobCommand request, CancellationToken ct)
     {
-        var job = await db.Set<BackgroundJob>().FirstOrDefaultAsync(j => j.Id == request.JobId, ct)
+        var job = await jobs.GetByIdAsync(request.JobId, ct)
             ?? throw new NotFoundException("Job not found.");
 
         if (job.Status != BackgroundJobStatus.Failed)
@@ -69,7 +69,8 @@ public class RetryBackgroundJobCommandHandler(ApplicationDbContext db) : IReques
         job.Attempts = 0;
         job.NextAttemptAt = DateTime.UtcNow;
         job.CompletedAt = null;
-        await db.SaveChangesAsync(ct);
+        jobs.Update(job);
+        await unitOfWork.SaveChangesAsync(ct);
     }
 }
 
@@ -77,17 +78,17 @@ public class RetryBackgroundJobCommandHandler(ApplicationDbContext db) : IReques
 [RequiresPermission(Permissions.Jobs.Manage)]
 public record DeleteBackgroundJobCommand(Guid JobId) : IRequest, IAuditableCommand;
 
-public class DeleteBackgroundJobCommandHandler(ApplicationDbContext db) : IRequestHandler<DeleteBackgroundJobCommand>
+public class DeleteBackgroundJobCommandHandler(IRepository<BackgroundJob, Guid> jobs, IUnitOfWork unitOfWork) : IRequestHandler<DeleteBackgroundJobCommand>
 {
     public async Task Handle(DeleteBackgroundJobCommand request, CancellationToken ct)
     {
-        var job = await db.Set<BackgroundJob>().FirstOrDefaultAsync(j => j.Id == request.JobId, ct)
+        var job = await jobs.GetByIdAsync(request.JobId, ct)
             ?? throw new NotFoundException("Job not found.");
 
         if (job.Status == BackgroundJobStatus.Running)
             throw new ConflictException("A running job cannot be deleted.");
 
-        db.Set<BackgroundJob>().Remove(job);
-        await db.SaveChangesAsync(ct);
+        jobs.Remove(job);
+        await unitOfWork.SaveChangesAsync(ct);
     }
 }

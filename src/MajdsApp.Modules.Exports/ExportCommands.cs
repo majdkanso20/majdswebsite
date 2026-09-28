@@ -1,3 +1,5 @@
+using MajdsApp.SharedKernel.Mapping;
+using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Files;
 using System.Text.Json;
 using FluentValidation;
@@ -33,7 +35,7 @@ public class StartExportCommandValidator : AbstractValidator<StartExportCommand>
 }
 
 public class StartExportCommandHandler(
-    ApplicationDbContext db, IEnumerable<IExportSource> sources, IPermissionChecker permissions, ICurrentUser currentUser)
+    ApplicationDbContext db, IEnumerable<IExportSource> sources, IPermissionChecker permissions, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<StartExportCommand, ExportJobDto>
 {
     private const int MaxActivePerUser = 3;
@@ -71,7 +73,7 @@ public class StartExportCommandHandler(
         db.Set<ExportJob>().Add(job);
         await db.SaveChangesAsync(ct);
 
-        return ExportJobMapping.ToDto(job, null);
+        return mapper.Map<ExportJobDto>(job);
     }
 }
 
@@ -79,19 +81,24 @@ public class StartExportCommandHandler(
 [RequiresFeature("Files")]
 public record ListMyExportsQuery : IRequest<IReadOnlyList<ExportJobDto>>;
 
-public class ListMyExportsQueryHandler(ApplicationDbContext db, ICurrentUser currentUser)
+public class ListMyExportsQueryHandler(IReadRepository<ExportJob, Guid> exportJobs, IReadRepository<FileRecord, Guid> fileRecords, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<ListMyExportsQuery, IReadOnlyList<ExportJobDto>>
 {
     public async Task<IReadOnlyList<ExportJobDto>> Handle(ListMyExportsQuery request, CancellationToken ct)
     {
         var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Authentication is required.");
-        var jobs = await db.Set<ExportJob>().AsNoTracking().Where(j => j.UserId == userId)
+        var jobs = await exportJobs.Query().Where(j => j.UserId == userId)
             .OrderByDescending(j => j.CreatedAt).Take(25).ToListAsync(ct);
 
         var fileIds = jobs.Where(j => j.FileId.HasValue).Select(j => j.FileId!.Value).ToList();
-        var files = await db.Set<FileRecord>().AsNoTracking().Where(f => fileIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, ct);
+        var files = await fileRecords.Query().Where(f => fileIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, ct);
 
-        return jobs.Select(j => ExportJobMapping.ToDto(j, j.FileId.HasValue ? files.GetValueOrDefault(j.FileId.Value) : null)).ToList();
+        // Members match by name; the file's name and size come from the file record the job produced.
+        return jobs.Select(j =>
+        {
+            var file = j.FileId.HasValue ? files.GetValueOrDefault(j.FileId.Value) : null;
+            return mapper.Map<ExportJobDto>(j) with { FileName = file?.FileName, Size = file?.Size };
+        }).ToList();
     }
 }
 
@@ -116,10 +123,4 @@ public class DownloadExportQueryHandler(ApplicationDbContext db, IFileStorage st
 
         return new DownloadedFile(record.FileName, record.ContentType, storage.Open(record.StoredName));
     }
-}
-
-internal static class ExportJobMapping
-{
-    public static ExportJobDto ToDto(ExportJob j, FileRecord? file) => new(
-        j.Id, j.Source, j.Title, j.Format, j.Status.ToString(), j.FileId, file?.FileName, file?.Size, j.Error, j.CreatedAt, j.CompletedAt);
 }

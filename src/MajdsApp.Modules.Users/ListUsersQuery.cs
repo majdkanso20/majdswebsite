@@ -1,3 +1,5 @@
+using MajdsApp.SharedKernel.Data;
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Search;
 using MajdsApp.Data;
 using MajdsApp.Modules.Authorization;
@@ -13,11 +15,11 @@ namespace MajdsApp.Modules.Users;
 [RequiresPermission(Permissions.Users.View)]
 public record ListUsersQuery(PagedRequest Request, bool? IsActive, string? Role) : IRequest<PagedResponse<UserDto>>;
 
-public class ListUsersQueryHandler(ApplicationDbContext db) : IRequestHandler<ListUsersQuery, PagedResponse<UserDto>>
+public class ListUsersQueryHandler(ApplicationDbContext db, IReadRepository<ApplicationUser, string> users, IObjectMapper mapper) : IRequestHandler<ListUsersQuery, PagedResponse<UserDto>>
 {
     public async Task<PagedResponse<UserDto>> Handle(ListUsersQuery request, CancellationToken ct)
     {
-        var query = await UserQueryFilters.ApplyAsync(db, db.Users.AsNoTracking(), request.Request.Filter, request.IsActive, request.Role, ct);
+        var query = await UserQueryFilters.ApplyAsync(db, users.Query(), request.Request.Filter, request.IsActive, request.Role, ct);
 
         var sortableColumns = new Dictionary<string, System.Linq.Expressions.Expression<Func<ApplicationUser, object>>>
         {
@@ -26,18 +28,7 @@ public class ListUsersQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
             ["createdAt"] = u => u.CreatedAt
         };
 
-        var page = await query.ApplyPagingAsync(request.Request, sortableColumns, u => new
-        {
-            u.Id,
-            Email = u.Email!,
-            u.FullName,
-            u.PhoneNumber,
-            u.IsActive,
-            u.EmailConfirmed,
-            LockedOut = u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.UtcNow,
-            u.TwoFactorEnabled,
-            u.CreatedAt
-        }, ct);
+        var page = await query.ApplyPagingAsync(request.Request, sortableColumns, mapper.Projection<ApplicationUser, UserDto>(), ct);
 
         var userIds = page.Items.Select(u => u.Id).ToList();
         var rolesByUser = await db.UserRoles
@@ -45,10 +36,7 @@ public class ListUsersQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
             .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, RoleName = r.Name! })
             .ToListAsync(ct);
 
-        var items = page.Items.Select(u => new UserDto(
-            u.Id, u.Email, u.FullName, u.PhoneNumber, u.IsActive, u.EmailConfirmed, u.LockedOut, u.TwoFactorEnabled,
-            rolesByUser.Where(r => r.UserId == u.Id).Select(r => r.RoleName).ToList(),
-            u.CreatedAt)).ToList();
+        var items = page.Items.Select(u => u with { Roles = rolesByUser.Where(r => r.UserId == u.Id).Select(r => r.RoleName).ToList() }).ToList();
 
         return new PagedResponse<UserDto>
         {

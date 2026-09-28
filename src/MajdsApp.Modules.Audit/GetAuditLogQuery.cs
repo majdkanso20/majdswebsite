@@ -1,4 +1,5 @@
 using MajdsApp.SharedKernel.Data;
+using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Search;
 using System.Linq.Expressions;
 using MajdsApp.Data;
@@ -45,7 +46,7 @@ public static class AuditLogFilters
 [RequiresPermission(Permissions.Audit.View)]
 public record GetAuditLogQuery(PagedRequest Request, AuditLogFilter Filter) : IRequest<PagedResponse<AuditLogEntryDto>>;
 
-public class GetAuditLogQueryHandler(IReadRepository<AuditLogEntry, int> entries) : IRequestHandler<GetAuditLogQuery, PagedResponse<AuditLogEntryDto>>
+public class GetAuditLogQueryHandler(IReadRepository<AuditLogEntry, int> entries, IObjectMapper mapper) : IRequestHandler<GetAuditLogQuery, PagedResponse<AuditLogEntryDto>>
 {
     public Task<PagedResponse<AuditLogEntryDto>> Handle(GetAuditLogQuery request, CancellationToken ct)
     {
@@ -60,8 +61,7 @@ public class GetAuditLogQueryHandler(IReadRepository<AuditLogEntry, int> entries
             ["durationMs"] = a => a.DurationMs
         };
 
-        return query.ApplyPagingAsync(request.Request, sortableColumns,
-            a => new AuditLogEntryDto(a.Id, a.Action, a.UserName, a.CreatedAt, a.Outcome, a.Succeeded, a.DurationMs, a.ClientIp, a.HttpMethod, a.Url), ct);
+        return query.ApplyPagingAsync(request.Request, sortableColumns, mapper.Projection<AuditLogEntry, AuditLogEntryDto>(), ct);
     }
 }
 
