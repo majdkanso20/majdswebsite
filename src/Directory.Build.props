@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    A static-analysis gate for the backend (NFR-MAINT-3), the same idea as the ESLint/Stylelint gate the frontend already has:
+    applies to every project under src/ automatically (MSBuild walks up from each .csproj looking for this file).
+
+    AnalysisModeSecurity=All turns every built-in security rule to at least a warning (SQL/LDAP/XML injection, weak crypto and
+    hashing, insecure deserialization, certificate validation bypass, ...); the backend build step already treats warnings as
+    visible and errors as build failures (see .github/workflows/ci.yml), so a new one is caught in CI, on the same pull request,
+    without any extra wiring here.
+
+    The rest of the analyzer catalog (performance, globalization, design suggestions like CA1848 or CA1305) is left at its
+    default, much quieter severity: turning it on wholesale (AnalysisMode=Recommended) surfaces hundreds of pre-existing,
+    stylistic findings across the codebase that are a separate cleanup, not a gate to add today.
+  -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisModeSecurity>All</AnalysisModeSecurity>
+  </PropertyGroup>
+
+</Project>

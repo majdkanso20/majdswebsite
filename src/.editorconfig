@@ -1,0 +1,42 @@
+# Backend code style (NFR-MAINT-3), the conventions the codebase already follows written down for an IDE to suggest.
+# Left at "suggestion", not enforced at build (that is Directory.Build.props's AnalysisModeSecurity, a separate, sharper gate).
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8-bom
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# One namespace per file, no extra indent level (every module already writes "namespace X;").
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_using_directive_placement = outside_namespace:suggestion
+
+# var where the type is obvious from the right-hand side, which is how the codebase already reads.
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_prefer_braces = when_multiline:suggestion
+
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+
+# Public members are PascalCase, everything else is left to context (matches what is already there).
+dotnet_naming_rule.public_members_pascal_case.severity = suggestion
+dotnet_naming_rule.public_members_pascal_case.symbols = public_symbols
+dotnet_naming_rule.public_members_pascal_case.style = pascal_case_style
+dotnet_naming_symbols.public_symbols.applicable_kinds = property, method, class, interface, enum, struct, event
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+[*.{json,yml,yaml}]
+indent_style = space
+indent_size = 2
+end_of_line = lf

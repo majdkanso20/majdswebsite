@@ -20,7 +20,14 @@ public class NotificationsModule : IFeatureModule
         services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
         services.AddScoped<INotificationTemplate, SecurityEmailTemplate>();
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, UnreadNotificationsWidget>();
-        services.AddSignalR();
+
+        // With no connection string, each node keeps its own connected clients (fine for one node). Set SignalR:Redis:ConnectionString
+        // (NFR-SCALE-2) to share them across every node behind a load balancer, so a push reaches a user connected to a different one.
+        var signalR = services.AddSignalR();
+        var redisConnection = configuration["SignalR:Redis:ConnectionString"];
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+            signalR.AddStackExchangeRedis(redisConnection, options => options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal(configuration["Cache:KeyPrefix"] is { Length: > 0 } p ? p : "majds:"));
+
         services.AddHostedService<NotificationDeliveryWorker>();
     }
 

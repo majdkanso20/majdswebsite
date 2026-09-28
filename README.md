@@ -71,6 +71,7 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `WebApp:BaseUrl` | Where admin-initiated password-reset links point (the Razor site) | `http://localhost:5132` |
 | `Cache:Provider` | `Memory` (one server), `Redis` (shared by every server) or `Distributed` (a distributed cache held in this process, for testing the shared path) | `Memory` |
 | `Cache:Redis:ConnectionString`, `Cache:KeyPrefix` | Redis address; a prefix so several applications can share one Redis | unset, `majds:` |
+| `SignalR:Redis:ConnectionString` | Shares connected clients across every server behind a load balancer, so a push reaches a user on a different node; with none, each node only knows its own | unset |
 | `Metrics:Token` / `Metrics:AllowAnonymous` / `Metrics:Enabled` | `/metrics` needs this bearer token; with none it is open only in Development (or when anonymous access is allowed); `false` turns it off | unset |
 | `Docs:Enabled` / `Docs:Access` | Outside Development the API docs (`/swagger`) are off unless `Docs:Enabled` is `true`; `Docs:Access` is `Permission` (needs `Docs.View`), `Authenticated` or `Open` | off, `Permission` |
 | `Jobs:Scheduler:Enabled` / `Jobs:Worker:Enabled` | Turn the recurring-job scheduler or the queue worker off on a server | on |
@@ -95,6 +96,8 @@ npm run lint:all                      # ESLint (TypeScript and templates) + Styl
 
 The integration tests host the real application against a throwaway SQLite database built from the project's migrations, so they exercise the same pipeline production uses.
 
+`dotnet build` also runs the .NET analyzers (`src/Directory.Build.props`): a security-relevant finding (injection, weak crypto, insecure deserialization...) is a build warning today and a build failure the moment it is promoted, the backend's counterpart to the frontend's ESLint/Stylelint gate.
+
 **Continuous integration:** `.github/workflows/ci.yml` runs the backend build and both backend test projects, and the frontend lint, unit tests and production build, on every push to `main` and every pull request. Run the same checks locally before pushing.
 
 ## Security notes
@@ -103,7 +106,7 @@ The integration tests host the real application against a throwaway SQLite datab
 - Responses carry hardening headers (CSP, `nosniff`, frame denial, referrer and permissions policies); HSTS is enabled outside Development.
 - Sensitive settings are encrypted with ASP.NET Core Data Protection. **In production configure a persistent key ring**, or stored secrets become unreadable when keys change.
 - The audit log records who did what, from where, the outcome, redacted parameters and property-level changes, and is append-only.
-- Plugin code runs inside the API process and is only semi-trusted. Install plugins only from sources you trust; signature checking is not implemented.
+- Plugin code runs inside the API process and is only semi-trusted. Install plugins only from sources you trust; a checksum allow-list and digital signatures (`Plugins:Trust:RequireSignature`, `Plugins:Trust:Signers:<keyId>`) can refuse anything that is not on the list or not signed by a trusted publisher, but neither is required by default.
 
 ## Known limits
 

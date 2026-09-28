@@ -72,6 +72,7 @@ When a channel is not in Prod, the website shows a banner under the header to ev
 ## Notes
 
 - Real-time: hub at `/hubs/notifications`. Browsers cannot set headers on a WebSocket, so the token is accepted from the `access_token` query string on `/hubs` paths only.
+- Behind a load balancer with more than one node, set `SignalR:Redis:ConnectionString` (NFR-SCALE-2) so a push reaches a user connected to a different node; with none, each node only knows about its own connections. Uses the same `Cache:KeyPrefix` so several deployments can share one Redis without crossing wires.
 - Types are `General`, `Security`, `Account`, `Administration` (see `NotificationTypes`); channels are in-app and email. With no saved preference every channel is on.
 - A notification may carry an in-app `link` (for example `/exports`); the bell opens it when clicked. Publishers pass it through the optional `link` argument of `IUserNotificationPublisher.PublishAsync`. Email copies carry the text only.
 - Every notification also carries a `severity` (`Info`, `Success`, `Warning`, `Error`; FR-NOTIF-004) and an optional `payload` — small, arbitrary JSON a client can read back, for example the id of the export it is about. Both default to nothing extra (`Info`, no payload) when a caller does not pass them. The bell menu gives `Warning` and `Error` a colored edge; `Info` and `Success` stay plain.
