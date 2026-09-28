@@ -45,7 +45,7 @@ Defined in the Settings module and used here and by the web app: `General.Defaul
 
 ## Notes
 
-- Not covered: text from ASP.NET Identity (for example password-policy errors) and model-binding errors stay in English; plugins cannot ship their own translations yet.
+- ASP.NET Identity's own texts (password-policy errors, taken names) and model-binding errors (a bad query value, a missing body) go through the catalog too, field by field, the same as everything else the server says. Not covered: text inside a plugin's frontend screens, and Swagger.
 - The catalog is embedded in the assembly, so a change needs a rebuild; there is no editing screen.
 
 ## Tests

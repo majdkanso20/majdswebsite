@@ -37,4 +37,19 @@ public class IdentityMessageTranslationTests(ApiFactory factory) : IClassFixture
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         body.Should().MatchRegex("[؀-ۿ]").And.NotContain("Passwords must");
     }
+
+    [Fact]
+    public async Task A_model_binding_error_is_translated_too_not_just_the_validation_summary()
+    {
+        var admin = await factory.SignInAsync("idm.admin2@example.com", "Admin");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/users/list?page=not-a-number");
+        request.Headers.AcceptLanguage.ParseAdd("ar");
+
+        var response = await admin.Http.SendAsync(request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        // ASP.NET's own "value is not valid" message, not just the "Validation failed." summary, comes back in Arabic (F-Localization FR-I18N-001).
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        body.Should().MatchRegex("[؀-ۿ]").And.NotContain("is not valid for");
+    }
 }

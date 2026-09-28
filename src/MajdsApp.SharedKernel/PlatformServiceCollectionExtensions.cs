@@ -96,9 +96,11 @@ public static class PlatformServiceCollectionExtensions
         {
             options.InvalidModelStateResponseFactory = context =>
             {
+                // Every field message (ours from [Required]/[Range]/... or the framework's own "value is not valid") goes through the
+                // same catalog as everything else the server says (F-Localization FR-I18N-001), so a client asking in Arabic gets it back in Arabic.
                 var errors = context.ModelState
                     .Where(entry => entry.Value?.Errors.Count > 0)
-                    .SelectMany(entry => entry.Value!.Errors.Select(e => $"{entry.Key}: {e.ErrorMessage}"));
+                    .SelectMany(entry => entry.Value!.Errors.Select(e => $"{entry.Key}: {context.HttpContext.Localize(e.ErrorMessage)}"));
 
                 var response = ResponseDto.Fail<object>(ResponseStatusCode.ValidationError, context.HttpContext.Localize("Validation failed."), errors);
                 return new BadRequestObjectResult(response) { StatusCode = (int)ResponseStatusCode.ValidationError };
