@@ -45,3 +45,6 @@ plugins/*/.uninstall
 # Playwright
 test-results/
 playwright-report/
+
+# Alternate build output used when a running API locks the normal one
+.artifacts/

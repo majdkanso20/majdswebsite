@@ -30,7 +30,8 @@ public class NotificationSubscription
     public NotificationChannel Channels { get; set; } = NotificationChannel.All;
 }
 
-public enum DeliveryStatus { Pending = 0, Sent = 1, Failed = 2 }
+/// <summary>Suppressed: deliberately not sent because the channel's delivery mode is Dev (or Test with no test recipient).</summary>
+public enum DeliveryStatus { Pending = 0, Sent = 1, Failed = 2, Suppressed = 3 }
 
 /// <summary>Per-recipient, per-channel delivery for channels that go through the background queue
 /// (email), with attempt tracking for retry/backoff (FR-NOTIF-004/007).</summary>

@@ -19,7 +19,11 @@ public class OutboundResilienceTests
     private sealed class FakeSender(Func<int, CancellationToken, Task> behaviour) : IEmailMessageSender
     {
         public int Calls;
-        public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) => behaviour(++Calls, ct);
+        public async Task<DeliveryOutcome> SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+        {
+            await behaviour(++Calls, ct);
+            return DeliveryOutcome.Sent;
+        }
     }
 
     private static (ResilientEmailMessageSender Sender, FakeSender Inner) Build(Func<int, CancellationToken, Task> behaviour, Action<OutboundResilienceOptions>? tune = null)

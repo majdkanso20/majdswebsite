@@ -159,5 +159,8 @@
   "Email '{0}' is invalid.": "البريد الإلكتروني '{0}' غير صالح.",
   "User already has a password set.": "لدى المستخدم كلمة مرور بالفعل.",
   "An unknown failure has occurred.": "حدث خطأ غير معروف.",
-  "Passwords must have at least one non alphanumeric character.": "يجب أن تحتوي كلمة المرور على رمز واحد على الأقل ليس حرفاً ولا رقماً."
+  "Passwords must have at least one non alphanumeric character.": "يجب أن تحتوي كلمة المرور على رمز واحد على الأقل ليس حرفاً ولا رقماً.",
+  "The delivery mode must be Dev, Test or Prod.": "يجب أن يكون وضع الإرسال Dev أو Test أو Prod.",
+  "The test recipient must be a valid email address.": "يجب أن يكون مستلم الاختبار بريداً إلكترونياً صالحاً.",
+  "Nothing was sent: the email delivery mode is Dev (or Test with no test recipient). Change it under Settings, Notifications.": "لم يُرسل شيء: وضع إرسال البريد هو Dev (أو Test بلا مستلم اختبار). غيّره من الإعدادات، الإشعارات."
 }

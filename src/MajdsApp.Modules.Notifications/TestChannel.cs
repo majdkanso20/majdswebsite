@@ -30,8 +30,10 @@ public class TestEmailChannelCommandHandler(
         try
         {
             var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
-            await sender.SendAsync(email, catalog.Translate("Test email", culture),
+            var outcome = await sender.SendAsync(email, catalog.Translate("Test email", culture),
                 $"<p>{catalog.Translate("This is a test email from the notification settings.", culture)}</p>", ct);
+            if (outcome == MajdsApp.SharedKernel.Notifications.DeliveryOutcome.Suppressed)
+                throw new ValidationException("Nothing was sent: the email delivery mode is Dev (or Test with no test recipient). Change it under Settings, Notifications.");
         }
         catch (Exception ex)
         {

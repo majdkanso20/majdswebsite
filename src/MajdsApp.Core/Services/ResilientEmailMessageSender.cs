@@ -31,6 +31,6 @@ public sealed class EmailPipeline(IOptions<OutboundResilienceOptions> options, I
 /// </summary>
 public sealed class ResilientEmailMessageSender(IEmailMessageSender inner, EmailPipeline pipeline) : IEmailMessageSender
 {
-    public async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
+    public async Task<DeliveryOutcome> SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
         await pipeline.Pipeline.ExecuteAsync(async token => await inner.SendAsync(toEmail, subject, htmlBody, token), ct);
 }

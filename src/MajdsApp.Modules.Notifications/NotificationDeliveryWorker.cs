@@ -46,10 +46,19 @@ public class NotificationDeliveryWorker(IServiceScopeFactory scopes, ILogger<Not
                 var email = await db.Users.IgnoreQueryFilters().Where(u => u.Id == delivery.UserId).Select(u => u.Email).FirstOrDefaultAsync(ct);
                 if (string.IsNullOrEmpty(email)) throw new InvalidOperationException("Recipient has no email address.");
 
-                await sender.SendAsync(email, delivery.Title, delivery.Body ?? $"<p>{System.Net.WebUtility.HtmlEncode(delivery.Message)}</p>", ct);
-                delivery.Status = DeliveryStatus.Sent;
-                delivery.SentAt = DateTime.UtcNow;
-                delivery.LastError = null;
+                var outcome = await sender.SendAsync(email, delivery.Title, delivery.Body ?? $"<p>{System.Net.WebUtility.HtmlEncode(delivery.Message)}</p>", ct);
+                if (outcome == DeliveryOutcome.Suppressed)
+                {
+                    // Dev mode (or Test with no test recipient): the mail channel logged it instead of sending it.
+                    delivery.Status = DeliveryStatus.Suppressed;
+                    delivery.LastError = "Not sent: the delivery mode is Dev, or Test with no test recipient.";
+                }
+                else
+                {
+                    delivery.Status = DeliveryStatus.Sent;
+                    delivery.SentAt = DateTime.UtcNow;
+                    delivery.LastError = null;
+                }
             }
             catch (Exception ex)
             {

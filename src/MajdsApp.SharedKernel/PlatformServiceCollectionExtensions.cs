@@ -48,6 +48,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddScoped<MajdsApp.SharedKernel.Jobs.IBackgroundJobQueue, MajdsApp.SharedKernel.Jobs.NullBackgroundJobQueue>();
         services.TryAddSingleton<MajdsApp.SharedKernel.Localization.IMessageCatalog, MajdsApp.SharedKernel.Localization.NullMessageCatalog>();
         services.TryAddScoped<IFeatureChecker, DefaultFeatureChecker>();
+        services.TryAddScoped<MajdsApp.SharedKernel.Notifications.IDeliveryModePolicy, MajdsApp.SharedKernel.Notifications.SettingsDeliveryModePolicy>();
         services.TryAddSingleton<IPluginStateCache, AllowAllPluginStateCache>();
         services.AddMemoryCache();
 

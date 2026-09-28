@@ -33,5 +33,7 @@ public class NullNotificationPublisher : IUserNotificationPublisher
 /// host only when SMTP is configured; the email channel is skipped when it is absent.</summary>
 public interface IEmailMessageSender
 {
-    Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default);
+    /// <summary>Hands a message to the mail channel. What actually happens depends on the delivery mode (see <see cref="DeliveryMode"/>): the result says whether
+    /// it was sent, sent to the test recipient instead, or only logged.</summary>
+    Task<DeliveryOutcome> SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default);
 }

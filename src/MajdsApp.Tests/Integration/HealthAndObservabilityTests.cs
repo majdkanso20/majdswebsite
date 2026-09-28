@@ -142,7 +142,7 @@ public class HealthAndObservabilityTests(HealthFactory factory) : IClassFixture<
 
     private sealed class Sender : IEmailMessageSender
     {
-        public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) => Task.CompletedTask;
+        public Task<DeliveryOutcome> SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) => Task.FromResult(DeliveryOutcome.Sent);
     }
 
     private static EmailHealthCheck EmailCheck(string host, int port, bool configured)

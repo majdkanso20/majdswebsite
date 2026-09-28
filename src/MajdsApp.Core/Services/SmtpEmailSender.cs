@@ -58,11 +58,11 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
         return new Translator(services.GetService<IMessageCatalog>(), culture);
     }
 
-    public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
+    public Task<MajdsApp.SharedKernel.Notifications.DeliveryOutcome> SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default) =>
         SendEmailAsync(toEmail, subject, htmlBody, ct);
 
     // The token is passed to every network call so a timeout or shutdown (see ResilientEmailMessageSender) really stops the send.
-    private async Task SendEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+    private async Task<MajdsApp.SharedKernel.Notifications.DeliveryOutcome> SendEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
     {
         // Admin-entered settings (Email.*, password stored encrypted) win over the server configuration
         // when non-empty, so credentials can be rotated from the UI without a redeploy.
@@ -70,8 +70,16 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
         // endpoint mapping), so read them through a short-lived scope of our own.
         string host, username, password, fromEmail;
         int port;
+        MajdsApp.SharedKernel.Notifications.DeliveryDecision decision;
         using (var scope = services.CreateScope())
         {
+            // The delivery mode (Dev, Test or Prod) is applied here, at the one place every email leaves the system, so nothing can bypass it:
+            // notifications, password resets, confirmation links and the settings page's test email all follow it. With no policy registered, mail is sent as addressed.
+            var policy = scope.ServiceProvider.GetService<MajdsApp.SharedKernel.Notifications.IDeliveryModePolicy>();
+            decision = policy is null
+                ? new MajdsApp.SharedKernel.Notifications.DeliveryDecision(MajdsApp.SharedKernel.Notifications.DeliveryMode.Prod, toEmail, null, null)
+                : await policy.DecideAsync("Email", toEmail, ct);
+
             var settings = scope.ServiceProvider.GetRequiredService<MajdsApp.SharedKernel.Settings.ISettingsProvider>();
             async Task<string> OrAsync(string name, string fallback)
             {
@@ -86,10 +94,16 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
             fromEmail = await OrAsync("Email.FromEmail", _options.FromEmail);
         }
 
+        if (decision.Recipient is null)
+        {
+            logger.LogInformation("[{Mode}] Email NOT sent ({Reason}). It was for {To}: '{Subject}'", decision.Mode, decision.Reason, toEmail, subject);
+            return MajdsApp.SharedKernel.Notifications.DeliveryOutcome.Suppressed;
+        }
+
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_options.FromName, fromEmail));
-        message.To.Add(MailboxAddress.Parse(toEmail));
-        message.Subject = subject;
+        message.To.Add(MailboxAddress.Parse(decision.Recipient));
+        message.Subject = (decision.SubjectPrefix ?? "") + subject;
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
         using var client = new SmtpClient();
@@ -98,6 +112,13 @@ public class SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, ILogger<SmtpEmai
         await client.SendAsync(message, ct);
         await client.DisconnectAsync(true, ct);
 
-        logger.LogInformation("Sent email '{Subject}' to {Email}", subject, toEmail);
+        if (decision.Recipient.Equals(toEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("Sent email '{Subject}' to {Email}", subject, toEmail);
+            return MajdsApp.SharedKernel.Notifications.DeliveryOutcome.Sent;
+        }
+
+        logger.LogInformation("[{Mode}] Sent email '{Subject}' to the test recipient {Recipient} instead of {Email}", decision.Mode, subject, decision.Recipient, toEmail);
+        return MajdsApp.SharedKernel.Notifications.DeliveryOutcome.Redirected;
     }
 }

@@ -361,5 +361,12 @@
   "Move users and delete": "نقل المستخدمين وحذف",
   "unread": "غير مقروءة",
   "Show": "عرض",
-  "The list could not be loaded.": "تعذّر تحميل القائمة."
+  "The list could not be loaded.": "تعذّر تحميل القائمة.",
+  "Notifications": "الإشعارات",
+  "Delivery mode": "وضع الإرسال",
+  "Email delivery mode": "وضع إرسال البريد",
+  "Email test recipient": "مستلم البريد التجريبي",
+  "Dev: nothing is sent, it is only logged. Test: messages are really sent, but only to the test recipient. Prod: messages go to their real recipients.": "Dev: لا يُرسل شيء ويُسجَّل فقط. Test: تُرسل الرسائل فعلاً لكن إلى مستلم الاختبار فقط. Prod: تصل الرسائل إلى مستلميها الحقيقيين.",
+  "Leave empty to use the delivery mode above, or choose Dev, Test or Prod for email alone.": "اتركه فارغاً لاستخدام وضع الإرسال أعلاه، أو اختر Dev أو Test أو Prod للبريد وحده.",
+  "In Test mode every email goes to this address instead of the real recipient. With none set, Test mode sends nothing.": "في وضع Test يذهب كل بريد إلى هذا العنوان بدلاً من المستلم الحقيقي. وإن لم يُحدَّد، فلا يُرسل Test شيئاً."
 }
