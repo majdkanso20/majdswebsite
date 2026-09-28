@@ -36,7 +36,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'dotnet run --project ../MajdsApp.Api --no-launch-profile --urls http://localhost:5299',
+      // Built into its own folder so a development API that is already running (and locking its own build output) never gets in the way.
+      command: `dotnet run --project ../MajdsApp.Api --no-launch-profile --urls http://localhost:5299 --property:UseArtifactsOutput=true --property:ArtifactsPath=${join(appFolder, '..', '..', '.artifacts', 'e2e')}`,
       cwd: appFolder,
       stdout: 'pipe',
       stderr: 'pipe',

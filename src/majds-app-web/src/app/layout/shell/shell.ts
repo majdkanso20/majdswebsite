@@ -23,6 +23,7 @@ import { AccountService } from '../../core/services/account.service';
 import { UserSettingsService } from '../../core/services/user-settings.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { MatBadgeModule } from '@angular/material/badge';
+import { channelsOutsideProd } from '../../core/notifications/delivery-environment';
 import { AppSettingsService } from '../../core/services/app-settings.service';
 
 /**
@@ -85,6 +86,12 @@ export class Shell {
   readonly skins = SKINS;
   readonly skin = this.themeService.skin;
   readonly currentUser = this.authService.currentUser;
+  /** One line for each channel that is not in Prod (Dev: nothing is sent; Test: only to the test recipient), or none. */
+  readonly deliveryNotices = computed(() =>
+    channelsOutsideProd((name, fallback) => this.appSettingsService.get(name, fallback)).map((c) =>
+      this.localization.translate(c.mode === 'Dev' ? 'Dev mode: {0} notifications are not sent, they are only logged.' : 'Test mode: {0} notifications go only to the test recipient.', this.localization.translate(c.channel))
+    )
+  );
   readonly applicationName = computed(() => this.appSettingsService.get('General.ApplicationName', "Majd's App"));
 
   /** Mobile = overlay sidenav that closes on navigation; desktop = persistent, always open. */

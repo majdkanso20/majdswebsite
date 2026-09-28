@@ -92,3 +92,14 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+// Announces that notifications are not going to their real recipients (Dev or Test delivery mode).
+.shell-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  font-size: 0.875rem;
+}

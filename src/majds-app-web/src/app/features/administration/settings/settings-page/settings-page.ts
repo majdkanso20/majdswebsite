@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { SettingsApiService } from '../settings-api.service';
 import { SettingDataType, SettingDto } from '../settings.models';
 
@@ -35,6 +36,7 @@ export class SettingsPage {
   private readonly api = inject(SettingsApiService);
   private readonly fb = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly appSettings = inject(AppSettingsService);
 
   readonly SettingDataType = SettingDataType;
   readonly loading = signal(true);
@@ -76,6 +78,7 @@ export class SettingsPage {
         this.saving.set(false);
         this.snackBar.open('Settings saved.', 'Dismiss', { duration: 3000 });
         this.load();
+        void this.appSettings.loadAsync(); // so the application name and the delivery-mode banner follow the change without a reload
       },
       error: () => {
         this.saving.set(false);

@@ -18,11 +18,13 @@ public static class NotificationSettings
         public static readonly SettingDefinition DeliveryMode = new(
             "Notifications.DeliveryMode", "Notifications", "Delivery mode", SettingDataType.String, "Prod",
             description: "Dev: nothing is sent, it is only logged. Test: messages are really sent, but only to the test recipient. Prod: messages go to their real recipients.",
+            isVisibleToClient: true, // the mode (not the test recipient) is shown to everyone as a banner when it is not Prod
             validator: value => CheckMode(value, allowEmpty: false));
 
         public static readonly SettingDefinition EmailDeliveryMode = new(
             "Notifications.Email.DeliveryMode", "Notifications", "Email delivery mode", SettingDataType.String, "",
             description: "Leave empty to use the delivery mode above, or choose Dev, Test or Prod for email alone.",
+            isVisibleToClient: true,
             validator: value => CheckMode(value, allowEmpty: true));
 
         public static readonly SettingDefinition EmailTestRecipient = new(

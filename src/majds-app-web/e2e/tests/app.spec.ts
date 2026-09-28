@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { ADMIN } from '../playwright.config';
 import { accessToken, api, signInQuickly, signInThroughTheForm } from './support';
@@ -142,5 +143,34 @@ test.describe('users', () => {
 
     await page.getByRole('radio', { name: 'All' }).click();
     await expect(page.getByRole('row', { name: new RegExp(sleeper) })).toBeVisible();
+  });
+});
+
+test.describe('notification delivery mode', () => {
+  const setMode = (request: import('@playwright/test').APIRequestContext, token: string, mode: string) =>
+    api(request, token, 'POST', 'settings/update', { items: [{ name: 'Notifications.DeliveryMode', value: mode }] });
+
+  test('a banner says when notifications are not going to their real recipients, follows the setting live, and is readable', async ({ page, request }) => {
+    const token = await signInQuickly(page, request);
+    try {
+      await setMode(request, token, 'Dev');
+      await page.goto('/dashboard');
+      const banner = page.getByRole('status').filter({ hasText: 'notifications are not sent' });
+      await expect(banner).toBeVisible();
+      await expect(banner).toContainText('Email');
+      expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.map((v) => v.id)).toEqual([]);
+
+      await setMode(request, token, 'Test');
+      await page.reload();
+      await expect(page.getByRole('status').filter({ hasText: 'go only to the test recipient' })).toBeVisible();
+
+      // Changing it on the settings page updates the banner without a reload.
+      await page.goto('/administration/settings');
+      await page.getByLabel('Delivery mode', { exact: true }).fill('Prod');
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.getByRole('status').filter({ hasText: 'notifications' })).toHaveCount(0);
+    } finally {
+      await setMode(request, token, 'Prod');
+    }
   });
 });

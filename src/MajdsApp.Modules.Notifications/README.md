@@ -44,6 +44,8 @@ Settings: `Notifications.DeliveryMode` (the general mode, default **Prod** so an
 
 Safety: in Test mode with no test recipient, or with a mode that is not Dev, Test or Prod, **nothing is sent** (a missing or wrong setting can only make the system quieter, never message a real person). The rule is applied inside the mail sender, the one place every email leaves the system, so it covers notifications, password-reset and confirmation emails, and the "Send test email" button (which reports "Nothing was sent" in Dev).
 
+When a channel is not in Prod, the website shows a banner under the header to every signed-in user ("Dev mode: Email notifications are not sent, they are only logged." or "Test mode: ... go only to the test recipient."). It reads the two mode settings, which are visible to clients (the test recipient is not), and updates as soon as the settings page saves.
+
 ## Recurring jobs
 
 - *Notification cleanup*

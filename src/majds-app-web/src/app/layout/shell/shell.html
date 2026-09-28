@@ -156,6 +156,13 @@
       </mat-menu>
     </mat-toolbar>
 
+    @for (notice of deliveryNotices(); track notice) {
+      <div class="shell-banner" role="status">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>{{ notice }}</span>
+      </div>
+    }
+
     <main #content id="main-content" class="shell-content" tabindex="-1">
       <router-outlet />
     </main>
