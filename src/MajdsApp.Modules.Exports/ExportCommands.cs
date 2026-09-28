@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using System.Text.Json;
 using FluentValidation;
 using MajdsApp.Data;
@@ -98,7 +99,7 @@ public class ListMyExportsQueryHandler(ApplicationDbContext db, ICurrentUser cur
 [RequiresFeature("Files")]
 public record DownloadExportQuery(Guid JobId) : IRequest<DownloadedFile>;
 
-public class DownloadExportQueryHandler(ApplicationDbContext db, FileStorage storage, ICurrentUser currentUser)
+public class DownloadExportQueryHandler(ApplicationDbContext db, IFileStorage storage, ICurrentUser currentUser)
     : IRequestHandler<DownloadExportQuery, DownloadedFile>
 {
     public async Task<DownloadedFile> Handle(DownloadExportQuery request, CancellationToken ct)

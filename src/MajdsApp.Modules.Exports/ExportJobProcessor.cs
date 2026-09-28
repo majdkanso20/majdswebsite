@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using System.Text.Json;
 using MajdsApp.Data;
 using MajdsApp.Modules.Files;
@@ -21,7 +22,7 @@ public static class ExportLimits
 /// can be driven directly, and a job that throws is recorded as failed (and the user told) rather than lost.
 /// </summary>
 public class ExportJobProcessor(
-    ApplicationDbContext db, IEnumerable<IExportSource> sources, FileStorage storage,
+    ApplicationDbContext db, IEnumerable<IExportSource> sources, IFileStorage storage,
     IUserNotificationPublisher notifications, ILogger<ExportJobProcessor> logger) : IScopedService
 {
     /// <summary>Claims and runs the oldest pending job. Returns false when there was nothing to do.</summary>

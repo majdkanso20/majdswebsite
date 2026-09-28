@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Jobs;
 using MajdsApp.SharedKernel.Settings;
@@ -9,7 +10,7 @@ namespace MajdsApp.Modules.Files;
 /// Physically removes files that were deleted more than <c>Files.DeletedRetentionDays</c> days ago: the bytes first, then the record (P F-Files FR-FILE-006).
 /// If removing the bytes fails the record is kept, so the next run tries again instead of leaving an untracked file on disk.
 /// </summary>
-public class PurgeDeletedFilesJob(ApplicationDbContext db, FileStorage storage, ISettingsProvider settings) : IRecurringJob
+public class PurgeDeletedFilesJob(ApplicationDbContext db, IFileStorage storage, ISettingsProvider settings) : IRecurringJob
 {
     public string Name => "Deleted file cleanup";
     public TimeSpan Interval => TimeSpan.FromHours(24);

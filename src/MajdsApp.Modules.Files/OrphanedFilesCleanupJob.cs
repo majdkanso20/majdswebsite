@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Jobs;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ namespace MajdsApp.Modules.Files;
 /// between writing the bytes and saving the record leaves one. Only files older than a day are touched, so a file that is being
 /// uploaded right now is never removed.
 /// </summary>
-public class OrphanedFilesCleanupJob(ApplicationDbContext db, FileStorage storage) : IRecurringJob
+public class OrphanedFilesCleanupJob(ApplicationDbContext db, IFileStorage storage) : IRecurringJob
 {
     public static readonly TimeSpan MinimumAge = TimeSpan.FromHours(24);
 

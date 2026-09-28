@@ -45,3 +45,11 @@ Tables: `Files`. Migrations live in `MajdsApp.Core`.
 Not yet covered by automated tests (see the traceability document).
 
 - *Orphaned file cleanup* (a recurring job, daily) deletes stored files that no file record points to, once they are a day old, so an upload interrupted between writing the bytes and saving the record does not leave a file behind.
+
+## Storage providers (FR-FILE-001)
+
+Everything that keeps a file (uploads, exports, profile pictures) talks to `IFileStorage` (in `MajdsApp.SharedKernel.Files`): save a stream, open a stream, delete, list. `Files:Storage:Provider` picks the store; `Disk` (the default, under `App_Data/files`) is built in. To add another (Azure Blob, S3), write a class that implements `IFileStorage` and an `IFileStorageProvider` with a name, register the provider in a module, and set the configuration to that name. An unknown name stops the application from starting and lists the ones that exist.
+
+## What an upload is checked against (FR-FILE-002)
+
+The bytes decide, not the name or the client's content type. A Windows, Linux or macOS program, a Java class or a script with a shebang is refused whatever the file is called. A file named as a PNG, JPEG, GIF, WebP, PDF, ZIP, DOCX, XLSX or PPTX must start like one. The content type stored (and served on download) comes from what was found; text formats (`.txt .csv .json .md .xml`) get their own type and everything else `application/octet-stream`. The size cap (`Files.MaxUploadMb`) and the blocked-extension list still apply. A refused file leaves nothing behind in the store.

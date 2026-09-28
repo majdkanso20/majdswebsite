@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using FluentValidation;
 using MajdsApp.Data;
 using MajdsApp.Modules.Files;
@@ -93,7 +94,7 @@ public class ChangeMyPasswordCommandHandler(UserManager<ApplicationUser> users, 
 public record SetMyPictureCommand(string ContentType, long Size, Stream Content) : IRequest, IAuditableCommand;
 
 public class SetMyPictureCommandHandler(
-    UserManager<ApplicationUser> users, ICurrentUser current, ApplicationDbContext db, FileStorage storage)
+    UserManager<ApplicationUser> users, ICurrentUser current, ApplicationDbContext db, IFileStorage storage)
     : IRequestHandler<SetMyPictureCommand>
 {
     private const long MaxBytes = 2 * 1024 * 1024;
@@ -149,7 +150,7 @@ public record MyPicture(string ContentType, Stream Content);
 public record GetMyPictureQuery : IRequest<MyPicture>;
 
 public class GetMyPictureQueryHandler(
-    UserManager<ApplicationUser> users, ICurrentUser current, ApplicationDbContext db, FileStorage storage)
+    UserManager<ApplicationUser> users, ICurrentUser current, ApplicationDbContext db, IFileStorage storage)
     : IRequestHandler<GetMyPictureQuery, MyPicture>
 {
     public async Task<MyPicture> Handle(GetMyPictureQuery request, CancellationToken ct)

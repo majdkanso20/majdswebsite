@@ -6,8 +6,8 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 148 |
-| PARTIAL | 53 |
+| DONE | 151 |
+| PARTIAL | 50 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -20,14 +20,14 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | U1 Skinnable UI | 8 | 4 | 4 | 0 |
 | U2 Mobile-first | 9 | 5 | 4 | 0 |
 | U3 App shell | 8 | 8 | 0 | 0 |
-| F-Authorization | 8 | 7 | 1 | 0 |
+| F-Authorization | 8 | 8 | 0 | 0 |
 | F-Users | 8 | 7 | 1 | 0 |
 | F-Roles | 5 | 5 | 0 | 0 |
 | F-Account | 6 | 6 | 0 | 0 |
-| F-Settings | 6 | 5 | 1 | 0 |
+| F-Settings | 6 | 6 | 0 | 0 |
 | F-Audit | 6 | 6 | 0 | 0 |
 | F-Notifications | 9 | 6 | 3 | 0 |
-| F-Files | 6 | 3 | 3 | 0 |
+| F-Files | 6 | 4 | 2 | 0 |
 | F-Localization | 6 | 5 | 1 | 0 |
 | F-Errors | 5 | 5 | 0 | 0 |
 | F-Data | 6 | 3 | 3 | 0 |
@@ -84,7 +84,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - DONE: 001, 002, 005, 006 (role-permission and user-role edits both refresh the cache; tested), 007 (last administrator protected on delete, deactivate and role removal; tested).
 - DONE: 003 direct user grants and denies (`GET /api/users/permissions/get` explains what the roles give, what was set on the user and the result; `POST /api/users/permissions/update` replaces the set; a deny wins over a role grant, a grant adds to the roles, both take effect at once, and an administrator holds everything anyway; unknown or contradictory permissions are refused; a Permissions dialog on the Users page edits them; tested).
 - DONE: 008 (permissions are found by scanning the assemblies, and a disabled plugin's permissions are left out of the role editor and come back when it is enabled; grants already made are kept; tested).
-- PARTIAL: 004 done in the behavior, no action filter.
+- DONE: 004 `[RequiresPermission]` works on a MediatR request (the pipeline checks it) and on a controller or an action (`PermissionActionFilter`); both answer 401 when nobody is signed in and 403 naming the missing permission, as `ResponseDto`; tested with a controller-level and an action-level guard.
 
 ## F-Users / F-Roles
 - Users DONE: 003, 004, 005, 006, 007 (self-delete, last-admin delete/deactivate and last-admin role removal are all refused; tested). DONE: 008 (`Security.MinPasswordLength`, 6 to 128, enforced by an Identity password validator so it applies to creating a user, registering, changing and resetting; tested). DONE: 001 (the list has an All / Active / Inactive selector, and the export follows it; a browser test covers it). PARTIAL: 002 (password only, no emailed set-password link).
@@ -96,7 +96,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 ## F-Settings (updated 2026-09-24)
 - DONE: 001 definitions declare whether a user may override them (`AllowUserOverride`); 002 precedence User > Application > code default (verified through the API: an application change reached one user but not the user who had overridden it); 003 typed getters plus a permission-guarded Application update and a self-scoped `settings/my` and `settings/update-mine` for the User scope (validates that the setting allows user override and, for time zone, that it exists); 004 caching with invalidation for both scopes.
 - DONE: 006 sensitive settings are encrypted at rest (ASP.NET Data Protection, stored as `enc:...`), masked on every read (only `hasValue` is returned), changed write-only (blank keeps, explicit clear removes), and refused at User scope. Verified: database row is ciphertext, the secret appears in no API response, non-admins get 403, and the stored SMTP password is what the mail sender uses.
-- PARTIAL: 005 admin page groups by category, now including Email and Appearance; no Notifications group.
+- DONE: 005 the admin page groups settings by category: General, Notifications (delivery mode and test recipients), Security, Appearance, Email, Files and the rest.
 - Now used by: the user's language and time zone (Account > My preferences, and the header language switch). Not yet applied: dates are still formatted in the browser's zone, not the saved time zone.
 
 ## F-Audit (updated 2026-09-24)
@@ -114,7 +114,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - Note: real email delivery is blocked by the rejected Gmail credentials; the retry path is proven, a successful send is not.
 
 ## F-Files
-- DONE: 003, 004. PARTIAL: 001 (concrete disk class, no `IFileStorage`, no cloud), 002 (blocked-extension list, size cap, no content sniffing), 005 (streamed, not chunked). DONE: 006 soft delete (deleting sets `DeletedAt`/`DeletedBy`, a global query filter hides the file from every query at once, and `PurgeDeletedFilesJob` removes the bytes and the record after `Files.DeletedRetentionDays`, default 30; the orphan sweep leaves a soft-deleted file's bytes alone; tested).
+- DONE: 003, 004. DONE: 002 (uploads are judged by their first bytes: a program is refused whatever it is called, a file named as a picture, PDF or archive must be one, and the stored content type comes from the content, never from the client; plus the size cap and blocked extensions; tested). PARTIAL: 001 (`IFileStorage` and configurable providers exist and everything that keeps a file uses them, proven with a second store chosen by `Files:Storage:Provider`; only the local disk is built, an Azure Blob or S3 provider is still to be written), 005 (uploads and downloads are streamed, not chunked or resumable). DONE: 006 soft delete (deleting sets `DeletedAt`/`DeletedBy`, a global query filter hides the file from every query at once, and `PurgeDeletedFilesJob` removes the bytes and the record after `Files.DeletedRetentionDays`, default 30; the orphan sweep leaves a soft-deleted file's bytes alone; tested).
 
 ## F-Localization
 - DONE: 002 the server answers in the request's language: the client's `Accept-Language` (the Angular app sends the language on screen), else the signed-in user's saved language, else the application default; error and validation messages (the platform's own and FluentValidation's built-in translations), notification texts (written per recipient) and the account emails (right to left for Arabic) are translated, `GET /api/localization/languages` and `GET /api/localization/resources?culture=` exist. 003 language switch at runtime without a reload, per-language file loaded on demand (tested). 004 dates in the user's time zone (`Appearance.Timezone`), numbers and currency (`Appearance.Currency`, a new personal setting) formatted by the active language through `localDate`, `localNumber` and `localCurrency`; server timestamps are read as UTC. 005 default language (`General.DefaultLanguage`) and fallback: a missing translation or an unsupported language shows the English source, never a blank (tested at both ends). 006 the direction flips with the language (tested), and lint now rejects physical `left`/`right` CSS so new styles stay right-to-left safe; no page-by-page visual audit in a browser was done.
@@ -146,7 +146,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 443 automated tests** in `src/MajdsApp.Tests` (358) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 464 automated tests** in `src/MajdsApp.Tests` (379) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 134 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -164,8 +164,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 53 are partial):
+Still open, roughly by value (no requirement is missing and 50 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
-3. F-Notifications SMS and push channels (the channel interface is ready; they need a provider); F-Files storage interface.
+3. F-Notifications SMS and push channels (the channel interface is ready; they need a provider); a cloud file-store provider and resumable uploads.
 4. Verification: more browser end-to-end journeys (seven exist), a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.

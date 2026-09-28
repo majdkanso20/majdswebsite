@@ -102,3 +102,7 @@ To ship the feature as a runtime plugin instead, see `MajdsApp.Plugins.Tasks`.
 Any entity that implements `IEntity<TKey>` can be reached through `IRepository<TEntity, TKey>` (tracked; add, update, remove) or `IReadRepository<TEntity, TKey>` (never tracked), both injectable and scoped, sharing the request's `DbContext` with `IUnitOfWork`. A list endpoint calls `repository.PagedAsync(request, sortableColumns, selector, spec)`: an unknown sort column is a 400. `Paging:MaxPageSize` (default 100, 1 to 1000) caps a page.
 
 `SaveChanges` stamps audit fields and turns the removal of any `ISoftDelete` entity into a soft delete; a query filter for such entities is added automatically. An entity that implements `IHasDomainEvents` (or derives from `DomainEventSource`) collects `IDomainEvent`s; they are published through MediatR after the save that stored the change succeeds, once each, and not at all if it fails. Handle one with an ordinary `INotificationHandler<T>`.
+
+## Declaring a permission on a controller (FR-AUTHZ-004)
+
+`[RequiresPermission("X")]` can go on a MediatR request (checked by the pipeline) or on a controller or an action (checked by `PermissionActionFilter` before the action runs). Both give 401 when nobody is signed in and 403 naming the missing permission, as the standard `ResponseDto`.

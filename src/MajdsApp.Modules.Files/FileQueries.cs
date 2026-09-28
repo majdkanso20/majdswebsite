@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Search;
@@ -52,7 +53,7 @@ public record DownloadedFile(string FileName, string ContentType, Stream Content
 public record DownloadFileQuery(Guid FileId) : IRequest<DownloadedFile>;
 
 public class DownloadFileQueryHandler(
-    IReadRepository<FileRecord, Guid> files, FileStorage storage, ICurrentUser currentUser, IPermissionChecker permissions)
+    IReadRepository<FileRecord, Guid> files, IFileStorage storage, ICurrentUser currentUser, IPermissionChecker permissions)
     : IRequestHandler<DownloadFileQuery, DownloadedFile>
 {
     public async Task<DownloadedFile> Handle(DownloadFileQuery request, CancellationToken ct)

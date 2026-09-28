@@ -19,8 +19,9 @@ public interface ITransactionalCommand;
 public interface IAuditableCommand;
 
 /// <summary>Declares the permission required to execute a request (FR-XC-003, F-Authorization).
-/// Checked by <see cref="AuthorizationBehavior{TRequest,TResponse}"/> before the handler runs.</summary>
-[AttributeUsage(AttributeTargets.Class)]
+/// On a request, checked by <see cref="AuthorizationBehavior{TRequest,TResponse}"/> before the handler runs; on a controller or an action, checked by
+/// <see cref="Api.PermissionActionFilter"/> before the action runs.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class RequiresPermissionAttribute(string permission) : Attribute
 {
     public string Permission { get; } = permission;

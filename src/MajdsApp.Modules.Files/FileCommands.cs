@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using MajdsApp.SharedKernel.Data;
 using MajdsApp.SharedKernel.Mapping;
 using FluentValidation;
@@ -18,7 +19,7 @@ public record FileDto(Guid Id, string FileName, string ContentType, long Size, s
 public record UploadFileCommand(string FileName, string ContentType, long Size, Stream Content) : IRequest<FileDto>, IAuditableCommand;
 
 public class UploadFileCommandHandler(
-    ApplicationDbContext db, FileStorage storage, ISettingsProvider settings, ICurrentUser currentUser, IObjectMapper mapper)
+    ApplicationDbContext db, IFileStorage storage, ISettingsProvider settings, ICurrentUser currentUser, IObjectMapper mapper)
     : IRequestHandler<UploadFileCommand, FileDto>
 {
     // Executable/script types that have no business being uploaded to a shared store.
@@ -47,7 +48,7 @@ public class UploadFileCommandHandler(
         {
             Id = Guid.NewGuid(),
             FileName = fileName.Length > 260 ? fileName[^260..] : fileName,
-            ContentType = string.IsNullOrWhiteSpace(request.ContentType) ? "application/octet-stream" : request.ContentType,
+            ContentType = "application/octet-stream", // replaced below by what the content turns out to be; the client's claim is not used
             Size = request.Size,
             StoredName = Guid.NewGuid().ToString("N"),
             OwnerId = currentUser.UserId,
@@ -58,6 +59,16 @@ public class UploadFileCommandHandler(
         await storage.SaveAsync(record.StoredName, request.Content, ct);
         try
         {
+            // Look at the stored bytes (F-Files FR-FILE-002): a program is refused whatever it is called, a file named as an image or a PDF must be one,
+            // and the content type comes from what was found, not from the client.
+            var header = new byte[FileContentInspector.HeaderBytes];
+            await using (var stored = storage.Open(record.StoredName))
+                header = header[..await stored.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, ct)];
+            var inspection = FileContentInspector.Inspect(fileName, header);
+            if (!inspection.Allowed)
+                throw new ValidationException($"'{fileName}' was not accepted: {inspection.Problem}.");
+            record.ContentType = inspection.ContentType;
+
             db.Set<FileRecord>().Add(record);
             await db.SaveChangesAsync(ct);
         }

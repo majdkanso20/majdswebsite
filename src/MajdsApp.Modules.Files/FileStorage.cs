@@ -1,11 +1,11 @@
-using MajdsApp.SharedKernel.Modules;
+using MajdsApp.SharedKernel.Files;
 using Microsoft.AspNetCore.Hosting;
 
 namespace MajdsApp.Modules.Files;
 
-/// <summary>Disk storage for file bytes, under App_Data/files in the API's content root (outside any
+/// <summary>The local-disk file store (the built-in <c>Disk</c> provider): disk storage for file bytes, under App_Data/files in the API's content root (outside any
 /// served static path, so files are only reachable through the authorized download endpoint).</summary>
-public class FileStorage(IWebHostEnvironment env) : IScopedService
+public class FileStorage(IWebHostEnvironment env) : IFileStorage
 {
     private string Root => Path.Combine(env.ContentRootPath, "App_Data", "files");
 

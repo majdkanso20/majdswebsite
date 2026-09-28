@@ -1,3 +1,4 @@
+using MajdsApp.SharedKernel.Files;
 using MajdsApp.Data;
 using MajdsApp.Modules.Files;
 using MajdsApp.SharedKernel.Jobs;
@@ -8,7 +9,7 @@ namespace MajdsApp.Modules.Exports;
 
 /// <summary>Deletes finished exports, and the files they produced, once they are older than the retention setting, so
 /// generated files do not pile up on disk.</summary>
-public class ExportsCleanupJob(ApplicationDbContext db, FileStorage storage, ISettingsProvider settings) : IRecurringJob
+public class ExportsCleanupJob(ApplicationDbContext db, IFileStorage storage, ISettingsProvider settings) : IRecurringJob
 {
     public string Name => "Export cleanup";
     public TimeSpan Interval => TimeSpan.FromHours(24);

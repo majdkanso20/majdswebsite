@@ -89,6 +89,7 @@ public static class PlatformServiceCollectionExtensions
         {
             options.Filters.Add<ResponseStatusCodeFilter>();
             options.Filters.Add<PluginGateFilter>();
+            options.Filters.Add<PermissionActionFilter>(); // [RequiresPermission] on a controller or an action (FR-AUTHZ-004)
         });
 
         services.Configure<ApiBehaviorOptions>(options =>
