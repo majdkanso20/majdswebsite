@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 MajdsApp.LoggingSetup.AddPlatformLogging(builder);
+MajdsApp.TelemetrySetup.AddPlatformTelemetry(builder); // traces, exported when Telemetry:OtlpEndpoint is set
 builder.Services.AddModuleOptions<MajdsApp.LogSinkOptions>(builder.Configuration, "Logging"); // bound and checked at start
 
 // Every feature module project referenced by this host — the single place a new module is "wired in"

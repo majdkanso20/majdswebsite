@@ -6,8 +6,8 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 
 | Status | Count |
 |---|---|
-| DONE | 151 |
-| PARTIAL | 50 |
+| DONE | 152 |
+| PARTIAL | 49 |
 | MISSING | 0 |
 
 | Group | Total | Done | Partial | Missing |
@@ -34,7 +34,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 | F-Export | 5 | 4 | 1 | 0 |
 | F-Dashboard | 4 | 4 | 0 | 0 |
 | F-Background-Jobs | 5 | 5 | 0 | 0 |
-| F-Health | 4 | 3 | 1 | 0 |
+| F-Health | 4 | 4 | 0 | 0 |
 | F-ApiDocs | 4 | 4 | 0 | 0 |
 | F-Caching | 3 | 2 | 1 | 0 |
 | F-Features | 4 | 4 | 0 | 0 |
@@ -132,7 +132,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - Jobs: DONE 001 (recurring jobs by interval or cron expression, plus persisted fire-and-forget and delayed jobs through `IBackgroundJobQueue`), 002 (queued jobs are stored in `BackgroundJobs` and survive a restart; a failure is retried with 10 s, 20 s, 40 s ... up to an hour, then left failed and the administrators are told; a failed recurring run is retried after 1, 2 and 4 minutes; a job left running by a restart is run again, and one that keeps crashing the process still ends up failed; tested), 003 (queue view with status filter, retry and delete, gated by `Jobs.View` / `Jobs.Manage`; recurring jobs show their last result, failure streak and next run, and can be run now), 004 (the queuing user's id and name and a parameter map are stored with the job and handed to it), 005 (audit retention, notification cleanup, export cleanup, orphaned uploaded files and abandoned plugin staging folders). Not done: no built-in feature uses the queue yet (exports and email delivery keep their own persisted queues), and a single node is assumed for the recurring scheduler.
 
 ## F-Health / F-ApiDocs / F-Caching
-- Health: DONE 001 (readiness checks the database, file storage, cache and email; a critical one down is a 503, a non-critical one is Degraded), 002 (`/metrics` in the Prometheus format: request rate, latency and errors by status code, guarded by `Metrics:Token`), 004 (readiness goes unhealthy when a critical dependency is down; tested). PARTIAL 003 (the correlation id is the W3C trace id, an incoming `traceparent` is continued, the id is carried as baggage and on every log line; spans are not exported to a tracing backend).
+- Health: DONE 001 (readiness checks the database, file storage, cache and email; a critical one down is a 503, a non-critical one is Degraded), 002 (`/metrics` in the Prometheus format: request rate, latency and errors by status code, guarded by `Metrics:Token`), 004 (readiness goes unhealthy when a critical dependency is down; tested). DONE 003 (the correlation id is the W3C trace id and an incoming `traceparent` is continued; every request is traced: the HTTP request, the command or query it ran as a nested span, and outgoing HTTP calls, under one trace id that the response header and the logs carry; spans are exported over OTLP to the backend named by `Telemetry:OtlpEndpoint` when there is one, and the health probes are not traced; tested with an in-memory exporter).
 - ApiDocs: DONE 001 (an OpenAPI document generated from the controllers, described as the `ResponseDto` envelope; a new endpoint appears by itself), 002 (a bearer scheme applied to every operation, so the UI's Authorize sends the token), 003 (API versioning by query or header with 1.0 as the default, one document per version; only 1.0 exists and a 2.0 controller in the test project proves a new version documents itself), 004 (off outside Development unless `Docs:Enabled`; then `Docs:Access` = `Permission` (`Docs.View`), `Authenticated` or `Open`). Not done: generating the Angular client from the document.
 - Caching: DONE 001 (`ICacheService`: get, set with a time to live, remove, get-or-add), 003 (permissions, settings, feature flags and cacheable queries use it and are invalidated on write; tested on the serializing path). PARTIAL 002 (Redis is selected by `Cache:Provider=Redis` and its wiring is tested, and a shared distributed cache is proven with two simulated servers, but nothing has been run against a live Redis server, so AC-CACHE-1 is not verified end to end).
 
@@ -146,7 +146,7 @@ First audited against `Application-Template-SRS_2.md` on 2026-09-24 by reading t
 - MISSING: NFR-SCALE-2 Redis backplane for SignalR (the hub itself exists; the cache can already use Redis), NFR-MAINT-3 .NET analyzers (CI and the frontend linters exist).
 
 ## Definition of Done — tests (updated 2026-09-25)
-- **Backend: 464 automated tests** in `src/MajdsApp.Tests` (379) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
+- **Backend: 470 automated tests** in `src/MajdsApp.Tests` (385) and `src/MajdsApp.Tests.Plugins` (84, a separate process because EF caches its model per process and a plugin's entity can only be in it once), run with `dotnet test MajdsApp.slnx` (under a minute). A GitHub Actions workflow (`.github/workflows/ci.yml`) runs them, and the frontend lint, tests and production build, on every push and pull request.
 - **Covered end to end:** deny-by-default and hardening headers, login, rate limiting, roles/users/permissions (with permission-denied and validation-failure cases), settings scopes and encrypted secrets, the audit trail, notifications and their per-recipient language, forgot/reset password and registration, dashboard widgets and layouts, exports in three formats and imports with per-row errors, background exports and the persisted job queue (retries, backoff, restart recovery), plugin install/upgrade/rollback/uninstall with the trust policy, localization, the cache backends (including the whole app on the serializing path), health and metrics, correlation ids, and the API docs and versioning.
 - **Frontend: 134 automated tests** (vitest via `ng test`): the shell, menu and theme, interceptors (auth, error, language), the login page, the data grid and shared components, the dashboard, export menu and import dialog, the exports, jobs and plugins screens, language switching and formatting, and a translation-coverage scan that fails when text has no Arabic entry. ESLint and Stylelint (which now rejects physical left/right CSS) run in CI.
 - **Bugs the tests found and that are now fixed:** a second host in the same process took over the first one's log output (each host now keeps its own Serilog logger); the last administrator could lose the Administrator role by editing the user (FR-USER-007); a user's cached permissions were not refreshed after a role change (FR-AUTHZ-006); a hand-placed folder in the plugin staging area would have been applied at startup without verification; error responses were counted as 200 in the metrics because the metrics middleware sat inside the exception handler; and the API never bound `Email:Smtp` to its options, which is why every email was rejected.
@@ -164,8 +164,8 @@ Done (2026-09-24): notifications with SignalR and preferences; user-scope and en
 
 Done (2026-09-25): dashboard widgets; export to Excel and PDF, import with templates, background exports; plugin install, upgrade, rollback and uninstall with a trust policy; the persisted job queue with cron, retries and monitoring; localization (server messages, notifications, emails, formatting, right-to-left guard); the cache abstraction with a Redis option; health checks, metrics and trace propagation; API docs, versioning and a production gate.
 
-Still open, roughly by value (no requirement is missing and 50 are partial):
+Still open, roughly by value (no requirement is missing and 49 are partial):
 1. P5: plugins shipping their own database migrations, applying changes without a restart, and native federation (only Web Components are supported).
 2. P4: Mapster for the remaining DTOs; P2: options classes for the remaining keys; P3: moving the remaining handlers to the repository (most partial items are here and in P5).
 3. F-Notifications SMS and push channels (the channel interface is ready; they need a provider); a cloud file-store provider and resumable uploads.
-4. Verification: more browser end-to-end journeys (seven exist), a run against a live Redis, a Redis backplane for SignalR, exporting traces (OpenTelemetry), generating the Angular client from the OpenAPI document, background imports.
+4. Verification: more browser end-to-end journeys (seven exist), a run against a live Redis, a Redis backplane for SignalR, generating the Angular client from the OpenAPI document, background imports.

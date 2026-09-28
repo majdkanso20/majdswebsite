@@ -35,7 +35,7 @@ None; the probes are public.
 
 ## Notes
 
-- Not done: exporting traces to a tracing backend (OpenTelemetry/OTLP). The ids are created and propagated; nothing collects the spans yet. No SMS or push provider exists to check.
+- Tracing (FR-HEALTH-003): every request is traced with OpenTelemetry. There is a span for the HTTP request (continuing an upstream `traceparent`), a nested span for each command or query it runs (named after it, marked as an error when it fails) and one for each outgoing HTTP call; the health probes and `/metrics` are left out. The trace id is the same one in the `X-Correlation-Id` header and on every log line. Set `Telemetry:OtlpEndpoint` (for example `http://localhost:4317`, an OpenTelemetry collector, Jaeger or any OTLP backend) to export the spans; leave it empty to keep them in process. `Telemetry:ServiceName` names the service in the backend. No SMS or push provider exists to check.
 - Metrics are per server; a scraper collects each one.
 
 ## Tests

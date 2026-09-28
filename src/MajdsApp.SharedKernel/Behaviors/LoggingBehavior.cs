@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using MajdsApp.SharedKernel.Middleware;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +14,8 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
         var requestName = typeof(TRequest).Name;
         logger.LogInformation("Handling {RequestName}", requestName);
 
+        // One span per request, nested under the HTTP request's own, so a trace shows which command or query took the time.
+        using var span = PlatformTelemetry.Source.StartActivity(requestName);
         try
         {
             var response = await next(ct);
@@ -20,6 +24,7 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
         }
         catch (Exception ex)
         {
+            span?.SetStatus(ActivityStatusCode.Error, ex.GetType().Name);
             logger.LogWarning(ex, "{RequestName} failed", requestName);
             throw;
         }

@@ -80,6 +80,7 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `Logging:Level` / `Logging:Console` / `Logging:File:Enabled` / `Logging:File:Path` / `Logging:File:RetainedFiles` | Serilog: the least severe event written, the console sink, and a daily rolling file (kept for that many days) | Information / on / on / `App_Data/logs` / 14 |
 | `Bootstrap:AdminEmail` / `Bootstrap:AdminPassword` | Creates the first administrator, on an installation with no users only (keep the password in user secrets or an environment variable and remove it afterwards) | unset |
 | `Database:MigrateOnStart` | Applies pending database migrations when the API starts | off |
+| `Telemetry:OtlpEndpoint` / `Telemetry:ServiceName` | Where request traces are exported (an OTLP collector or backend; empty keeps them in process) and the service's name there | unset / `MajdsApp.Api` |
 | `MediatR:LicenseKey` | Required for production use of MediatR | unset |
 
 Runtime behavior that administrators change without a redeploy (application name, session timeout, self-registration, upload size, mail server, retention, feature flags) is under **Settings** and **Features** in the app.
