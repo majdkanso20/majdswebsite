@@ -3,6 +3,7 @@ using System.Text.Json;
 using MajdsApp.Configuration;
 using MajdsApp.Data;
 using MajdsApp.SharedKernel.Caching;
+using MajdsApp.SharedKernel.Configuration;
 using MajdsApp.SharedKernel.Modules;
 using MajdsApp.SharedKernel.Notifications;
 using MajdsApp.SharedKernel.Settings;
@@ -30,6 +31,7 @@ public class HealthModule : IFeatureModule
 {
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddModuleOptions<MetricsOptions>(configuration, "Metrics"); // bound and checked at start (P2 FR-MOD-004)
         services.AddHealthChecks()
             .AddCheck<DatabaseHealthCheck>("database", HealthStatus.Unhealthy)
             .AddCheck<FileStorageHealthCheck>("file-storage", HealthStatus.Unhealthy)
@@ -148,7 +150,19 @@ public class EmailHealthCheck(IServiceProvider services, IOptions<SmtpOptions> s
 /// bearer token; with no token the endpoint is open only in Development (or when <c>Metrics:AllowAnonymous</c> is <c>true</c>) and otherwise not there at all.
 /// <c>Metrics:Enabled=false</c> turns it off.
 /// </summary>
-public class MetricsAccessMiddleware(RequestDelegate next, IConfiguration configuration, IWebHostEnvironment environment)
+/// <summary>The <c>Metrics</c> section: whether <c>/metrics</c> is served and who may read it (see the Health README).</summary>
+public class MetricsOptions
+{
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>When set, a scraper must send <c>Authorization: Bearer &lt;token&gt;</c>.</summary>
+    public string? Token { get; set; }
+
+    /// <summary>Lets anyone read the metrics outside Development when there is no token.</summary>
+    public bool AllowAnonymous { get; set; }
+}
+
+public class MetricsAccessMiddleware(RequestDelegate next, Microsoft.Extensions.Options.IOptions<MetricsOptions> options, IWebHostEnvironment environment)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -158,9 +172,9 @@ public class MetricsAccessMiddleware(RequestDelegate next, IConfiguration config
             return;
         }
 
-        var token = configuration["Metrics:Token"];
-        var enabled = configuration["Metrics:Enabled"] is not "false";
-        var open = environment.IsDevelopment() || configuration["Metrics:AllowAnonymous"] is "true";
+        var token = options.Value.Token;
+        var enabled = options.Value.Enabled;
+        var open = environment.IsDevelopment() || options.Value.AllowAnonymous;
 
         if (!enabled || (string.IsNullOrEmpty(token) && !open))
         {

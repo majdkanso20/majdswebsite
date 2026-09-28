@@ -1,17 +1,32 @@
+using MajdsApp.SharedKernel.Configuration;
 using MajdsApp.SharedKernel.Modules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MajdsApp.Modules.Jobs;
 
+/// <summary>The <c>Jobs</c> section (P2 FR-MOD-004). Each part can be switched off, for example to run the scheduler on one node only or so a test can drive the work itself.</summary>
+public class JobsOptions
+{
+    public JobPartOptions Scheduler { get; set; } = new();
+    public JobPartOptions Worker { get; set; } = new();
+}
+
+public class JobPartOptions
+{
+    public bool Enabled { get; set; } = true;
+}
+
 public class JobsModule : IFeatureModule
 {
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        // Both can be switched off by configuration (Jobs:Scheduler:Enabled, Jobs:Worker:Enabled; on unless set to "false"), for example
-        // to run them on one node only, or so tests can drive the work themselves and never touch real data.
-        if (configuration["Jobs:Scheduler:Enabled"] is not "false") services.AddHostedService<JobScheduler>();
-        if (configuration["Jobs:Worker:Enabled"] is not "false") services.AddHostedService<BackgroundJobWorker>();
+        // Bound and checked at start: a value that is not true or false (Jobs:Worker:Enabled=nope) stops the start instead of quietly meaning "on".
+        services.AddModuleOptions<JobsOptions>(configuration, "Jobs");
+        var jobs = configuration.GetSection("Jobs").Get<JobsOptions>() ?? new JobsOptions();
+
+        if (jobs.Scheduler.Enabled) services.AddHostedService<JobScheduler>();
+        if (jobs.Worker.Enabled) services.AddHostedService<BackgroundJobWorker>();
         services.AddScoped<MajdsApp.SharedKernel.Jobs.IBackgroundJobQueue, BackgroundJobQueue>();
     }
 }

@@ -30,8 +30,9 @@ public class TracingTests(TracingFactory factory) : IClassFixture<TracingFactory
         {
             lock (TracingFactory.Spans)
             {
-                var found = TracingFactory.Spans.Where(s => s.TraceId.ToString() == traceId).ToList();
-                if (found.Any(s => s.DisplayName == "GetMySettingsQuery")) return found;
+                var found = TracingFactory.Spans.ToArray().Where(s => s.TraceId.ToString() == traceId).ToList();
+                // The HTTP span ends after the response has been sent, so wait for it as well as for the query's.
+                if (found.Any(s => s.DisplayName == "GetMySettingsQuery") && found.Any(s => s.Kind == ActivityKind.Server)) return found;
             }
             await Task.Delay(100);
         }
