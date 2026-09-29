@@ -1,4 +1,3 @@
-using MajdsApp.SharedKernel.Mapping;
 using MajdsApp.SharedKernel.Data;
 using System.Text.Json;
 using FluentValidation;
@@ -34,7 +33,7 @@ public class StartImportCommandValidator : AbstractValidator<StartImportCommand>
 }
 
 public class StartImportCommandHandler(
-    ApplicationDbContext db, IEnumerable<IImportSource> sources, IPermissionChecker permissions, ICurrentUser currentUser, IObjectMapper mapper)
+    ApplicationDbContext db, IEnumerable<IImportSource> sources, IPermissionChecker permissions, ICurrentUser currentUser)
     : IRequestHandler<StartImportCommand, ImportJobDto>
 {
     private const int MaxActivePerUser = 3;

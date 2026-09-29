@@ -29,15 +29,15 @@ Tables: `Files`. Migrations live in `MajdsApp.Core`.
 
 ## Notes
 
-- Uploads are limited by the `Files.MaxUploadMb` setting (default 10) and a blocked-extension list (executables and scripts). Content is not sniffed and the client's content type is trusted.
+- Uploads are limited by the `Files.MaxUploadMb` setting (default 10), a blocked-extension list (executables and scripts), and content sniffing (FR-FILE-002): the stored content type comes from the file's own bytes, never the client's claimed one, and a program refused whatever it is named.
 - Deleting a file is a soft delete (FR-FILE-006): the record gets `DeletedAt`/`DeletedBy` and a global query filter hides it from every list, download, export and profile picture at once. The recurring job *Deleted file cleanup* (daily) removes the bytes and the record once the file has been deleted for `Files.DeletedRetentionDays`; if the bytes cannot be removed the record is kept and the next run tries again. There is no restore screen yet. Code that must see deleted files uses `IgnoreQueryFilters()`; the *Orphaned file cleanup* job does, so it never sweeps a soft-deleted file's bytes early.
 - The whole module is behind the `Files` feature flag.
-- Storage is a concrete disk class today; there is no `IFileStorage` abstraction or cloud provider yet, and deletion is permanent.
 
 ## Configuration keys
 
 - Setting `Files.MaxUploadMb` (default `10`)
 - Setting `Files.DeletedRetentionDays` (default `30`)
+- `Files:Storage:Provider` (`Disk` default, or `AzureBlob`), `Files:Storage:AzureBlob:ConnectionString` / `ContainerName` — see Storage providers above.
 - Feature flag `Files`
 
 ## Tests
@@ -48,7 +48,10 @@ Not yet covered by automated tests (see the traceability document).
 
 ## Storage providers (FR-FILE-001)
 
-Everything that keeps a file (uploads, exports, profile pictures) talks to `IFileStorage` (in `MajdsApp.SharedKernel.Files`): save a stream, open a stream, delete, list. `Files:Storage:Provider` picks the store; `Disk` (the default, under `App_Data/files`) is built in. To add another (Azure Blob, S3), write a class that implements `IFileStorage` and an `IFileStorageProvider` with a name, register the provider in a module, and set the configuration to that name. An unknown name stops the application from starting and lists the ones that exist.
+Everything that keeps a file (uploads, exports, profile pictures) talks to `IFileStorage` (in `MajdsApp.SharedKernel.Files`): save a stream, open a stream, delete, list. `Files:Storage:Provider` picks the store; `Disk` (the default, under `App_Data/files`) and `AzureBlob` are built in. To add another (S3), write a class that implements `IFileStorage` and an `IFileStorageProvider` with a name, register the provider in a module, and set the configuration to that name. An unknown name stops the application from starting and lists the ones that exist.
+
+- `Disk` (default): files live under `App_Data/files` in the API's content root.
+- `AzureBlob`: files live as blobs in one Azure Storage container. `Files:Storage:AzureBlob:ConnectionString` (required when this provider is selected — checked at start, the same way `Cache:Redis:ConnectionString` only matters when `Cache:Provider` is `Redis`) and `Files:Storage:AzureBlob:ContainerName` (default `files`, created automatically on first use).
 
 ## What an upload is checked against (FR-FILE-002)
 

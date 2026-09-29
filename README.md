@@ -71,6 +71,8 @@ Set through `appsettings*.json`, environment variables (`Section__Key`) or user-
 | `WebApp:BaseUrl` | Where admin-initiated password-reset links point (the Razor site) | `http://localhost:5132` |
 | `Cache:Provider` | `Memory` (one server), `Redis` (shared by every server) or `Distributed` (a distributed cache held in this process, for testing the shared path) | `Memory` |
 | `Cache:Redis:ConnectionString`, `Cache:KeyPrefix` | Redis address; a prefix so several applications can share one Redis | unset, `majds:` |
+| `Files:Storage:Provider` | `Disk` (local disk) or `AzureBlob` (an Azure Storage container) | `Disk` |
+| `Files:Storage:AzureBlob:ConnectionString`, `ContainerName` | Required when `Files:Storage:Provider` is `AzureBlob`; the container is created automatically | unset, `files` |
 | `SignalR:Redis:ConnectionString` | Shares connected clients across every server behind a load balancer, so a push reaches a user on a different node; with none, each node only knows its own | unset |
 | `Metrics:Token` / `Metrics:AllowAnonymous` / `Metrics:Enabled` | `/metrics` needs this bearer token; with none it is open only in Development (or when anonymous access is allowed); `false` turns it off | unset |
 | `Docs:Enabled` / `Docs:Access` | Outside Development the API docs (`/swagger`) are off unless `Docs:Enabled` is `true`; `Docs:Access` is `Permission` (needs `Docs.View`), `Authenticated` or `Open` | off, `Permission` |

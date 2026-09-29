@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MajdsApp.Tests.Support;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -38,6 +39,34 @@ public class ModuleOptionsTests
     public void A_wrong_value_stops_the_application_from_starting_and_names_the_setting(string key, string value, string mention)
     {
         ShouldRefuseToStart(new BadConfigFactory((key, value)), mention);
+    }
+
+    [Fact]
+    public void Choosing_AzureBlob_storage_without_a_connection_string_stops_the_application_from_starting()
+    {
+        // Cache:Redis:ConnectionString works the same way: only checked when its provider is the one actually selected.
+        ShouldRefuseToStart(new BadConfigFactory(("Files:Storage:Provider", "AzureBlob")), "Files:Storage:AzureBlob:ConnectionString");
+    }
+
+    [Fact]
+    public void Choosing_AzureBlob_storage_with_no_container_name_stops_the_application_from_starting()
+    {
+        ShouldRefuseToStart(new BadConfigFactory(
+            ("Files:Storage:Provider", "AzureBlob"), ("Files:Storage:AzureBlob:ConnectionString", "UseDevelopmentStorage=true"), ("Files:Storage:AzureBlob:ContainerName", "")),
+            "Files:Storage:AzureBlob:ContainerName");
+    }
+
+    [Fact]
+    public void AzureBlob_storage_is_chosen_by_configuration_and_needs_no_live_account_to_start()
+    {
+        // No connection is opened until the first file is actually read or written, so this proves the wiring
+        // without a real Azure account (the same approach the Redis cache test uses).
+        using var factory = new BadConfigFactory(
+            ("Files:Storage:Provider", "AzureBlob"), ("Files:Storage:AzureBlob:ConnectionString", "UseDevelopmentStorage=true"));
+
+        factory.Invoking(f => f.CreateClient()).Should().NotThrow();
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<MajdsApp.SharedKernel.Files.IFileStorage>().Should().BeOfType<MajdsApp.Modules.Files.AzureBlobFileStorage>();
     }
 
     [Fact]

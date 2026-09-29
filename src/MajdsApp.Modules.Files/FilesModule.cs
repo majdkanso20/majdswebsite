@@ -39,6 +39,13 @@ public class FilesModule : IFeatureModule
         services.AddSingleton<IFileStorageProvider, DiskFileStorageProvider>();
         services.AddScoped<FileStorage>();
 
+        // A second built-in provider (an Azure Blob container), proving the abstraction really does let a store be
+        // added with no change to anything that already talks to IFileStorage.
+        services.AddModuleOptions<AzureBlobStorageOptions>(configuration, "Files:Storage:AzureBlob");
+        services.AddSingleton<IValidateOptions<AzureBlobStorageOptions>, AzureBlobStorageOptionsValidator>();
+        services.AddSingleton<IFileStorageProvider, AzureBlobFileStorageProvider>();
+        services.AddScoped<AzureBlobFileStorage>();
+
         // Everything that keeps a file asks for IFileStorage; the configured provider decides where the bytes go.
         services.AddScoped<IFileStorage>(sp =>
         {
