@@ -53,12 +53,12 @@ public class PluginInstallApiTests(PluginHostFactory factory)
         var (status, body) = await PluginApi.InstallAsync(admin, package, PluginApi.Sha(package));
 
         status.Should().Be(HttpStatusCode.OK);
-        body!.Data.Should().Match<ChangeRow>(c => c.Id == Id && c.Action == "Upgrade" && c.Version == "1.1.0" && c.PreviousVersion == "1.0.0"
+        body!.Data.Should().Match<ChangeRow>(c => c.Id == Id && c.Action == "Upgrade" && c.Version == "1.1.0" && c.PreviousVersion == "1.0.1"
             && c.RestartRequired && c.Sha256 == PluginApi.Sha(package));
 
         (await admin.GetAsync<List<PendingRow>>("/api/plugins/pending")).Data!.Should().ContainSingle(p => p.Id == Id && p.Action == "Upgrade");
         (await admin.GetAsync<PagedData<TaskRow>>("/api/tasks/list?page=1&pageSize=5")).Status.Should().Be(HttpStatusCode.OK);   // still running
-        (await admin.GetAsync<List<LifecyclePluginRow>>("/api/plugins/list")).Data!.Single(p => p.Id == Id).Version.Should().Be("1.0.0");
+        (await admin.GetAsync<List<LifecyclePluginRow>>("/api/plugins/list")).Data!.Single(p => p.Id == Id).Version.Should().Be("1.0.1");
 
         (await admin.PostAsync("/api/plugins/cancel-pending", new { pluginId = Id })).Status.Should().Be(HttpStatusCode.OK);
         (await admin.GetAsync<List<PendingRow>>("/api/plugins/pending")).Data!.Should().BeEmpty();
@@ -191,7 +191,7 @@ public class PluginUninstallApiTests(PluginHostFactory factory)
         {
             db.Set<MajdsApp.Modules.Plugins.InstalledPlugin>().Add(new MajdsApp.Modules.Plugins.InstalledPlugin
             {
-                Id = Id, Name = "Tasks", Version = "1.0.0", Author = "Demo", AssemblyName = Id, IsEnabled = true,
+                Id = Id, Name = "Tasks", Version = "1.0.1", Author = "Demo", AssemblyName = Id, IsEnabled = true,
                 DiscoveredAt = DateTime.UtcNow, LastSeenAt = DateTime.UtcNow
             });
             await db.SaveChangesAsync();

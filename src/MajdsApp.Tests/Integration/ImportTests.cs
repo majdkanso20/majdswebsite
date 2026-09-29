@@ -81,10 +81,11 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
         done.Status.Should().Be("Completed");
         done.Total.Should().Be(6);
         done.Succeeded.Should().Be(2);
-        done.Errors!.Select(e => e.Row).Should().Equal(3, 4, 5, 7);
-        done.Errors.Single(e => e.Row == 4).Reason.Should().Contain("Unknown role 'Nonexistent'");
-        done.Errors.Single(e => e.Row == 5).Reason.Should().Contain("6");                       // the create rule's minimum length
-        done.Errors.Single(e => e.Row == 7).Reason.Should().Contain("imp.good1@example.com");   // already taken
+        var errors = done.Errors!;
+        errors.Select(e => e.Row).Should().Equal(3, 4, 5, 7);
+        errors.Single(e => e.Row == 4).Reason.Should().Contain("Unknown role 'Nonexistent'");
+        errors.Single(e => e.Row == 5).Reason.Should().Contain("6");                       // the create rule's minimum length
+        errors.Single(e => e.Row == 7).Reason.Should().Contain("imp.good1@example.com");   // already taken
 
         var created = await EmailsAsync(admin, "imp.good");
         created.Should().BeEquivalentTo("imp.good1@example.com", "imp.good4@example.com");        // valid rows in, invalid rows out (AC-EXP-2)

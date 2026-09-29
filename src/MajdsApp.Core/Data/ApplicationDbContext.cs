@@ -19,10 +19,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         // Includes MajdsApp.Plugins.* too (P5): a runtime-loaded plugin's IEntityTypeConfiguration is
         // picked up the same way a compiled-in module's is, as long as its assembly is already loaded
-        // by the time this model is built (PluginManager loads plugins before AddDbContext runs).
+        // by the time this model is built (PluginManager loads plugins before AddDbContext runs) —
+        // except one marked [PluginOwnsItsDatabase] (FR-PLUG-011): its entities live in its own DbContext
+        // and its own migrations instead, so this shared model and this project's migrations never see them.
         var moduleAssemblies = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => a.GetName().Name is { } name
-                && (name.StartsWith("MajdsApp.Modules.", StringComparison.Ordinal) || name.StartsWith("MajdsApp.Plugins.", StringComparison.Ordinal)));
+                && (name.StartsWith("MajdsApp.Modules.", StringComparison.Ordinal) || name.StartsWith("MajdsApp.Plugins.", StringComparison.Ordinal))
+                && !a.IsDefined(typeof(MajdsApp.SharedKernel.Plugins.PluginOwnsItsDatabaseAttribute), inherit: false));
 
         foreach (var assembly in moduleAssemblies)
             builder.ApplyConfigurationsFromAssembly(assembly);

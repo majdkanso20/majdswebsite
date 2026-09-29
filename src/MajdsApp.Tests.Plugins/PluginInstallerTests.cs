@@ -58,7 +58,7 @@ public class PluginInstallerTests : IDisposable
 
         messages.Should().ContainSingle().Which.Should().Contain("Install");
         PluginInstaller.ListPending(_folder).Should().BeEmpty();
-        InstalledVersion().Should().Be("1.0.0");
+        InstalledVersion().Should().Be("1.0.1");
         File.Exists(Path.Combine(_folder, Id, "backend", "MajdsApp.Plugins.Tasks.dll")).Should().BeTrue();
         File.Exists(Path.Combine(_folder, Id, ".meta.json")).Should().BeFalse();        // the staging marker does not travel into the install
     }
@@ -78,7 +78,7 @@ public class PluginInstallerTests : IDisposable
     public void With_an_allow_list_only_the_approved_id_and_checksum_can_be_installed()
     {
         var package = PluginPackages.Create();
-        var other = PluginPackages.Create(m => m["version"] = "1.0.1");
+        var other = PluginPackages.Create(m => m["version"] = "9.9.9"); // must genuinely differ from the baseline, or its checksum would (accidentally) match too
 
         var options = Options(true, new AllowedPlugin(Id, Sha(package)));
 

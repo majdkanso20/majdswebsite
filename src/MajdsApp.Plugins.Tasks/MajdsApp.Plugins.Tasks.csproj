@@ -30,6 +30,12 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!-- Design-time only (dotnet ef migrations add), for TasksDbContextFactory; PrivateAssets keeps it out of this
+       project's own output, the same way MajdsApp.Core references it for the host's own migrations. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" PrivateAssets="all" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="localization\*.json" CopyToOutputDirectory="PreserveNewest" />

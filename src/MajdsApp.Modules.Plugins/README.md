@@ -72,7 +72,7 @@ Tables: `InstalledPlugins`. Migrations live in `MajdsApp.Core`.
 ## Notes
 
 - Enable and disable take effect immediately; the assembly stays loaded until the process restarts.
-- Not implemented: plugin-shipped database migrations, applying changes without a restart.
+- Plugin-shipped database migrations (FR-PLUG-011) are supported: a plugin can mark its assembly `[PluginOwnsItsDatabase]`, keep its entities in its own `DbContext`, and apply its own migrations from its `OnInstall`/`OnUpgrade` hook through `PluginMigrations.ApplyAsync<TContext>` (`MajdsApp.SharedKernel.Plugins`) — a separate migrations-history table keeps it independent of the host's and of every other plugin's. `MajdsApp.Plugins.Tasks` does this; see its README for the exact `dotnet ef` command (its `DbContext` needs its own design-time factory, since the project has no host of its own). Not implemented: applying a change without a restart.
 - See `plugins/README.md` and `MajdsApp.Plugins.Tasks` for how to author and package a plugin.
 
 ## Configuration keys

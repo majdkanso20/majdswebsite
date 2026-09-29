@@ -46,7 +46,7 @@ public static class PluginPackages
     }
 
     /// <summary>The sample plugin as an installed folder, exactly as the host expects to find it.</summary>
-    public static void InstallFolder(string pluginsFolder, string version = "1.0.0")
+    public static void InstallFolder(string pluginsFolder, string version = "1.0.1")
     {
         var built = BuiltFolder();
         var target = Path.Combine(pluginsFolder, "MajdsApp.Plugins.Tasks");

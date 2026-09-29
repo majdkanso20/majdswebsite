@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MajdsApp.Tests.Support;
@@ -71,11 +70,8 @@ public class ApiFactory : WebApplicationFactory<Program>
         foreach (var dll in Directory.GetFiles(AppContext.BaseDirectory, "MajdsApp.Modules.*.dll"))
             Assembly.LoadFrom(dll);
 
-        // The snapshot includes the sample plugin's table (its migration lives in the host, a documented
-        // simplification of P5 FR-PLUG-011), so a run without that plugin looks like "pending changes".
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlite(connectionString)
-            .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))
             .Options;
         using var db = new ApplicationDbContext(options);
         db.Database.Migrate();

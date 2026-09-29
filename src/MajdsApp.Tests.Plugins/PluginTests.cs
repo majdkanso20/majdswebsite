@@ -5,7 +5,7 @@ using Xunit;
 
 namespace MajdsApp.Tests.Plugins;
 
-public record TaskRow(Guid Id, string Title, string? Description, string Status);
+public record TaskRow(Guid Id, string Title, string? Description, string Status, DateTime CreatedAt);
 
 /// <summary>P5 end to end: a real plugin assembly, built separately and never referenced by the host, is dropped
 /// into the plugins folder and loaded at runtime into its own load context.</summary>
@@ -29,7 +29,7 @@ public class PluginTests
         var plugins = (await admin.GetAsync<List<PluginRow>>("/api/plugins/list")).Data!;
 
         plugins.Should().ContainSingle(p => p.Id == "MajdsApp.Plugins.Tasks")
-            .Which.Should().Match<PluginRow>(p => p.IsEnabled && p.LastError == null && p.Version == "1.0.0");
+            .Which.Should().Match<PluginRow>(p => p.IsEnabled && p.LastError == null && p.Version == "1.0.1");
     }
 
     [Fact]
@@ -72,6 +72,9 @@ public class PluginTests
         invalid.Status.Should().Be(HttpStatusCode.BadRequest);
         created.Status.Should().Be(HttpStatusCode.OK);
         read.Data!.Status.Should().Be("Done");
+        // Stamped by the same central interceptor the host's own ApplicationDbContext uses (P5 FR-PLUG-011):
+        // this plugin's own TasksDbContext wires it in too, so isolating the data does not lose the behavior.
+        read.Data.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         afterDelete.Status.Should().Be(HttpStatusCode.NotFound);
     }
 

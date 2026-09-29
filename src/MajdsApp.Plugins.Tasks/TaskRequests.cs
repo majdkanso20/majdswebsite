@@ -1,5 +1,4 @@
 using FluentValidation;
-using MajdsApp.Data;
 using MajdsApp.SharedKernel.Behaviors;
 using MajdsApp.SharedKernel.Exceptions;
 using MajdsApp.SharedKernel.Paging;
@@ -27,7 +26,7 @@ public class BoomQueryHandler : IRequestHandler<BoomQuery, string>
 [RequiresPermission(Permissions.Tasks.View)]
 public record ListTasksQuery(PagedRequest Request) : IRequest<PagedResponse<TaskDto>>;
 
-public class ListTasksQueryHandler(ApplicationDbContext db) : IRequestHandler<ListTasksQuery, PagedResponse<TaskDto>>
+public class ListTasksQueryHandler(TasksDbContext db) : IRequestHandler<ListTasksQuery, PagedResponse<TaskDto>>
 {
     public Task<PagedResponse<TaskDto>> Handle(ListTasksQuery request, CancellationToken ct)
     {
@@ -55,7 +54,7 @@ public class ListTasksQueryHandler(ApplicationDbContext db) : IRequestHandler<Li
 [RequiresPermission(Permissions.Tasks.View)]
 public record GetTaskQuery(Guid Id) : IRequest<TaskDto>;
 
-public class GetTaskQueryHandler(ApplicationDbContext db) : IRequestHandler<GetTaskQuery, TaskDto>
+public class GetTaskQueryHandler(TasksDbContext db) : IRequestHandler<GetTaskQuery, TaskDto>
 {
     public async Task<TaskDto> Handle(GetTaskQuery request, CancellationToken ct)
     {
@@ -80,7 +79,7 @@ public class CreateTaskCommandValidator : AbstractValidator<CreateTaskCommand>
     }
 }
 
-public class CreateTaskCommandHandler(ApplicationDbContext db) : IRequestHandler<CreateTaskCommand, Guid>
+public class CreateTaskCommandHandler(TasksDbContext db) : IRequestHandler<CreateTaskCommand, Guid>
 {
     public async Task<Guid> Handle(CreateTaskCommand request, CancellationToken ct)
     {
@@ -113,7 +112,7 @@ public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
     }
 }
 
-public class UpdateTaskCommandHandler(ApplicationDbContext db) : IRequestHandler<UpdateTaskCommand>
+public class UpdateTaskCommandHandler(TasksDbContext db) : IRequestHandler<UpdateTaskCommand>
 {
     public async Task Handle(UpdateTaskCommand request, CancellationToken ct)
     {
@@ -132,7 +131,7 @@ public class UpdateTaskCommandHandler(ApplicationDbContext db) : IRequestHandler
 [RequiresPermission(Permissions.Tasks.Delete)]
 public record DeleteTaskCommand(Guid Id) : IRequest, IAuditableCommand;
 
-public class DeleteTaskCommandHandler(ApplicationDbContext db) : IRequestHandler<DeleteTaskCommand>
+public class DeleteTaskCommandHandler(TasksDbContext db) : IRequestHandler<DeleteTaskCommand>
 {
     public async Task Handle(DeleteTaskCommand request, CancellationToken ct)
     {
