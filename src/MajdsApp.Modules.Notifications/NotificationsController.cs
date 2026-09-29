@@ -47,4 +47,26 @@ public class NotificationsController(IMediator mediator) : ApiControllerBase
         await mediator.Send(command);
         return Ok<object?>(null);
     }
+
+    /// <summary>The public half of the VAPID key pair a subscribing browser needs; null when push is not set up.</summary>
+    [HttpGet("push/vapid-public-key")]
+    public async Task<ResponseDto<string?>> VapidPublicKey() => Ok(await mediator.Send(new GetVapidPublicKeyQuery()));
+
+    [HttpPost("push/subscribe")]
+    public async Task<ResponseDto<object?>> Subscribe([FromBody] SubscribeToPushCommand command)
+    {
+        await mediator.Send(command);
+        return Ok<object?>(null);
+    }
+
+    [HttpPost("push/unsubscribe")]
+    public async Task<ResponseDto<object?>> Unsubscribe([FromBody] UnsubscribeFromPushCommand command)
+    {
+        await mediator.Send(command);
+        return Ok<object?>(null);
+    }
+
+    /// <summary>A fresh VAPID key pair for the settings page's "Generate" button — push needs no third-party account, just this.</summary>
+    [HttpGet("push/generate-vapid-keys")]
+    public async Task<ResponseDto<VapidKeyPairDto>> GenerateVapidKeys() => Ok(await mediator.Send(new GenerateVapidKeysQuery()));
 }

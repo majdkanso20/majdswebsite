@@ -1,0 +1,27 @@
+<mat-card appearance="outlined" class="push">
+  <mat-card-header>
+    <mat-card-title>{{ 'Push notifications' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (!supported) {
+      <p class="push__hint">{{ 'Not available in this browser.' | translate }}</p>
+    } @else {
+      <p class="push__hint">
+        {{
+          (subscribed()
+            ? 'Push notifications are on for this device.'
+            : 'Turn on push notifications to get them on this device even when the app is not open.') | translate
+        }}
+      </p>
+      @if (subscribed()) {
+        <button mat-stroked-button type="button" [disabled]="busy()" (click)="disable()">
+          {{ 'Turn off for this device' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" type="button" [disabled]="busy()" (click)="enable()">
+          {{ 'Turn on for this device' | translate }}
+        </button>
+      }
+    }
+  </mat-card-content>
+</mat-card>

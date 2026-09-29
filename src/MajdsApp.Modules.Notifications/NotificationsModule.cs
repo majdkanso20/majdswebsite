@@ -17,6 +17,7 @@ public class NotificationsModule : IFeatureModule
         services.AddScoped<IUserNotificationPublisher>(sp => sp.GetRequiredService<NotificationPublisher>());
         services.AddScoped<INotificationDispatcher>(sp => sp.GetRequiredService<NotificationPublisher>());
         services.AddScoped<IOutboundChannel, EmailOutboundChannel>(); // the first channel; any module can add another the same way
+        services.AddScoped<IOutboundChannel, WebPushOutboundChannel>();
         services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
         services.AddScoped<INotificationTemplate, SecurityEmailTemplate>();
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, UnreadNotificationsWidget>();

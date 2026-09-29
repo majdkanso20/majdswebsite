@@ -9,6 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TwoFactorCard } from '../two-factor-card/two-factor-card';
 import { MyPreferencesCard } from '../my-preferences-card/my-preferences-card';
 import { NotificationPreferencesCard } from '../notification-preferences-card/notification-preferences-card';
+import { PushNotificationsCard } from '../push-notifications-card/push-notifications-card';
 import { AccountService } from '../../../core/services/account.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -21,6 +22,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     TwoFactorCard,
     MyPreferencesCard,
     NotificationPreferencesCard,
+    PushNotificationsCard,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,

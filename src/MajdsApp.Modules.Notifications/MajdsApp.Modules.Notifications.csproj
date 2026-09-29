@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.12" />
+    <PackageReference Include="WebPush" Version="1.0.13" />
   </ItemGroup>
 
 </Project>

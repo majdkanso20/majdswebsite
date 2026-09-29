@@ -157,7 +157,8 @@ public class DeliveryModeTests
         (await admin.PostAsync("/api/settings/update", new { items = new[] { new { name = "Notifications.Email.DeliveryMode", value = "" } } })).Status.Should().Be(HttpStatusCode.OK);
 
         var listed = (await admin.GetAsync<List<SettingRow>>("/api/settings/list")).Data!;
-        listed.Where(s => s.Group == "Notifications").Select(s => s.Name).Should()
-            .BeEquivalentTo("Notifications.DeliveryMode", "Notifications.Email.DeliveryMode", "Notifications.Email.TestRecipient");
+        listed.Where(s => s.Group == "Notifications").Select(s => s.Name).Should().BeEquivalentTo(
+            "Notifications.DeliveryMode", "Notifications.Email.DeliveryMode", "Notifications.Email.TestRecipient",
+            "Notifications.Push.DeliveryMode", "Notifications.Push.VapidPublicKey", "Notifications.Push.VapidPrivateKey", "Notifications.Push.VapidSubject");
     }
 }

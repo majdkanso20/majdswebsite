@@ -70,10 +70,11 @@ public class OutboundChannelTests(ChannelFactory factory) : IClassFixture<Channe
         var userId = await IdOfAsync(admin, "oc.user1@example.com");
 
         var before = (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!;
-        before.Should().OnlyContain(s => s.Channels!.Single().Name == "Sms" && s.Channels!.Single().DisplayName == "SMS" && !s.Channels!.Single().Enabled);
+        // Alongside the test's own fake Sms channel, the real Push channel this session added is registered too (its own default off, no subscription for this user).
+        before.Should().OnlyContain(s => s.Channels!.Single(c => c.Name == "Sms").DisplayName == "SMS" && !s.Channels!.Single(c => c.Name == "Sms").Enabled);
 
         await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = true } } } } });
-        (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!.Single(s => s.Type == "General").Channels!.Single().Enabled.Should().BeTrue();
+        (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!.Single(s => s.Type == "General").Channels!.Single(c => c.Name == "Sms").Enabled.Should().BeTrue();
 
         var reset = await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = false } } } } });
         reset.Status.Should().Be(HttpStatusCode.OK, string.Join("; ", reset.Errors));
