@@ -159,6 +159,7 @@ public class DeliveryModeTests
         var listed = (await admin.GetAsync<List<SettingRow>>("/api/settings/list")).Data!;
         listed.Where(s => s.Group == "Notifications").Select(s => s.Name).Should().BeEquivalentTo(
             "Notifications.DeliveryMode", "Notifications.Email.DeliveryMode", "Notifications.Email.TestRecipient",
-            "Notifications.Push.DeliveryMode", "Notifications.Push.VapidPublicKey", "Notifications.Push.VapidPrivateKey", "Notifications.Push.VapidSubject");
+            "Notifications.Push.DeliveryMode", "Notifications.Push.VapidPublicKey", "Notifications.Push.VapidPrivateKey", "Notifications.Push.VapidSubject",
+            "Notifications.Sms.DeliveryMode", "Notifications.Sms.TestRecipient");
     }
 }

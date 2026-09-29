@@ -18,6 +18,10 @@ public class NotificationsModule : IFeatureModule
         services.AddScoped<INotificationDispatcher>(sp => sp.GetRequiredService<NotificationPublisher>());
         services.AddScoped<IOutboundChannel, EmailOutboundChannel>(); // the first channel; any module can add another the same way
         services.AddScoped<IOutboundChannel, WebPushOutboundChannel>();
+        services.AddHttpClient();
+        services.AddScoped<ISmsGateway, TwilioSmsGateway>();
+        services.AddScoped<ISmsGateway, VonageSmsGateway>();
+        services.AddScoped<IOutboundChannel, SmsOutboundChannel>();
         services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
         services.AddScoped<INotificationTemplate, SecurityEmailTemplate>();
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, UnreadNotificationsWidget>();

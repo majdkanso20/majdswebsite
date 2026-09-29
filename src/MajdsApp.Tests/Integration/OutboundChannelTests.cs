@@ -11,13 +11,14 @@ using Xunit;
 
 namespace MajdsApp.Tests.Integration;
 
-/// <summary>What a module writes to add a notification channel: one class, one registration. This one stands in for SMS.</summary>
-public class FakeSmsChannel : IOutboundChannel
+/// <summary>What a module writes to add a notification channel: one class, one registration. A stand-in for a channel this
+/// test suite owns and can misconfigure freely — Email, Push and Sms are all real channels now.</summary>
+public class FakeChatChannel : IOutboundChannel
 {
     public static readonly List<(string Address, string Title, string Message)> Sent = [];
 
-    public string Name => "Sms";
-    public string DisplayName => "SMS";
+    public string Name => "Chat";
+    public string DisplayName => "Chat";
     public bool EnabledByDefault => false;
 
     public Task<string?> ResolveAddressAsync(string userId, CancellationToken ct = default) => Task.FromResult<string?>("+1555" + Math.Abs(userId.GetHashCode()).ToString()[..4]);
@@ -34,7 +35,7 @@ public class ChannelFactory : ApiFactory
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         base.ConfigureWebHost(builder);
-        builder.ConfigureServices(services => services.AddScoped<IOutboundChannel, FakeSmsChannel>());
+        builder.ConfigureServices(services => services.AddScoped<IOutboundChannel, FakeChatChannel>());
     }
 }
 
@@ -70,16 +71,16 @@ public class OutboundChannelTests(ChannelFactory factory) : IClassFixture<Channe
         var userId = await IdOfAsync(admin, "oc.user1@example.com");
 
         var before = (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!;
-        // Alongside the test's own fake Sms channel, the real Push channel this session added is registered too (its own default off, no subscription for this user).
-        before.Should().OnlyContain(s => s.Channels!.Single(c => c.Name == "Sms").DisplayName == "SMS" && !s.Channels!.Single(c => c.Name == "Sms").Enabled);
+        // Alongside the test's own fake Chat channel, the real Push and Sms channels this session added are registered too (their own default off, no subscription/number for this user).
+        before.Should().OnlyContain(s => s.Channels!.Single(c => c.Name == "Chat").DisplayName == "Chat" && !s.Channels!.Single(c => c.Name == "Chat").Enabled);
 
-        await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = true } } } } });
-        (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!.Single(s => s.Type == "General").Channels!.Single(c => c.Name == "Sms").Enabled.Should().BeTrue();
+        await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Chat", displayName = "Chat", enabled = true } } } } });
+        (await user.GetAsync<List<Sub>>("/api/notifications/subscriptions/get")).Data!.Single(s => s.Type == "General").Channels!.Single(c => c.Name == "Chat").Enabled.Should().BeTrue();
 
-        var reset = await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = false } } } } });
+        var reset = await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = true, channels = new[] { new { name = "Chat", displayName = "Chat", enabled = false } } } } });
         reset.Status.Should().Be(HttpStatusCode.OK, string.Join("; ", reset.Errors));
         using var scope = factory.Services.CreateScope();
-        (await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Set<NotificationChannelChoice>().Where(c => c.UserId == userId && c.Type == "General" && c.ChannelName == "Sms").ToListAsync())
+        (await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Set<NotificationChannelChoice>().Where(c => c.UserId == userId && c.Type == "General" && c.ChannelName == "Chat").ToListAsync())
             .Should().BeEmpty("the default needs no stored row");
     }
 
@@ -102,7 +103,7 @@ public class OutboundChannelTests(ChannelFactory factory) : IClassFixture<Channe
         await factory.SignInAsync("oc.silent@example.com");
         var wantsId = await IdOfAsync(admin, "oc.wants@example.com");
         var silentId = await IdOfAsync(admin, "oc.silent@example.com");
-        await wants.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = false, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = true } } } } });
+        await wants.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "General", inApp = true, email = false, channels = new[] { new { name = "Chat", displayName = "Chat", enabled = true } } } } });
 
         using (var scope = factory.Services.CreateScope())
         {
@@ -111,13 +112,13 @@ public class OutboundChannelTests(ChannelFactory factory) : IClassFixture<Channe
             await publisher.PublishAsync(silentId, "Your export is ready", "It is waiting for you.");
         }
 
-        var delivered = await WaitForDeliveryAsync(factory, wantsId, "Sms", d => d.Status != DeliveryStatus.Pending);
+        var delivered = await WaitForDeliveryAsync(factory, wantsId, "Chat", d => d.Status != DeliveryStatus.Pending);
         delivered!.Status.Should().Be(DeliveryStatus.Sent);
-        lock (FakeSmsChannel.Sent) FakeSmsChannel.Sent.Should().Contain(s => s.Title == "Your export is ready" && s.Address.StartsWith("+1555"));
+        lock (FakeChatChannel.Sent) FakeChatChannel.Sent.Should().Contain(s => s.Title == "Your export is ready" && s.Address.StartsWith("+1555"));
         await Task.Delay(1500);
         using var check = factory.Services.CreateScope();
-        (await check.ServiceProvider.GetRequiredService<ApplicationDbContext>().Set<NotificationDelivery>().AnyAsync(d => d.UserId == silentId && d.ChannelName == "Sms"))
-            .Should().BeFalse("SMS is off by default, so nothing is queued for someone who never chose it");
+        (await check.ServiceProvider.GetRequiredService<ApplicationDbContext>().Set<NotificationDelivery>().AnyAsync(d => d.UserId == silentId && d.ChannelName == "Chat"))
+            .Should().BeFalse("Chat is off by default, so nothing is queued for someone who never chose it");
     }
 
     [Fact]
@@ -126,19 +127,19 @@ public class OutboundChannelTests(ChannelFactory factory) : IClassFixture<Channe
         var admin = await factory.SignInAsync("oc.admin4@example.com", "Admin");
         var user = await factory.SignInAsync("oc.dev@example.com");
         var userId = await IdOfAsync(admin, "oc.dev@example.com");
-        await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "Account", inApp = true, email = false, channels = new[] { new { name = "Sms", displayName = "SMS", enabled = true } } } } });
+        await user.PostAsync("/api/notifications/subscriptions/update", new { items = new[] { new { type = "Account", inApp = true, email = false, channels = new[] { new { name = "Chat", displayName = "Chat", enabled = true } } } } });
         await admin.PostAsync("/api/settings/update", new { items = new[] { new { name = "Notifications.DeliveryMode", value = "Dev" } } });
         int before;
-        lock (FakeSmsChannel.Sent) before = FakeSmsChannel.Sent.Count;
+        lock (FakeChatChannel.Sent) before = FakeChatChannel.Sent.Count;
         try
         {
             using (var scope = factory.Services.CreateScope())
                 await scope.ServiceProvider.GetRequiredService<IUserNotificationPublisher>().PublishAsync(userId, "Dev mode check", "Nothing should be sent.", NotificationTypes.Account);
 
-            var delivery = await WaitForDeliveryAsync(factory, userId, "Sms", d => d.Status != DeliveryStatus.Pending);
+            var delivery = await WaitForDeliveryAsync(factory, userId, "Chat", d => d.Status != DeliveryStatus.Pending);
 
             delivery!.Status.Should().Be(DeliveryStatus.Suppressed);
-            lock (FakeSmsChannel.Sent) FakeSmsChannel.Sent.Count.Should().Be(before);
+            lock (FakeChatChannel.Sent) FakeChatChannel.Sent.Count.Should().Be(before);
         }
         finally
         {

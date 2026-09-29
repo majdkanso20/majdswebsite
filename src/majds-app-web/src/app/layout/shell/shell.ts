@@ -88,7 +88,7 @@ export class Shell {
   readonly currentUser = this.authService.currentUser;
   /** One line for each channel that is not in Prod (Dev: nothing is sent; Test: only to the test recipient), or none. */
   readonly deliveryNotices = computed(() =>
-    channelsOutsideProd((name, fallback) => this.appSettingsService.get(name, fallback)).map((c) =>
+    channelsOutsideProd((name, fallback) => this.appSettingsService.get(name, fallback), ['Email', 'Push', 'Sms']).map((c) =>
       this.localization.translate(c.mode === 'Dev' ? 'Dev mode: {0} notifications are not sent, they are only logged.' : 'Test mode: {0} notifications go only to the test recipient.', this.localization.translate(c.channel))
     )
   );

@@ -32,6 +32,18 @@ public static class NotificationSettings
             description: "In Test mode every email goes to this address instead of the real recipient. With none set, Test mode sends nothing.",
             validator: value => value.Length == 0 || new EmailAddressAttribute().IsValid(value) ? null : "The test recipient must be a valid email address.");
 
+        public static readonly SettingDefinition SmsDeliveryMode = new(
+            "Notifications.Sms.DeliveryMode", "Notifications", "SMS delivery mode", SettingDataType.String, "",
+            description: "Leave empty to use the delivery mode above, or choose Dev, Test or Prod for SMS alone.",
+            isVisibleToClient: true,
+            validator: value => CheckMode(value, allowEmpty: true));
+
+        public static readonly SettingDefinition SmsTestRecipient = new(
+            "Notifications.Sms.TestRecipient", "Notifications", "SMS test recipient", SettingDataType.String, "",
+            description: "In Test mode every SMS goes to this number instead of the real recipient. With none set, Test mode sends nothing.",
+            validator: value => value.Length == 0 || System.Text.RegularExpressions.Regex.IsMatch(value, @"^\+[1-9]\d{1,14}$")
+                ? null : "The test recipient must be a phone number in international format, e.g. +15551234567.");
+
         // A push subscription is one browser on one device, not an address someone can type into a "test recipient" field the
         // way an email or phone number is — there is nothing sensible to redirect Test mode's real sends to. So Push treats Test
         // the same as Dev (logged, never actually sent) and only ever sends for real in Prod; see WebPushOutboundChannel.
