@@ -1,5 +1,6 @@
 import { ExportFormat } from '../../../../core/utils/download';
 import { ImportDialog, ImportDialogData } from '../../../../shared/components/import-dialog/import-dialog';
+import { ImportsService } from '../../../../core/services/imports.service';
 import { ExportMenu } from '../../../../shared/components/export-menu/export-menu';
 import { ActiveFilter } from '../../../../shared/components/active-filter/active-filter';
 import { LocalizationService } from '../../../../core/i18n/localization.service';
@@ -36,6 +37,7 @@ export class UsersList {
   private readonly snackBar = inject(MatSnackBar);
   private readonly l10n = inject(LocalizationService);
   private readonly exportsApi = inject(ExportsService);
+  private readonly importsApi = inject(ImportsService);
   private readonly router = inject(Router);
 
   readonly columns: GridColumn<UserDto>[] = [
@@ -155,20 +157,22 @@ export class UsersList {
     });
   }
 
+  /** Queues the import as a background job (F-Export FR-EXP-004); the list is not reloaded here since nothing has
+   * necessarily happened to it yet — Import history is where the outcome, and any row that failed, shows up. */
   openImportDialog(): void {
     this.dialog
       .open<ImportDialog, ImportDialogData, boolean>(ImportDialog, {
         data: {
           title: 'Import users',
-          upload: (file) => this.usersApi.importUsers(file),
-          template: (format) => this.usersApi.importTemplate(format)
+          upload: (file) => this.importsApi.start('users', file),
+          template: (format) => this.importsApi.template('users', format)
         },
         width: 'min(640px, 95vw)',
         maxWidth: '95vw'
       })
       .afterClosed()
-      .subscribe((imported) => {
-        if (imported) this.load();
+      .subscribe((queued) => {
+        if (queued) this.snackBar.open('Import queued. See Import history for progress.', 'Dismiss', { duration: 4000 });
       });
   }
 

@@ -18,6 +18,7 @@ export class MenuService {
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Files', icon: 'folder', route: '/files', feature: 'Files' },
     { label: 'My exports', icon: 'cloud_download', route: '/exports', feature: 'Files' },
+    { label: 'Import history', icon: 'upload_file', route: '/imports', feature: 'Imports' },
     {
       label: 'Administration',
       icon: 'admin_panel_settings',

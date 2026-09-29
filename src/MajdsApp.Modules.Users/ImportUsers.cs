@@ -1,10 +1,9 @@
 using MajdsApp.Data;
 using MajdsApp.Modules.Authorization;
-using MajdsApp.SharedKernel.Behaviors;
-using MajdsApp.SharedKernel.Export;
 using MajdsApp.SharedKernel.Import;
-using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace MajdsApp.Modules.Users;
 
@@ -21,18 +20,28 @@ public static class UserImportColumns
     public const string Email = "Email", FullName = "Full name", Roles = "Roles", Password = "Password";
 }
 
-/// <summary>Creates users from an uploaded CSV or Excel file (FR-EXP-003). Each row goes through the same
-/// <see cref="CreateUserCommand"/> as the create endpoint, so it obeys the same validation and is audited the same
-/// way. Valid rows are created; invalid rows are reported with their row number and reason (AC-EXP-2).</summary>
-[RequiresPermission(Permissions.Users.Create)]
-public record ImportUsersCommand(byte[] Content, string FileName) : IRequest<ImportResult>;
-
-public class ImportUsersCommandHandler(IMediator mediator, ApplicationDbContext db) : IRequestHandler<ImportUsersCommand, ImportResult>
+/// <summary>
+/// Creates users from an uploaded CSV or Excel file, running as a background job through the Imports module
+/// (F-Export FR-EXP-003/004). Each row goes through <see cref="UserCreator.CreateAsync"/> — the same validation
+/// and creation logic <see cref="CreateUserCommand"/>'s own handler uses — but called directly rather than through
+/// MediatR: a background worker has no signed-in user for <c>[RequiresPermission]</c> to check against, and the
+/// permission was already checked once, while the import was queued (<c>StartImportCommandHandler</c>), the same
+/// reason an export's <see cref="MajdsApp.SharedKernel.Export.IExportSource"/> queries the database directly
+/// instead of re-sending a permission-gated request. Valid rows are created; invalid rows are reported with
+/// their row number and reason (AC-EXP-2).
+/// </summary>
+public class UsersImportSource(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IConfiguration configuration, IEmailSender<ApplicationUser>? emailSender = null)
+    : IImportSource
 {
-    public async Task<ImportResult> Handle(ImportUsersCommand request, CancellationToken ct)
+    public string Key => "users";
+    public string Title => "Users";
+    public string? Permission => Permissions.Users.Create;
+    public IReadOnlyList<ImportColumn> TemplateColumns => UserImportColumns.All;
+
+    public async Task<ImportResult> RunAsync(byte[] content, string fileName, CancellationToken ct)
     {
-        using var stream = new MemoryStream(request.Content);
-        var table = TabularReader.Read(stream, request.FileName, [UserImportColumns.Email]);
+        using var stream = new MemoryStream(content);
+        var table = TabularReader.Read(stream, fileName, [UserImportColumns.Email]);
 
         var roleNames = await db.Roles.AsNoTracking().Select(r => r.Name!).ToListAsync(ct);
 
@@ -41,11 +50,14 @@ public class ImportUsersCommandHandler(IMediator mediator, ApplicationDbContext 
             var roles = ResolveRoles(row.Get(UserImportColumns.Roles), roleNames);
             var password = row.Get(UserImportColumns.Password);
 
-            await mediator.Send(new CreateUserCommand(
+            // No email column: a random password nobody sees, same as before — a bulk import should not silently start
+            // emailing every imported account a set-password link (FR-USER-002's SendSetPasswordEmail is opt-in elsewhere).
+            var command = new CreateUserCommand(
                 row.Get(UserImportColumns.Email),
                 password.Length > 0 ? password : PasswordGenerator.Generate(), false,
                 NullIfEmpty(row.Get(UserImportColumns.FullName)),
-                roles), ct);
+                roles);
+            await UserCreator.CreateAsync(userManager, command, configuration, emailSender, ct);
         }, ct);
     }
 
@@ -64,14 +76,4 @@ public class ImportUsersCommandHandler(IMediator mediator, ApplicationDbContext 
     }
 
     private static string? NullIfEmpty(string value) => value.Length == 0 ? null : value;
-}
-
-/// <summary>The blank template for a users import (FR-EXP-005).</summary>
-[RequiresPermission(Permissions.Users.View)]
-public record GetUsersImportTemplateQuery(string? Format) : IRequest<ExportFile>;
-
-public class GetUsersImportTemplateQueryHandler : IRequestHandler<GetUsersImportTemplateQuery, ExportFile>
-{
-    public Task<ExportFile> Handle(GetUsersImportTemplateQuery request, CancellationToken ct) =>
-        Task.FromResult(ImportTemplate.Create(ExportFormats.Parse(request.Format), "users", UserImportColumns.All));
 }

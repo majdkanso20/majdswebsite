@@ -1,0 +1,60 @@
+<div class="imports">
+  <div class="imports__toolbar">
+    <h1>{{ 'Import history' | translate }}</h1>
+    <button mat-stroked-button type="button" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'Refresh' | translate }}
+    </button>
+  </div>
+
+  <p class="imports__hint">
+    {{ 'Imports run in the background. You are notified when one is done, and history is kept for a few weeks.' | translate }}
+  </p>
+
+  @if (jobs() === undefined) {
+    <app-loading-state />
+  } @else if (jobs()!.length === 0) {
+    <app-empty-state icon="upload_file" message="No imports yet. Use Import on a list, such as Users." />
+  } @else {
+    <ul class="imports__list">
+      @for (job of jobs(); track job.id) {
+        <li class="imports__item" [class.imports__item--failed]="job.status === 'Failed'">
+          <mat-icon class="imports__icon">{{ icon(job) }}</mat-icon>
+          <div class="imports__details">
+            <strong>{{ job.title | translate }} ({{ job.fileName }})</strong>
+            <span class="imports__meta">
+              {{ job.status | translate }} · {{ job.createdAt | localDate: 'short' }}
+              @if (job.status === 'Completed') {
+                · {{ job.succeeded }}/{{ job.total }} {{ 'imported' | translate }}
+              }
+            </span>
+            @if (job.error) {
+              <span class="imports__error">{{ job.error }}</span>
+            }
+            @if (job.errors && job.errors.length > 0) {
+              <details class="imports__errors">
+                <summary>{{ job.errors.length }} {{ 'row(s) could not be imported' | translate }}</summary>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{{ 'Row' | translate }}</th>
+                      <th>{{ 'Reason' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of job.errors; track item.row) {
+                      <tr>
+                        <td>{{ item.row }}</td>
+                        <td>{{ item.reason }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </details>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

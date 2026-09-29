@@ -36,7 +36,7 @@ public static partial class AuditRedactor
             var options = new JsonSerializerOptions
             {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                Converters = { new BinaryPlaceholderConverter() }
+                Converters = { new BinaryPlaceholderConverter(), new ByteArrayPlaceholderConverter() }
             };
 
             var node = JsonSerializer.SerializeToNode(request, request.GetType(), options);
@@ -74,5 +74,19 @@ public static partial class AuditRedactor
 
         public override void Write(Utf8JsonWriter writer, Stream value, JsonSerializerOptions options) =>
             writer.WriteStringValue("[binary]");
+    }
+
+    /// <summary>
+    /// Without this, System.Text.Json's own default handling for <c>byte[]</c> writes it as a base64 string —
+    /// an uploaded file's whole content (for example <see cref="MajdsApp.SharedKernel.Import.IImportSource"/>'s
+    /// <c>StartImportCommand</c>) would otherwise land in the audit trail, the opposite of what this class promises.
+    /// </summary>
+    private sealed class ByteArrayPlaceholderConverter : JsonConverter<byte[]>
+    {
+        public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+            throw new NotSupportedException();
+
+        public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options) =>
+            writer.WriteStringValue($"[binary, {value.Length:N0} bytes]");
     }
 }

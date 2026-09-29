@@ -27,25 +27,10 @@
   color: var(--mat-sys-error);
 }
 
-.import__summary {
+.import__queued {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-2);
   margin: 0;
-  font: var(--mat-sys-title-small);
-}
-
-.import__errors {
-  width: 100%;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: var(--app-space-1) var(--app-space-2);
-    border-block-end: 1px solid var(--mat-sys-outline-variant);
-    text-align: start;
-    vertical-align: top;
-  }
-
-  th:first-child,
-  td:first-child {
-    width: 4rem;
-  }
+  color: var(--mat-sys-on-surface-variant);
 }

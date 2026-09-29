@@ -12,5 +12,7 @@ public class UsersModule : IFeatureModule
         services.AddScoped<MajdsApp.SharedKernel.Dashboard.IDashboardWidget, TotalUsersWidget>();
         services.AddScoped<UsersExportSource>();
         services.AddScoped<MajdsApp.SharedKernel.Export.IExportSource>(sp => sp.GetRequiredService<UsersExportSource>());
+        services.AddScoped<UsersImportSource>();
+        services.AddScoped<MajdsApp.SharedKernel.Import.IImportSource>(sp => sp.GetRequiredService<UsersImportSource>());
     }
 }

@@ -61,4 +61,17 @@ public class AuditRedactorTests
         json.Should().NotContain("hunter2").And.NotContain("inner-secret").And.NotContain("list-secret");
         json.Should().Contain("[binary]");
     }
+
+    private record FileCommand(string FileName, byte[] Content);
+
+    [Fact]
+    public void A_byte_array_is_a_placeholder_too_not_the_base_64_System_Text_Json_would_write_by_default()
+    {
+        // An uploaded file's bytes (StartImportCommand and the like): without its own converter, System.Text.Json's
+        // default byte[] handling would base64-encode the whole thing straight into the audit trail.
+        var json = AuditRedactor.SerializeParameters(new FileCommand("import.csv", [1, 2, 3, 4, 5]))!;
+
+        json.Should().Contain("import.csv").And.Contain("[binary, 5 bytes]");
+        json.Should().NotContain(Convert.ToBase64String([1, 2, 3, 4, 5]));
+    }
 }

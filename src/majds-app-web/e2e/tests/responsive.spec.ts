@@ -13,6 +13,7 @@ const pages = [
   '/administration/features',
   '/files',
   '/exports',
+  '/imports',
   '/account'
 ];
 

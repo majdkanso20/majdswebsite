@@ -38,5 +38,6 @@ Table: `ExportJobs`. Migration lives in `MajdsApp.Core`.
 
 ## Notes
 
-- Not covered: imports do not run in the background yet (they process up to 5,000 rows during the request), and the file is built in memory before it is written, which is why the cap is 200,000 rows.
+- Imports have the same shape as this, in their own module (`MajdsApp.Modules.Imports`), since they needed a different limit (the whole uploaded file is held in the job row, not built and streamed to storage like an export's output).
+- The file is built in memory before it is written, which is why the background cap is 200,000 rows.
 - The notification link needs the frontend route `/exports`; the email copy of a notification carries the text only, not the link.

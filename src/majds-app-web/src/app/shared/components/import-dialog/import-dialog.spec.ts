@@ -2,12 +2,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
-import { ImportDialog, ImportDialogData, ImportResult } from './import-dialog';
+import { ImportJob } from '../../../core/services/imports.service';
+import { ImportDialog, ImportDialogData } from './import-dialog';
 
 describe('ImportDialog', () => {
   const dialogRef = { close: vi.fn() };
   const data: ImportDialogData = { title: 'Import things', upload: vi.fn(), template: vi.fn() };
   const file = new File(['Email\na@b.co'], 'users.csv', { type: 'text/csv' });
+
+  const job: ImportJob = {
+    id: 'job-1', source: 'users', title: 'Users', fileName: 'users.csv', status: 'Pending',
+    total: 0, succeeded: 0, errors: null, error: null, createdAt: '2026-01-01T00:00:00Z', completedAt: null
+  };
 
   async function create() {
     const fixture = TestBed.createComponent(ImportDialog);
@@ -36,9 +42,8 @@ describe('ImportDialog', () => {
     expect(data.upload).not.toHaveBeenCalled();
   });
 
-  it('uploads the chosen file and lists each failed row with its reason', async () => {
-    const result: ImportResult = { total: 3, succeeded: 2, failed: 1, errors: [{ row: 3, reason: 'Unknown role.' }] };
-    (data.upload as ReturnType<typeof vi.fn>).mockReturnValue(of(result));
+  it('uploads the chosen file and confirms it was queued, without waiting for it to finish', async () => {
+    (data.upload as ReturnType<typeof vi.fn>).mockReturnValue(of(job));
     const { fixture, dialog, element } = await create();
 
     dialog.file.set(file);
@@ -46,13 +51,13 @@ describe('ImportDialog', () => {
     fixture.detectChanges();
 
     expect(data.upload).toHaveBeenCalledWith(file);
-    expect(element.querySelector('.import__summary')?.textContent).toContain('2');
-    const cells = Array.from(element.querySelectorAll('.import__errors tbody td')).map((c) => c.textContent);
-    expect(cells).toEqual(['3', 'Unknown role.']);
+    expect(dialog.queued()).toEqual(job);
+    expect(element.querySelector('.import__queued')?.textContent).toContain('queued');
+    expect(element.querySelector('.import__file')).toBeNull(); // the form is replaced by the confirmation, not shown alongside it
   });
 
-  it('shows the reason when the whole file is rejected', async () => {
-    const failure = new HttpErrorResponse({ status: 400, error: { errors: ['The file is missing the required column(s): Email.'] } });
+  it('shows the reason when queuing itself is refused (too large, too many in progress...)', async () => {
+    const failure = new HttpErrorResponse({ status: 400, error: { errors: ['The file must be no larger than 5 MB.'] } });
     (data.upload as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => failure));
     const { fixture, dialog, element } = await create();
 
@@ -60,17 +65,17 @@ describe('ImportDialog', () => {
     dialog.import();
     fixture.detectChanges();
 
-    expect(element.querySelector('.import__error')?.textContent).toContain('missing the required column');
+    expect(element.querySelector('.import__error')?.textContent).toContain('no larger than 5 MB');
     expect(dialog.uploading()).toBe(false);
   });
 
-  it('tells the list to reload only when something was imported', async () => {
+  it('tells the list something was queued only once it actually was', async () => {
     const { dialog } = await create();
 
     dialog.close();
     expect(dialogRef.close).toHaveBeenLastCalledWith(false);
 
-    dialog.result.set({ total: 1, succeeded: 1, failed: 0, errors: [] });
+    dialog.queued.set(job);
     dialog.close();
     expect(dialogRef.close).toHaveBeenLastCalledWith(true);
   });

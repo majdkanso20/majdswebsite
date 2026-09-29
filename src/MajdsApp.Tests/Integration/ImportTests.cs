@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using ClosedXML.Excel;
 using FluentAssertions;
 using MajdsApp.Tests.Support;
@@ -11,33 +10,57 @@ using Xunit;
 namespace MajdsApp.Tests.Integration;
 
 public record ImportErrorRow(int Row, string Reason);
-public record ImportSummary(int Total, int Succeeded, int Failed, List<ImportErrorRow> Errors);
+public record ImportJobRow(Guid Id, string Source, string Title, string FileName, string Status, int Total, int Succeeded, List<ImportErrorRow>? Errors, string? Error);
 
-/// <summary>F-Export import: per-row validation with a summary, and downloadable templates.</summary>
+/// <summary>F-Export FR-EXP-003/004: imports run as a background job, with per-row validation and a summary, and downloadable templates.</summary>
 public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-
-    private static async Task<(HttpStatusCode Status, Envelope<ImportSummary>? Body)> UploadAsync(ApiClient client, string fileName, byte[] content)
+    private static async Task<ApiResult<ImportJobRow>> StartAsync(ApiClient client, string fileName, byte[] content, string source = "users")
     {
         using var form = new MultipartFormDataContent();
         var file = new ByteArrayContent(content);
         file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         form.Add(file, "file", fileName);
-
-        var response = await client.Http.PostAsync("/api/users/import", form);
-        var text = await response.Content.ReadAsStringAsync();
-        return (response.StatusCode, text.StartsWith('{') ? JsonSerializer.Deserialize<Envelope<ImportSummary>>(text, Json) : null); // a 401 has no body
+        return await SendAsync(client, source, form);
     }
 
-    private static Task<(HttpStatusCode Status, Envelope<ImportSummary>? Body)> UploadCsvAsync(ApiClient client, string csv) =>
-        UploadAsync(client, "users.csv", Encoding.UTF8.GetBytes(csv));
+    private static async Task<ApiResult<ImportJobRow>> SendAsync(ApiClient client, string source, HttpContent content)
+    {
+        var response = await client.Http.PostAsync($"/api/imports/start?source={source}", content);
+        var text = await response.Content.ReadAsStringAsync();
+        return new ApiResult<ImportJobRow>(response.StatusCode,
+            text.StartsWith('{') ? System.Text.Json.JsonSerializer.Deserialize<Envelope<ImportJobRow>>(text, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)) : null,
+            response);
+    }
+
+    private static Task<ApiResult<ImportJobRow>> StartCsvAsync(ApiClient client, string csv, string source = "users") =>
+        StartAsync(client, "users.csv", Encoding.UTF8.GetBytes(csv), source);
+
+    private static async Task<ImportJobRow> WaitForAsync(ApiClient client, Guid jobId, params string[] finished)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (DateTime.UtcNow < deadline)
+        {
+            var job = (await client.GetAsync<List<ImportJobRow>>("/api/imports/list")).Data!.Single(j => j.Id == jobId);
+            if (finished.Contains(job.Status)) return job;
+            await Task.Delay(300);
+        }
+
+        throw new TimeoutException($"Import {jobId} did not reach {string.Join("/", finished)} in time.");
+    }
+
+    private static async Task<ImportJobRow> RunAsync(ApiClient client, string csv)
+    {
+        var started = await StartCsvAsync(client, csv);
+        started.Status.Should().Be(HttpStatusCode.OK, string.Join("; ", started.Errors));
+        return await WaitForAsync(client, started.Data!.Id, "Completed", "Failed");
+    }
 
     private static async Task<List<string>> EmailsAsync(ApiClient admin, string filter) =>
         (await admin.GetAsync<PagedData<UserRow>>($"/api/users/list?page=1&pageSize=100&filter={filter}")).Data!.Items.Select(u => u.Email).ToList();
 
     [Fact]
-    public async Task Valid_rows_are_imported_and_invalid_rows_are_reported_with_their_row_and_reason()
+    public async Task Queues_immediately_and_runs_valid_rows_in_while_invalid_rows_are_reported_with_row_and_reason()
     {
         var admin = await factory.SignInAsync("imp.admin1@example.com", "Admin");
         var csv = string.Join("\r\n",
@@ -49,17 +72,19 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
             "imp.good4@example.com,Good Four,\"Admin; User\",",  // row 6: fine, generated password, two roles
             "imp.good1@example.com,Duplicate,,Passw0rd!x") + "\r\n"; // row 7: already imported above
 
-        var (status, body) = await UploadCsvAsync(admin, csv);
+        var started = await StartCsvAsync(admin, csv);
+        started.Status.Should().Be(HttpStatusCode.OK);
+        started.Data!.Status.Should().Be("Pending");           // returns straight away, work is queued, same shape as a background export
 
-        status.Should().Be(HttpStatusCode.OK);
-        var result = body!.Data!;
-        result.Total.Should().Be(6);
-        result.Succeeded.Should().Be(2);
-        result.Failed.Should().Be(4);
-        result.Errors.Select(e => e.Row).Should().Equal(3, 4, 5, 7);
-        result.Errors.Single(e => e.Row == 4).Reason.Should().Contain("Unknown role 'Nonexistent'");
-        result.Errors.Single(e => e.Row == 5).Reason.Should().Contain("6");                       // the create rule's minimum length
-        result.Errors.Single(e => e.Row == 7).Reason.Should().Contain("imp.good1@example.com");   // already taken
+        var done = await WaitForAsync(admin, started.Data.Id, "Completed", "Failed");
+
+        done.Status.Should().Be("Completed");
+        done.Total.Should().Be(6);
+        done.Succeeded.Should().Be(2);
+        done.Errors!.Select(e => e.Row).Should().Equal(3, 4, 5, 7);
+        done.Errors.Single(e => e.Row == 4).Reason.Should().Contain("Unknown role 'Nonexistent'");
+        done.Errors.Single(e => e.Row == 5).Reason.Should().Contain("6");                       // the create rule's minimum length
+        done.Errors.Single(e => e.Row == 7).Reason.Should().Contain("imp.good1@example.com");   // already taken
 
         var created = await EmailsAsync(admin, "imp.good");
         created.Should().BeEquivalentTo("imp.good1@example.com", "imp.good4@example.com");        // valid rows in, invalid rows out (AC-EXP-2)
@@ -80,10 +105,12 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
 
-        var (status, body) = await UploadAsync(admin, "users.xlsx", stream.ToArray());
+        var started = await StartAsync(admin, "users.xlsx", stream.ToArray());
+        started.Status.Should().Be(HttpStatusCode.OK);
+        var done = await WaitForAsync(admin, started.Data!.Id, "Completed", "Failed");
 
-        status.Should().Be(HttpStatusCode.OK);
-        body!.Data!.Succeeded.Should().Be(1);
+        done.Status.Should().Be("Completed");
+        done.Succeeded.Should().Be(1);
         (await EmailsAsync(admin, "imp.excel")).Should().Equal("imp.excel@example.com");
     }
 
@@ -91,7 +118,7 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
     public async Task A_user_imported_without_a_password_exists_but_cannot_sign_in_with_a_guessed_one()
     {
         var admin = await factory.SignInAsync("imp.admin3@example.com", "Admin");
-        await UploadCsvAsync(admin, "Email\r\nimp.nopass@example.com\r\n");
+        await RunAsync(admin, "Email\r\nimp.nopass@example.com\r\n");
 
         var response = await factory.Anonymous().Http.PostAsJsonAsync("/api/identity/login", new { email = "imp.nopass@example.com", password = "Test1234!" });
 
@@ -100,16 +127,27 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task A_file_the_importer_cannot_use_is_rejected_before_any_row_is_imported()
+    public async Task A_file_the_importer_cannot_use_fails_the_job_before_any_row_is_imported()
     {
         var admin = await factory.SignInAsync("imp.admin4@example.com", "Admin");
 
-        var noEmailColumn = await UploadCsvAsync(admin, "Name\r\nAda\r\n");
-        noEmailColumn.Status.Should().Be(HttpStatusCode.BadRequest);
-        noEmailColumn.Body!.Errors.Should().Contain(e => e.Contains("Email"));
+        var noEmailColumn = await RunAsync(admin, "Name\r\nAda\r\n");
+        noEmailColumn.Status.Should().Be("Failed");
+        noEmailColumn.Error.Should().Contain("Email");
 
-        (await UploadAsync(admin, "users.txt", Encoding.UTF8.GetBytes("Email\na@b.co"))).Status.Should().Be(HttpStatusCode.BadRequest);
-        (await UploadAsync(admin, "users.csv", [])).Status.Should().Be(HttpStatusCode.BadRequest);
+        // Queuing itself refuses an empty upload straight away — there is no file to run a job on.
+        (await StartAsync(admin, "users.csv", [])).Status.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task An_unrecognized_file_extension_still_fails_only_the_job_not_the_request()
+    {
+        var admin = await factory.SignInAsync("imp.admin7@example.com", "Admin");
+
+        var started = await StartAsync(admin, "users.txt", Encoding.UTF8.GetBytes("Email\na@b.co"));
+        started.Status.Should().Be(HttpStatusCode.OK);       // queuing does not parse the file; that is the worker's job
+        var job = await WaitForAsync(admin, started.Data!.Id, "Completed", "Failed");
+        job.Status.Should().Be("Failed");
     }
 
     [Fact]
@@ -117,37 +155,39 @@ public class ImportTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var plain = await factory.SignInAsync("imp.plain@example.com");
 
-        (await UploadCsvAsync(plain, "Email\r\nimp.nope@example.com\r\n")).Status.Should().Be(HttpStatusCode.Forbidden);
-        (await UploadCsvAsync(factory.Anonymous(), "Email\r\na@b.co\r\n")).Status.Should().Be(HttpStatusCode.Unauthorized);
+        (await StartCsvAsync(plain, "Email\r\nimp.nope@example.com\r\n")).Status.Should().Be(HttpStatusCode.Forbidden);
+        (await StartCsvAsync(factory.Anonymous(), "Email\r\na@b.co\r\n")).Status.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task The_templates_carry_the_expected_columns_and_no_data_rows()
+    public async Task The_template_carries_the_expected_columns_and_no_data_rows()
     {
         var admin = await factory.SignInAsync("imp.admin5@example.com", "Admin");
 
-        var csv = await admin.Http.GetAsync("/api/users/import-template");
+        var csv = await admin.Http.GetAsync("/api/imports/template?source=users");
         csv.Content.Headers.ContentType!.MediaType.Should().Be("text/csv");
         Encoding.UTF8.GetString(await csv.Content.ReadAsByteArrayAsync()).Should().Contain("Email,Full name,Roles,Password");
 
-        var xlsx = await admin.Http.GetAsync("/api/users/import-template?format=xlsx");
+        var xlsx = await admin.Http.GetAsync("/api/imports/template?source=users&format=xlsx");
         using var workbook = new XLWorkbook(new MemoryStream(await xlsx.Content.ReadAsByteArrayAsync()));
         workbook.Worksheet("Data").RowsUsed().Should().ContainSingle();                            // headers only: nothing to import by accident
         workbook.Worksheet("Data").Row(1).Cells(1, 4).Select(c => c.GetString()).Should().Equal("Email", "Full name", "Roles", "Password");
         workbook.Worksheet("Instructions").Cell(2, 2).GetString().Should().Be("Yes");              // Email is required
 
-        (await admin.Http.GetAsync("/api/users/import-template?format=pdf")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.Http.GetAsync("/api/imports/template?source=users&format=pdf")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.Http.GetAsync("/api/imports/template?source=nope")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task A_downloaded_template_filled_in_imports_cleanly()
     {
         var admin = await factory.SignInAsync("imp.admin6@example.com", "Admin");
-        var template = Encoding.UTF8.GetString(await (await admin.Http.GetAsync("/api/users/import-template")).Content.ReadAsByteArrayAsync()).TrimStart('﻿');
+        var template = Encoding.UTF8.GetString(await (await admin.Http.GetAsync("/api/imports/template?source=users")).Content.ReadAsByteArrayAsync()).TrimStart('﻿');
 
-        var (_, body) = await UploadCsvAsync(admin, template + "imp.template@example.com,Template User,User,Passw0rd!x\r\n");
+        var done = await RunAsync(admin, template + "imp.template@example.com,Template User,User,Passw0rd!x\r\n");
 
-        body!.Data!.Succeeded.Should().Be(1);
-        body.Data.Failed.Should().Be(0);
+        done.Status.Should().Be("Completed");
+        done.Succeeded.Should().Be(1);
+        (done.Errors?.Count ?? 0).Should().Be(0);
     }
 }

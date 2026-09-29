@@ -10,7 +10,7 @@ describe('MenuService', () => {
   let http: HttpTestingController;
   let menu: MenuService;
 
-  async function signInWith(permissions: string[], features: string[] = ['Files']): Promise<void> {
+  async function signInWith(permissions: string[], features: string[] = ['Files', 'Imports']): Promise<void> {
     const loading = Promise.all([TestBed.inject(PermissionService).loadAsync(), TestBed.inject(FeaturesService).loadAsync()]);
     http.expectOne(`${environment.apiBaseUrl}/session/permissions`).flush({ data: permissions });
     http.expectOne(`${environment.apiBaseUrl}/features/enabled`).flush({ data: features });
@@ -29,14 +29,14 @@ describe('MenuService', () => {
   it('shows only the entries the user is permitted to see (FR-SHELL-002)', async () => {
     await signInWith(['Users.View']);
 
-    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports', 'Users']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports', 'Import history', 'Users']);
   });
 
   it('hides a whole group when none of its entries are visible', async () => {
     await signInWith([]);
 
     expect(menu.visibleItems().some((item) => item.children)).toBe(false);
-    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports', 'Import history']);
   });
 
   it('hides an entry whose feature flag is off', async () => {
@@ -61,7 +61,7 @@ describe('MenuService', () => {
 
     menu.replaceSource('plugins', []);
     expect(labels()).not.toContain('Tasks');
-    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports']);
+    expect(labels()).toEqual(['Dashboard', 'Files', 'My exports', 'Import history']);
   });
 
   it('applies the same permission filter to contributed entries as to built-in ones', async () => {
