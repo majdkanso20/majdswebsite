@@ -1,0 +1,47 @@
+<div class="employees-list">
+  <div class="employees-list__toolbar">
+    <h1>{{ 'Employees' | translate }}</h1>
+    <button mat-flat-button color="primary" *hasPermission="'Hr.Create'" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      {{ 'New employee' | translate }}
+    </button>
+  </div>
+
+  @if (filter()) {
+    <app-active-filter [value]="filter()" />
+  }
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    [failed]="failed()"
+    (retry)="reload()"
+    emptyMessage="No employees found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #cellTemplate let-row let-column="column">
+      @switch (column.key) {
+        @case ('status') {
+          <mat-chip-set>
+            <mat-chip [class.employees-list__chip--warn]="row.status !== 'Active'">{{ row.status | translate }}</mat-chip>
+          </mat-chip-set>
+        }
+        @default {
+          {{ defaultValueFallback(row, column) }}
+        }
+      }
+    </ng-template>
+
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Hr.Edit'" (click)="openEditDialog(row)" aria-label="Edit">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button *hasPermission="'Hr.Delete'" (click)="deleteEmployee(row)" aria-label="Delete">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+</div>

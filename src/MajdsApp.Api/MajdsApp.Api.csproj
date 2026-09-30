@@ -35,6 +35,7 @@
     <ProjectReference Include="..\MajdsApp.Modules.Files\MajdsApp.Modules.Files.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Account\MajdsApp.Modules.Account.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Health\MajdsApp.Modules.Health.csproj" />
+    <ProjectReference Include="..\MajdsApp.Modules.Hr\MajdsApp.Modules.Hr.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Jobs\MajdsApp.Modules.Jobs.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Features\MajdsApp.Modules.Features.csproj" />
     <ProjectReference Include="..\MajdsApp.Modules.Search\MajdsApp.Modules.Search.csproj" />

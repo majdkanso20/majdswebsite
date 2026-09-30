@@ -1,0 +1,34 @@
+<div class="departments-list">
+  <div class="departments-list__toolbar">
+    <h1>{{ 'Departments' | translate }}</h1>
+    <button mat-flat-button color="primary" *hasPermission="'Hr.Create'" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      {{ 'New department' | translate }}
+    </button>
+  </div>
+
+  @if (filter()) {
+    <app-active-filter [value]="filter()" />
+  }
+
+  <app-data-grid
+    [columns]="columns"
+    [rows]="rows()"
+    [totalCount]="totalCount()"
+    [loading]="loading()"
+    [failed]="failed()"
+    (retry)="reload()"
+    emptyMessage="No departments found."
+    (page)="onPage($event)"
+    (sortChange)="onSort($event)"
+  >
+    <ng-template #actionsTemplate let-row>
+      <button mat-icon-button *hasPermission="'Hr.Edit'" (click)="openEditDialog(row)" aria-label="Edit">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button *hasPermission="'Hr.Delete'" (click)="deleteDepartment(row)" aria-label="Delete">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </ng-template>
+  </app-data-grid>
+</div>

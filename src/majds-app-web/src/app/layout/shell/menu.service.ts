@@ -20,6 +20,14 @@ export class MenuService {
     { label: 'My exports', icon: 'cloud_download', route: '/exports', feature: 'Files' },
     { label: 'Import history', icon: 'upload_file', route: '/imports', feature: 'Imports' },
     {
+      label: 'HR',
+      icon: 'badge',
+      children: [
+        { label: 'Departments', icon: 'apartment', route: '/hr/departments', permission: 'Hr.View', feature: 'Hr' },
+        { label: 'Employees', icon: 'groups', route: '/hr/employees', permission: 'Hr.View', feature: 'Hr' }
+      ]
+    },
+    {
       label: 'Administration',
       icon: 'admin_panel_settings',
       children: [

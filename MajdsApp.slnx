@@ -10,6 +10,7 @@
     <Project Path="src/MajdsApp.Modules.Features/MajdsApp.Modules.Features.csproj" />
     <Project Path="src/MajdsApp.Modules.Files/MajdsApp.Modules.Files.csproj" />
     <Project Path="src/MajdsApp.Modules.Health/MajdsApp.Modules.Health.csproj" />
+    <Project Path="src/MajdsApp.Modules.Hr/MajdsApp.Modules.Hr.csproj" />
     <Project Path="src/MajdsApp.Modules.Jobs/MajdsApp.Modules.Jobs.csproj" />
     <Project Path="src/MajdsApp.Modules.Notifications/MajdsApp.Modules.Notifications.csproj" />
     <Project Path="src/MajdsApp.Modules.Plugins/MajdsApp.Modules.Plugins.csproj" />

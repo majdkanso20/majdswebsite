@@ -47,6 +47,16 @@ export const routes: Routes = [
           import('./features/administration/roles/roles-list/roles-list').then((m) => m.RolesList)
       },
       {
+        path: 'hr/departments',
+        canActivate: [featureGuard('Hr'), permissionGuard('Hr.View')],
+        loadComponent: () => import('./features/hr/departments-list/departments-list').then((m) => m.DepartmentsList)
+      },
+      {
+        path: 'hr/employees',
+        canActivate: [featureGuard('Hr'), permissionGuard('Hr.View')],
+        loadComponent: () => import('./features/hr/employees-list/employees-list').then((m) => m.EmployeesList)
+      },
+      {
         path: 'administration/settings',
         canActivate: [permissionGuard('Settings.View')],
         loadComponent: () =>
