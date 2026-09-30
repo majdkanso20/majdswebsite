@@ -13,8 +13,9 @@ namespace MajdsApp.Tests.Integration;
 /// F-Notifications FR-NOTIF-002/009: SMS as a real, pluggable channel. The supervisor's own framing of the request was
 /// "I can change the underlying implementation of SMS based upon the provider (as every SMS provider provides their own
 /// endpoints with their specific payloads)" — <see cref="SmsOutboundChannel"/> never talks to a provider itself, only to
-/// whichever <see cref="ISmsGateway"/> the <c>Sms.Provider</c> setting names; Twilio and Vonage are the two built in, each
-/// with a genuinely different request shape (Basic-auth form post vs. an API-key JSON body).
+/// whichever <see cref="ISmsGateway"/> the <c>Sms.Provider</c> setting names; Twilio, Vonage and Infobip are the three
+/// built in, each with a genuinely different request shape (Basic-auth form post, an API-key JSON body, and an
+/// App-scheme auth header with its own per-account base URL).
 /// </summary>
 public class SmsOutboundChannelTests
 {
@@ -77,7 +78,7 @@ public class SmsOutboundChannelTests
 }
 
 /// <summary>The same channel wired into the real host: its settings, its user-facing phone number, and each gateway's own
-/// missing-credentials error, none of which is run against a live Twilio or Vonage account here.</summary>
+/// missing-credentials error, none of which is run against a live Twilio, Vonage or Infobip account here.</summary>
 public class SmsNotificationTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     [Fact]
@@ -89,21 +90,25 @@ public class SmsNotificationTests(ApiFactory factory) : IClassFixture<ApiFactory
 
         listed.Where(s => s.Group == "Sms").Select(s => s.Name).Should().BeEquivalentTo(
             "Sms.Provider", "Sms.Twilio.AccountSid", "Sms.Twilio.AuthToken", "Sms.Twilio.FromNumber",
-            "Sms.Vonage.ApiKey", "Sms.Vonage.ApiSecret", "Sms.Vonage.FromNumber");
+            "Sms.Vonage.ApiKey", "Sms.Vonage.ApiSecret", "Sms.Vonage.FromNumber",
+            "Sms.Infobip.BaseUrl", "Sms.Infobip.ApiKey", "Sms.Infobip.FromNumber");
     }
 
-    [Fact]
-    public async Task A_provider_chosen_with_no_credentials_saved_yet_is_refused_by_name_not_a_raw_HTTP_error()
+    [Theory]
+    [InlineData("Twilio")]
+    [InlineData("Vonage")]
+    [InlineData("Infobip")]
+    public async Task A_provider_chosen_with_no_credentials_saved_yet_is_refused_by_name_not_a_raw_HTTP_error(string provider)
     {
         using var freshFactory = new ApiFactory();
-        var admin = await freshFactory.SignInAsync("sms.admin2@example.com", "Admin");
-        await admin.PostAsync("/api/settings/update", new { items = new[] { new { name = "Sms.Provider", value = "Twilio" } } });
+        var admin = await freshFactory.SignInAsync($"sms.admin2.{provider.ToLowerInvariant()}@example.com", "Admin");
+        await admin.PostAsync("/api/settings/update", new { items = new[] { new { name = "Sms.Provider", value = provider } } });
 
         using var scope = freshFactory.Services.CreateScope();
         var channel = scope.ServiceProvider.GetServices<IOutboundChannel>().Single(c => c.Name == "Sms");
 
         var sending = async () => await channel.SendAsync("+15551234567", new OutboundMessage("u", "General", "Title", "Message", null));
-        (await sending.Should().ThrowAsync<InvalidOperationException>()).Which.Message.Should().Contain("Twilio");
+        (await sending.Should().ThrowAsync<InvalidOperationException>()).Which.Message.Should().Contain(provider);
     }
 
     [Fact]

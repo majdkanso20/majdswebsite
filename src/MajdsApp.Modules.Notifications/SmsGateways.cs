@@ -93,3 +93,58 @@ public class VonageSmsGateway(ISettingsProvider settings, IHttpClientFactory htt
         return DeliveryOutcome.Sent;
     }
 }
+
+/// <summary>
+/// Infobip's Advanced Text Messaging API: an <c>App</c>-scheme authorization header (not Basic, not a bearer token) carrying
+/// the API key, a JSON body listing one or more <c>destinations</c>, and its own per-account base URL rather than one fixed
+/// host — a third shape again, which is exactly why the channel above talks to <see cref="ISmsGateway"/> and never to a provider.
+/// </summary>
+public class InfobipSmsGateway(ISettingsProvider settings, IHttpClientFactory httpClientFactory, ILogger<InfobipSmsGateway> logger) : ISmsGateway
+{
+    public string Name => "Infobip";
+
+    public async Task<DeliveryOutcome> SendAsync(string toPhoneNumber, string message, CancellationToken ct = default)
+    {
+        var baseUrl = await settings.GetAsync(SmsSettings.Sms.InfobipBaseUrl.Name, ct);
+        var apiKey = await settings.GetAsync(SmsSettings.Sms.InfobipApiKey.Name, ct);
+        var fromNumber = await settings.GetAsync(SmsSettings.Sms.InfobipFromNumber.Name, ct);
+        if (baseUrl.Length == 0 || apiKey.Length == 0 || fromNumber.Length == 0)
+            throw new InvalidOperationException("Infobip needs a base URL, API key and sender ID set on the Sms settings page.");
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            messages = new[]
+            {
+                new { destinations = new[] { new { to = toPhoneNumber.TrimStart('+') } }, from = fromNumber, text = message }
+            }
+        });
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/sms/2/text/advanced")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("App", apiKey);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var client = httpClientFactory.CreateClient();
+        using var response = await client.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Infobip SMS send failed: {Status} {Body}", response.StatusCode, body);
+            throw new HttpRequestException($"Infobip refused the message ({(int)response.StatusCode}): {body}");
+        }
+
+        using var doc = JsonDocument.Parse(body);
+        var status = doc.RootElement.GetProperty("messages")[0].GetProperty("status");
+        var groupName = status.GetProperty("groupName").GetString();
+        if (groupName is "REJECTED" or "UNDELIVERABLE")
+        {
+            var description = status.TryGetProperty("description", out var d) ? d.GetString() : "unknown reason";
+            logger.LogWarning("Infobip SMS send failed: {GroupName} ({Description})", groupName, description);
+            throw new InvalidOperationException($"Infobip refused the message ({groupName}): {description}");
+        }
+
+        return DeliveryOutcome.Sent;
+    }
+}

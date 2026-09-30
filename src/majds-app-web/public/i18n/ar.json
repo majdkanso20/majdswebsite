@@ -413,5 +413,12 @@
   "Vonage API key": "مفتاح واجهة برمجة Vonage",
   "Vonage API secret": "المفتاح السري لواجهة برمجة Vonage",
   "Vonage sender ID": "معرّف مرسل Vonage",
-  "The Vonage sender ID or number messages are sent from.": "معرّف أو رقم مرسل Vonage الذي تُرسَل منه الرسائل."
+  "The Vonage sender ID or number messages are sent from.": "معرّف أو رقم مرسل Vonage الذي تُرسَل منه الرسائل.",
+  "Leave empty to leave SMS unavailable. Twilio, Vonage and Infobip are built in.": "اتركه فارغاً لتعطيل الرسائل النصية. تويليو (Twilio) وفوناج (Vonage) وإنفوبيب (Infobip) مدمجة.",
+  "The SMS provider must be Twilio, Vonage or Infobip.": "يجب أن يكون مزود الرسائل النصية Twilio أو Vonage أو Infobip.",
+  "Infobip base URL": "رابط Infobip الأساسي",
+  "The personalized API base URL from the Infobip dashboard, e.g. https://xxxxxx.api.infobip.com.": "رابط واجهة البرمجة الأساسي الخاص بحسابك من لوحة تحكم Infobip، مثل https://xxxxxx.api.infobip.com.",
+  "Infobip API key": "مفتاح واجهة برمجة Infobip",
+  "Infobip sender ID": "معرّف مرسل Infobip",
+  "The Infobip sender ID or number messages are sent from.": "معرّف أو رقم مرسل Infobip الذي تُرسَل منه الرسائل."
 }

@@ -21,6 +21,7 @@ public class NotificationsModule : IFeatureModule
         services.AddHttpClient();
         services.AddScoped<ISmsGateway, TwilioSmsGateway>();
         services.AddScoped<ISmsGateway, VonageSmsGateway>();
+        services.AddScoped<ISmsGateway, InfobipSmsGateway>();
         services.AddScoped<IOutboundChannel, SmsOutboundChannel>();
         services.AddScoped<INotificationTemplateRenderer, NotificationTemplateRenderer>();
         services.AddScoped<INotificationTemplate, SecurityEmailTemplate>();

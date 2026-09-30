@@ -55,7 +55,7 @@ Storage: `NotificationDeliveries.ChannelName` names the channel of each queued m
 
 ### SMS: swapping the provider without touching the channel
 
-`SmsOutboundChannel` never talks to a provider itself — it resolves a user's saved phone number, then hands the message to whichever `ISmsGateway` the `Sms.Provider` setting names (`SmsGateways.cs`). Twilio and Vonage are both built in, each with a genuinely different request shape (Twilio: HTTP Basic auth, a form-encoded body; Vonage: the key and secret inside a JSON body, and a 200 response even for many failures — the real result is a per-message status code inside it). Adding a third provider is the same shape as adding a channel: implement `ISmsGateway`, register it (`services.AddScoped<ISmsGateway, MyGateway>()`), and it appears as a choice in the `Sms.Provider` setting's validator. Credentials live under their own `Sms` settings group (`Sms.Twilio.*`, `Sms.Vonage.*`), separate from the `Notifications.Sms.DeliveryMode`/`TestRecipient` pair every channel gets — the same split `Email.*` (server/credentials) and `Notifications.Email.*` (delivery mode) already use.
+`SmsOutboundChannel` never talks to a provider itself — it resolves a user's saved phone number, then hands the message to whichever `ISmsGateway` the `Sms.Provider` setting names (`SmsGateways.cs`). Three are built in, each with a genuinely different request shape: Twilio (HTTP Basic auth, a form-encoded body), Vonage (the key and secret inside a JSON body, and a 200 response even for many failures — the real result is a per-message status code inside it), and Infobip (an `App`-scheme authorization header carrying the API key, a JSON body of `destinations`, and its own per-account base URL rather than one fixed host). Adding a fourth provider is the same shape as adding a channel: implement `ISmsGateway`, register it (`services.AddScoped<ISmsGateway, MyGateway>()`), and it appears as a choice in the `Sms.Provider` setting's validator. Credentials live under their own `Sms` settings group (`Sms.Twilio.*`, `Sms.Vonage.*`, `Sms.Infobip.*`), separate from the `Notifications.Sms.DeliveryMode`/`TestRecipient` pair every channel gets — the same split `Email.*` (server/credentials) and `Notifications.Email.*` (delivery mode) already use.
 
 ### Push: no provider needed
 
@@ -96,7 +96,7 @@ When a channel is not in Prod, the website shows a banner under the header to ev
 - Feature flag `Notifications`
 - Email uses the Email settings (host, port, user, encrypted password, from address) or the `Email:Smtp:*` configuration
 - Push uses the Notifications settings (`Notifications.Push.VapidPublicKey/VapidPrivateKey/VapidSubject`) — self-generated, no external configuration
-- SMS uses the Sms settings (`Sms.Provider`, plus `Sms.Twilio.*` or `Sms.Vonage.*` depending on which is chosen)
+- SMS uses the Sms settings (`Sms.Provider`, plus `Sms.Twilio.*`, `Sms.Vonage.*` or `Sms.Infobip.*` depending on which is chosen)
 
 ## Tests
 
