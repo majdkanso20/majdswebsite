@@ -10,4 +10,15 @@ html[data-skin='violet'] {
       ),
     )
   );
+
+  // A real violet tint on every surface, not just the primary — see _tokens.scss for why.
+  --mat-sys-surface: light-dark(#f4eefb, #170c1e);
+  --mat-sys-surface-dim: light-dark(#dcc9ee, #170c1e);
+  --mat-sys-surface-bright: light-dark(#f4eefb, #3d2c48);
+  --mat-sys-surface-container-lowest: light-dark(#fff, #0e0713);
+  --mat-sys-surface-container-low: light-dark(#ede3f8, #1d0f26);
+  --mat-sys-surface-container: light-dark(#e4d6f4, #24132f);
+  --mat-sys-surface-container-high: light-dark(#dac8ef, #2c1839);
+  --mat-sys-surface-container-highest: light-dark(#d0baea, #341e44);
+  --mat-sys-background: var(--mat-sys-surface);
 }

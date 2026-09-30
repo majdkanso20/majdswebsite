@@ -17,6 +17,23 @@ html {
     )
   );
 
+  // Material's own M3 algorithm keeps every surface tone near-neutral by design (a fixed, very low
+  // chroma) no matter which hue is chosen as primary — so out of the box every skin ends up looking
+  // the same shade of white/grey, with color only on buttons and other primary-role elements. These
+  // overrides give the surfaces themselves a real, visible tint of the skin's own hue instead (U1
+  // FR-UI-006): every component already reads its background through `--mat-sys-surface*`, so
+  // redefining these here is enough to recolor cards, the sidenav and the page itself with no
+  // component change, the same "one token file re-skins everything" contract the skin system promises.
+  --mat-sys-surface: light-dark(#eef3ff, #0d1526);
+  --mat-sys-surface-dim: light-dark(#ccd7ef, #0d1526);
+  --mat-sys-surface-bright: light-dark(#eef3ff, #2a3552);
+  --mat-sys-surface-container-lowest: light-dark(#fff, #080d18);
+  --mat-sys-surface-container-low: light-dark(#e6edfd, #111a2e);
+  --mat-sys-surface-container: light-dark(#dbe6fb, #16213a);
+  --mat-sys-surface-container-high: light-dark(#cedbf7, #1c2a48);
+  --mat-sys-surface-container-highest: light-dark(#c0d0f2, #223256);
+  --mat-sys-background: var(--mat-sys-surface);
+
   // App-level tokens layered on top of Material's system tokens, for anything the shell/shared
   // components need that Material doesn't already expose. Skins override these — never hard-code
   // these values in component SCSS.

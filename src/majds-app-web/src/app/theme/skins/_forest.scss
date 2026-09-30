@@ -10,4 +10,15 @@ html[data-skin='forest'] {
       ),
     )
   );
+
+  // A real green tint on every surface, not just the primary — see _tokens.scss for why.
+  --mat-sys-surface: light-dark(#eaf6ea, #0a1a0c);
+  --mat-sys-surface-dim: light-dark(#c9e3c9, #0a1a0c);
+  --mat-sys-surface-bright: light-dark(#eaf6ea, #2b452c);
+  --mat-sys-surface-container-lowest: light-dark(#fff, #061107);
+  --mat-sys-surface-container-low: light-dark(#e1f3e1, #0f200f);
+  --mat-sys-surface-container: light-dark(#d5edd5, #142914);
+  --mat-sys-surface-container-high: light-dark(#c7e5c8, #1a331a);
+  --mat-sys-surface-container-highest: light-dark(#b9dcba, #203d20);
+  --mat-sys-background: var(--mat-sys-surface);
 }

@@ -12,6 +12,16 @@ html[data-skin='ocean'] {
     )
   );
 
+  // A real cyan/teal tint on every surface, not just the primary — see _tokens.scss for why.
+  --mat-sys-surface: light-dark(#e7f6f7, #071b1d);
+  --mat-sys-surface-dim: light-dark(#c5e4e6, #071b1d);
+  --mat-sys-surface-bright: light-dark(#e7f6f7, #234648);
+  --mat-sys-surface-container-lowest: light-dark(#fff, #041112);
+  --mat-sys-surface-container-low: light-dark(#defafb, #0b2225);
+  --mat-sys-surface-container: light-dark(#d1f0f2, #10292d);
+  --mat-sys-surface-container-high: light-dark(#c2e7ea, #163338);
+  --mat-sys-surface-container-highest: light-dark(#b2dee1, #1c3d43);
+  --mat-sys-background: var(--mat-sys-surface);
   --app-radius-sm: 6px;
   --app-radius-md: 10px;
 }

@@ -11,6 +11,16 @@ html[data-skin='sunset'] {
     )
   );
 
+  // A real warm tint on every surface, not just the primary — see _tokens.scss for why.
+  --mat-sys-surface: light-dark(#fdf1e6, #211208);
+  --mat-sys-surface-dim: light-dark(#efd6bb, #211208);
+  --mat-sys-surface-bright: light-dark(#fdf1e6, #4a3620);
+  --mat-sys-surface-container-lowest: light-dark(#fff, #150a04);
+  --mat-sys-surface-container-low: light-dark(#fbe9d8, #29160a);
+  --mat-sys-surface-container: light-dark(#f8dfc7, #331b0d);
+  --mat-sys-surface-container-high: light-dark(#f3d3b4, #3e2210);
+  --mat-sys-surface-container-highest: light-dark(#eec7a1, #492913);
+  --mat-sys-background: var(--mat-sys-surface);
   --app-radius-sm: 4px;
   --app-radius-md: 6px;
 }
